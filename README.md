@@ -21,7 +21,7 @@ magister/
 │   ├── lib/             Helpers (paths, safety patterns)
 │   └── routes/          HTTP handlers
 ├── curriculum/          Subject configs (gitted)
-├── web/                 Next.js UI on port 3003 (extraction pending)
+├── web/                 Next.js UI on port 3003 (page proxies to API via /api/proxy)
 ├── state/               Local DB + receipts + uploads (gitignored)
 └── docs/
 ```
@@ -82,10 +82,24 @@ Migrated from `/mnt/ai/squidley-v2/modules/experiences/magister/` and the inline
 - State DB migrated.
 
 Pending:
-- Companion chat endpoint — needs standalone LLM client (OpenRouter primary, Ollama fallback).
-- Voice (Piper TTS, Whisper STT, ElevenLabs cloud TTS) — direct copy pending.
-- Web UI — `apps/web/app/magister/page.tsx` (2,450 lines) → `web/` as standalone Next.js on port 3003.
-- Squidley-side cutover — replace in-process service calls with HTTP to `MAGISTER_URL`.
+- Squidley-side cutover — replace in-process service calls with HTTP to `MAGISTER_URL` and remove the inline magister code from squidley-v2's chat.ts.
+- Inkwell tab persistence (drafts) and Maren feedback — squidley used Archivum for these; standalone needs a generalized drafts/feedback endpoint or to bind Inkwell to a curriculum module.
+- Companion memory writeback per-turn (squidley's was silently broken; deferred to recap endpoint).
+
+## Web — running and known issues
+
+```bash
+cd web/
+npm install        # postinstall patches a Next.js bundled package.json bug
+npm run dev        # http://127.0.0.1:3003 — proxies API via /api/proxy/* → MAGISTER_API_URL (default http://127.0.0.1:18793)
+npm run build      # production build
+npm run start      # serve the production build
+```
+
+The `postinstall` script (`scripts/patch-punycode.mjs`) adds
+`"type":"commonjs"` to `next/dist/compiled/punycode/package.json`. Without
+it, `next build` throws `ERR_INVALID_PACKAGE_CONFIG` on Node 22+ —
+upstream Next.js bug; remove the script when fixed there.
 
 ## License
 

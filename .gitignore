@@ -2,6 +2,12 @@ node_modules/
 dist/
 *.log
 
+# Next.js build artifacts (web/)
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
 # Local state — DBs, receipts, uploads, tmp
 state/
 !state/.gitkeep
