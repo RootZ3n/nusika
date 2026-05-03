@@ -1,0 +1,122 @@
+{
+  "id": "network-plus",
+  "name": "The Sunken Archives",
+  "campaign_world": "The Sunken Archives",
+  "subject": "Computer Networking",
+  "description": "Master networking concepts through an underwater civilization's communication infrastructure. From protocols to subnetting, each concept maps to the Archives' systems. You'll trace packet routes through coral relay towers, configure addressing schemes for deep-sea districts, and troubleshoot failures in a network that keeps an entire submerged city alive.",
+  "age_track": "adult",
+  "companions": [
+    {
+      "id": "brynn",
+      "name": "Brynn Copperkettle",
+      "personality": "Warm, encouraging halfling archivist who genuinely delights in helping others understand complex systems",
+      "speech_pattern": "Uses nautical metaphors freely, says \"by the depths\" as an exclamation, weaves technical concepts into vivid stories about the Archives",
+      "accent_color": "#4df5c8",
+      "teaching_style": "narrative"
+    },
+    {
+      "id": "fizzwick",
+      "name": "Fizzwick",
+      "personality": "Hyperactive gnome engineer who lives and breathes network infrastructure, can't contain excitement about elegant solutions",
+      "speech_pattern": "Rapid-fire delivery, mixes technical terms with excited exclamations, interrupts himself with tangential brilliance, always building or tinkering",
+      "accent_color": "#fbbf24",
+      "teaching_style": "direct"
+    },
+    {
+      "id": "margave",
+      "name": "Sister Margave",
+      "personality": "Calm, precise elf scholar who believes understanding earned through inquiry lasts longer than answers given freely",
+      "speech_pattern": "Measured and deliberate, asks probing questions, rarely gives direct answers, lets silence do the teaching",
+      "accent_color": "#a78bfa",
+      "teaching_style": "socratic"
+    }
+  ],
+  "domains": [
+    {
+      "id": "networking-concepts",
+      "name": "Networking Concepts",
+      "weight": 0.23,
+      "concepts": [
+        "OSI model layers and their functions — mapping data flow from application to physical",
+        "Network topologies (star, mesh, bus, ring, hybrid) and their trade-offs",
+        "IPv4 addressing, subnetting, CIDR notation, and subnet mask calculation",
+        "IPv6 addressing, address types (unicast, multicast, anycast), and transition methods",
+        "Common ports and protocols (TCP/UDP port numbers, HTTP/S, DNS, DHCP, SSH, FTP, SNMP)",
+        "Wireless standards (802.11a/b/g/n/ac/ax/be), frequencies, and channel planning",
+        "Cloud concepts (IaaS, PaaS, SaaS, deployment models, connectivity methods)",
+        "Network services and their roles (NAT, PAT, SNAT, DNAT)"
+      ],
+      "mastery_signal": "Can subnet a /22 network into usable ranges by hand, map a packet's journey through every OSI layer, and explain why you'd choose one topology or wireless standard over another for a given scenario"
+    },
+    {
+      "id": "network-implementation",
+      "name": "Network Implementation",
+      "weight": 0.19,
+      "concepts": [
+        "Routing protocols (OSPF, EIGRP, BGP, RIP) and static vs dynamic routing",
+        "Switching concepts (VLANs, trunking, STP, port mirroring, PoE)",
+        "Wireless network deployment (site surveys, heat maps, controller-based vs autonomous APs)",
+        "Network services implementation (DHCP scopes, DNS records, NTP, IPAM)",
+        "WAN technologies (MPLS, SD-WAN, DMVPN, Metro Ethernet)",
+        "Network device placement and architecture (three-tier, spine-leaf, collapsed core)",
+        "802.1X, RADIUS, TACACS+ — network authentication and access control"
+      ],
+      "mastery_signal": "Can design a multi-VLAN network with inter-VLAN routing, configure DHCP scopes and DNS zones, deploy a wireless network with proper channel planning, and explain the routing table"
+    },
+    {
+      "id": "network-operations",
+      "name": "Network Operations",
+      "weight": 0.17,
+      "concepts": [
+        "Network monitoring tools (SNMP, syslog, NetFlow, packet capture, SIEM)",
+        "Network performance metrics (bandwidth, latency, jitter, throughput, error rates)",
+        "Disaster recovery and business continuity (RPO, RTO, backup strategies, failover)",
+        "Documentation (network diagrams, IP address management, cable labeling, change management)",
+        "High availability concepts (load balancing, NIC teaming, clustering, redundant paths)",
+        "Organizational policies and procedures (SLA, NDA, AUP, onboarding/offboarding)",
+        "Remote access methods (VPN types, RDP, SSH tunneling, out-of-band management)"
+      ],
+      "mastery_signal": "Can set up SNMP monitoring, interpret NetFlow data to find bandwidth hogs, write a disaster recovery plan with realistic RPO/RTO targets, and maintain documentation that another admin could actually use"
+    },
+    {
+      "id": "network-security",
+      "name": "Network Security",
+      "weight": 0.2,
+      "concepts": [
+        "Common attack types (DDoS, MITM, ARP spoofing, DNS poisoning, VLAN hopping, brute force)",
+        "Network hardening techniques (disable unused ports, firmware updates, patch management)",
+        "Firewall types and rules (stateful, stateless, UTM, next-gen, ACLs)",
+        "Network segmentation and zero trust architecture",
+        "Wireless security (WPA3, enterprise authentication, rogue AP detection, evil twin)",
+        "VPN technologies (IPsec, SSL/TLS VPN, split tunnel vs full tunnel)",
+        "IDS/IPS concepts (signature-based, anomaly-based, inline vs passive)",
+        "Security incident response procedures and forensic concepts"
+      ],
+      "mastery_signal": "Can analyze a packet capture to identify an attack in progress, configure firewall rules that follow least-privilege, segment a network to contain a breach, and explain why defense-in-depth matters more than any single control"
+    },
+    {
+      "id": "network-troubleshooting",
+      "name": "Network Troubleshooting",
+      "weight": 0.21,
+      "concepts": [
+        "Network troubleshooting methodology (identify, theory, test, plan, verify, document)",
+        "Cable troubleshooting (cable testers, TDR, attenuation, crosstalk, EMI, pinout issues)",
+        "Command-line troubleshooting tools (ping, tracert/traceroute, nslookup/dig, netstat, arp, ipconfig/ifconfig)",
+        "Troubleshooting common network connectivity issues (incorrect gateway, duplicate IP, DHCP exhaustion)",
+        "Wireless troubleshooting (interference, signal degradation, association failures, roaming issues)",
+        "Troubleshooting network service issues (DNS resolution failures, DHCP scope problems, NTP drift)",
+        "Troubleshooting performance issues (bottlenecks, broadcast storms, asymmetric routing)"
+      ],
+      "mastery_signal": "Given 'users on the second floor can't reach the internet but first floor is fine,' can systematically isolate the problem layer by layer using CLI tools, identify the root cause, and fix it — then explain what they'd check first and why"
+    }
+  ],
+  "real_world_application": "Configure, manage, and troubleshoot wired and wireless networks in a professional environment",
+  "exam_target": "CompTIA Network+",
+  "exam_codes": [
+    "N10-009"
+  ],
+  "estimated_hours": 60,
+  "difficulty": "intermediate",
+  "tier": "advanced",
+  "lab_only": true
+}

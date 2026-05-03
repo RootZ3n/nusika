@@ -1,0 +1,69 @@
+{
+  "id": "financial-basics",
+  "name": "Financial Basics for Kids",
+  "tier": "premium_kids",
+  "campaign_world": "The Coin Garden",
+  "tagline": "Money grows when you understand it. Let's plant some seeds.",
+  "subject": "Financial Literacy",
+  "description": "A garden where coins sprout like seeds and grow into trees — but only if you understand how to tend them. Every lesson is a planting decision. Save or spend? Invest or share? The garden shows you what happens over time. Mistakes make the plants wilt. Good decisions make them bloom. Nobody yells at you for a wilted plant — you just learn to water differently next time.",
+  "age_track": "kids",
+  "companions": [],
+  "domains": [
+    {
+      "id": "money-basics",
+      "name": "What Is Money?",
+      "weight": 0.25,
+      "concepts": [
+        "Coins and bills — identifying denominations, counting change",
+        "Where money comes from — earning, allowance, gifts, jobs",
+        "Needs vs wants — food is a need, a toy is a want, where's the line?",
+        "The value of things — why does a sandwich cost $5 and a bike costs $200?",
+        "Digital money — bank accounts, cards, apps, it's still real money"
+      ],
+      "mastery_signal": "Can count change correctly, explain the difference between needs and wants with real examples, and understand that a debit card is real money"
+    },
+    {
+      "id": "saving",
+      "name": "The Saving Tree",
+      "weight": 0.25,
+      "concepts": [
+        "Why save — goals, emergencies, big purchases",
+        "The three jars — save, spend, share",
+        "Compound growth — money grows over time (simple, no math jargon)",
+        "Setting a savings goal — how long to save $20 at $2/week",
+        "Delayed gratification — the marshmallow test, applied to money"
+      ],
+      "mastery_signal": "Can set a savings goal, calculate how long it takes, and explain why waiting can get you something better"
+    },
+    {
+      "id": "spending",
+      "name": "Smart Spending",
+      "weight": 0.25,
+      "concepts": [
+        "Budgeting — deciding before you spend, not after",
+        "Comparing prices — same thing, different stores, different prices",
+        "Advertising tricks — why companies want you to buy things you don't need",
+        "Opportunity cost — if you buy this, you can't buy that",
+        "Impulse vs planned purchases — the 24-hour rule"
+      ],
+      "mastery_signal": "Can create a simple budget for a week, identify advertising tricks, and explain what you give up when you buy something"
+    },
+    {
+      "id": "earning-sharing",
+      "name": "Earning & Sharing",
+      "weight": 0.25,
+      "concepts": [
+        "Ways kids can earn money — chores, lemonade stands, helping neighbors",
+        "The value of work — time + effort = money, not all work pays the same",
+        "Generosity — sharing money, donating, helping causes you care about",
+        "Entrepreneurship basics — selling something you made",
+        "Taxes and community — where does public money come from and go?"
+      ],
+      "mastery_signal": "Can explain how people earn money, describe one way they could earn money themselves, and explain why communities share money through taxes"
+    }
+  ],
+  "real_world_application": "Make smart decisions about money. Save for goals, spend wisely, understand advertising, and know that money is a tool not a score.",
+  "exam_target": null,
+  "estimated_hours": 20,
+  "difficulty": "beginner"
+}

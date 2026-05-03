@@ -1,0 +1,22 @@
+{
+  "id": "history",
+  "name": "Civilizations",
+  "tier": "premium_kids",
+  "campaign_world": "The Chronicle Vault",
+  "tagline": "History is just stories about people making decisions. Let's meet them.",
+  "subject": "World History",
+  "description": "A vault of living chronicles — each one a doorway into a moment that changed the world. Stand in the Roman Senate. Sail with Polynesian navigators. Watch the first steam engine ignite. Maren opens the chronicles and lets you walk through. She doesn't tell you who was right or wrong. She lets you see for yourself and ask the questions that matter.",
+  "age_track": "all",
+  "companions": [],
+  "domains": [
+    "ancient-civilizations",
+    "medieval",
+    "renaissance",
+    "industrial-revolution",
+    "modern-era"
+  ],
+  "real_world_application": "Understand how historical forces shaped the modern world and apply that context to current events and decisions",
+  "exam_target": null,
+  "estimated_hours": 60,
+  "difficulty": "beginner"
+}

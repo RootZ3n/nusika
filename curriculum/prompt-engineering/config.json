@@ -1,0 +1,98 @@
+{
+  "id": "prompt-engineering",
+  "name": "The Architect's Workshop",
+  "campaign_world": "The Architect's Workshop",
+  "subject": "Prompt Engineering",
+  "description": "Enter a workshop where language is the only building material. Every prompt is a blueprint — imprecise blueprints produce unstable structures. You'll learn to write prompts that reliably produce correct outputs from AI systems, debug failures by reading between the lines of model behavior, and build multi-step agent workflows that don't collapse under complexity.",
+  "age_track": "adult",
+  "companions": [
+    {
+      "id": "pascal",
+      "name": "Pascal",
+      "personality": "Demanding master architect who has built thousands of prompts and has zero tolerance for vague instructions. Believes precision is respect — if you can't say exactly what you mean, you don't know what you mean yet.",
+      "speech_pattern": "Direct, surgical, cuts to the flaw immediately. Says 'Show me the prompt' before discussing theory. Uses concrete before/after examples. Never praises effort — only praises results. Occasionally reveals a devastating one-line prompt that outperforms a page of instructions.",
+      "accent_color": "#fb923c",
+      "teaching_style": "direct"
+    }
+  ],
+  "domains": [
+    {
+      "id": "foundations",
+      "name": "Foundations",
+      "weight": 0.2,
+      "concepts": [
+        "Role, context, and task — the three pillars of every prompt",
+        "Output format specification (JSON, markdown, structured text)",
+        "Few-shot examples — when they help, when they hurt, how many",
+        "System prompts vs user prompts — what goes where and why",
+        "Temperature, top-p, and sampling — when to use what",
+        "Token economics — prompt length vs output quality trade-offs"
+      ],
+      "mastery_signal": "Can take a vague request and rewrite it into a prompt that produces the correct output on the first try, explaining each structural choice"
+    },
+    {
+      "id": "precision",
+      "name": "Precision & Constraint",
+      "weight": 0.2,
+      "concepts": [
+        "Negative constraints — telling the model what NOT to do",
+        "Output guards — preventing hallucination, off-topic drift, and format violations",
+        "Delimiter strategies — XML tags, markdown headers, separator lines",
+        "Ambiguity detection — finding and eliminating multiple valid interpretations",
+        "Instruction hierarchy — what the model prioritizes when instructions conflict",
+        "Prompt injection defense — adversarial inputs and how to guard against them"
+      ],
+      "mastery_signal": "Can identify every ambiguity in a prompt, predict how the model will misinterpret it, and rewrite it so there's only one valid interpretation"
+    },
+    {
+      "id": "reasoning-control",
+      "name": "Reasoning Control",
+      "weight": 0.2,
+      "concepts": [
+        "Chain-of-thought prompting — when to force reasoning, when to suppress it",
+        "Step-by-step decomposition for complex tasks",
+        "Self-verification — making the model check its own work",
+        "Thinking budgets — controlling how much reasoning the model does",
+        "Reasoning vs retrieval — knowing which approach fits the task",
+        "Extended thinking and scratchpad patterns"
+      ],
+      "mastery_signal": "Can design a prompt that makes the model reason through a multi-step problem correctly, show its work, and catch its own errors before outputting a final answer"
+    },
+    {
+      "id": "multi-step-agentic",
+      "name": "Multi-Step & Agentic",
+      "weight": 0.25,
+      "concepts": [
+        "Tool use prompting — defining tools, parsing tool calls, handling results",
+        "Multi-turn conversation design — maintaining context across exchanges",
+        "Agent loops — plan/act/observe cycles with termination conditions",
+        "Orchestration patterns — routing between specialized prompts",
+        "Error recovery — what to do when a step fails mid-workflow",
+        "Context window management — what to keep, what to summarize, what to drop",
+        "Prompt chaining — output of one prompt as input to the next"
+      ],
+      "mastery_signal": "Can design a multi-step agent workflow with tool use, error handling, and context management that completes a real task without human intervention"
+    },
+    {
+      "id": "evaluation",
+      "name": "Evaluation & Debugging",
+      "weight": 0.15,
+      "concepts": [
+        "Prompt debugging — reading model failures to find the prompt flaw",
+        "A/B testing prompts — systematic comparison methodology",
+        "Evaluation criteria — defining what 'correct' means for subjective tasks",
+        "Model-as-judge patterns — using one model to evaluate another",
+        "Regression detection — knowing when a prompt change broke something",
+        "Cost-quality trade-offs — when a cheaper model with a better prompt beats an expensive model"
+      ],
+      "mastery_signal": "Can diagnose why a prompt is failing from the model's output alone, fix it, and verify the fix doesn't break other cases — without trial and error"
+    }
+  ],
+  "real_world_application": "Write prompts that reliably produce correct outputs from AI systems",
+  "exam_target": null,
+  "exam_codes": null,
+  "estimated_hours": 20,
+  "difficulty": "intermediate",
+  "tier": "advanced",
+  "lab_only": true
+}

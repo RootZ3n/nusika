@@ -1,0 +1,10 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "sourceMap": false,
+    "removeComments": false
+  },
+  "include": ["server/**/*.ts"],
+  "exclude": ["node_modules", "dist", "web", "curriculum", "test", "**/*.test.ts"]
+}

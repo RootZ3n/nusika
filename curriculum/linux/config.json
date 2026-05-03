@@ -1,0 +1,109 @@
+{
+  "id": "linux",
+  "name": "The Sovereign Grid",
+  "campaign_world": "The Sovereign Grid",
+  "subject": "Linux Administration",
+  "description": "Manage a city-sized machine network where every system runs on open source. From file permissions to shell scripting, it's all hands-on. You'll configure services, lock down user access, automate tasks with scripts, diagnose failing nodes, and keep the Grid running against entropy and the occasional rogue process.",
+  "age_track": "adult",
+  "companions": [
+    {
+      "id": "cronk",
+      "name": "C-RONK",
+      "personality": "Grumpy but brilliant robot who has been maintaining systems since before most admins were born and has no patience for sloppy work",
+      "speech_pattern": "Terse, uses ALL CAPS for emphasis, occasionally glitches mid-sentence with repeated words or garbled output, secretly proud when you get it right",
+      "accent_color": "#4df5c8",
+      "teaching_style": "direct"
+    },
+    {
+      "id": "wrrrakk",
+      "name": "Wrrrakk",
+      "personality": "Enthusiastic alien sysadmin who fell in love with Linux from across the galaxy and brings infectious energy to every lesson",
+      "speech_pattern": "Mispronounces human words endearingly, very supportive, uses alien analogies that somehow make perfect sense, celebrates every small victory",
+      "accent_color": "#fbbf24",
+      "teaching_style": "narrative"
+    },
+    {
+      "id": "sable",
+      "name": "Sable",
+      "personality": "Cool, collected AI construct who approaches every problem as a logic puzzle and respects precision above all",
+      "speech_pattern": "Formal, precise, occasionally shows dry wit, asks questions that make you realize you already know the answer",
+      "accent_color": "#a78bfa",
+      "teaching_style": "socratic"
+    }
+  ],
+  "domains": [
+    {
+      "id": "system-management",
+      "name": "System Management",
+      "weight": 0.32,
+      "concepts": [
+        "Linux file system hierarchy (/, /etc, /var, /home, /proc, /sys, /dev) and FHS standard",
+        "Storage management (fdisk, parted, LVM, mount/umount, fstab, swap)",
+        "Process management (ps, top, htop, kill, nice, renice, systemctl, journalctl)",
+        "System services and daemons (systemd units, enable/disable, start/stop, status)",
+        "Package management (apt, yum/dnf, zypper, dpkg, rpm, repositories, dependencies)",
+        "Boot process (BIOS/UEFI, GRUB2, initramfs, kernel, systemd targets/runlevels)",
+        "Hardware management (lsblk, lspci, lsusb, dmesg, /proc and /sys interfaces)",
+        "Localization, time zones, and NTP configuration",
+        "Kernel modules, parameters, and basic kernel tuning"
+      ],
+      "mastery_signal": "Can set up LVM on a new disk, extend a logical volume without downtime, troubleshoot a failed systemd service using journalctl, and navigate the file system hierarchy knowing exactly where any config file lives and why it's there"
+    },
+    {
+      "id": "security",
+      "name": "Security",
+      "weight": 0.21,
+      "concepts": [
+        "File permissions (chmod, chown, chgrp, umask, SUID, SGID, sticky bit)",
+        "User and group management (useradd, usermod, groupadd, /etc/passwd, /etc/shadow, /etc/group)",
+        "PAM (Pluggable Authentication Modules) configuration and password policies",
+        "Firewall configuration (iptables, nftables, firewalld, ufw)",
+        "SSH hardening (key-based auth, disable root login, port changes, AllowUsers)",
+        "SELinux and AppArmor (modes, contexts, policies, troubleshooting permission denials)",
+        "Encryption (LUKS, GPG, SSL/TLS certificates, openssl basics)",
+        "Auditing and logging (auditd, /var/log, rsyslog, logrotate)"
+      ],
+      "mastery_signal": "Can lock down a fresh server — configure firewall rules, set up key-based SSH, enable SELinux in enforcing mode, configure proper file permissions, and explain the principle of least privilege as implemented at every layer"
+    },
+    {
+      "id": "scripting-automation",
+      "name": "Scripting & Automation",
+      "weight": 0.19,
+      "concepts": [
+        "Bash scripting fundamentals (variables, conditionals, loops, functions, exit codes)",
+        "Environment variables (PATH, HOME, export, .bashrc vs .bash_profile, /etc/environment)",
+        "Text processing tools (grep, sed, awk, cut, sort, uniq, tr, xargs)",
+        "Task scheduling (cron, crontab, at, systemd timers, anacron)",
+        "Regular expressions for pattern matching and data extraction",
+        "Version control basics (git init, add, commit, push, pull, branching)",
+        "Infrastructure automation concepts (Ansible basics, shell script deployment patterns)"
+      ],
+      "mastery_signal": "Can write a bash script that parses log files, extracts error patterns with grep/awk, emails a summary via cron, and handles edge cases — without cargo-culting from Stack Overflow"
+    },
+    {
+      "id": "troubleshooting",
+      "name": "Troubleshooting",
+      "weight": 0.28,
+      "concepts": [
+        "System performance analysis (top, vmstat, iostat, sar, free, df, du)",
+        "Network troubleshooting (ip, ss, ping, traceroute, dig, netstat, tcpdump, NetworkManager)",
+        "Storage troubleshooting (disk full, inode exhaustion, fsck, SMART monitoring, I/O bottlenecks)",
+        "Boot process troubleshooting (GRUB rescue, emergency/rescue targets, dracut, initramfs rebuild)",
+        "Log analysis and correlation (journalctl filters, /var/log/messages, syslog priorities, dmesg)",
+        "Service and application troubleshooting (dependency failures, port conflicts, resource exhaustion)",
+        "CPU and memory issues (runaway processes, OOM killer, memory leaks, load averages)",
+        "SELinux/AppArmor troubleshooting (audit2why, audit2allow, context mismatches)"
+      ],
+      "mastery_signal": "Given a server that won't boot, can work through GRUB rescue to single-user mode, identify the failed service, check logs, fix the root cause, and get it back online — then explain every step to a junior admin"
+    }
+  ],
+  "real_world_application": "Administer Linux systems, automate tasks with scripts, and troubleshoot server and desktop environments",
+  "exam_target": "CompTIA Linux+",
+  "exam_codes": [
+    "XK0-005"
+  ],
+  "estimated_hours": 60,
+  "difficulty": "intermediate",
+  "tier": "advanced",
+  "lab_only": true
+}

@@ -1,0 +1,21 @@
+{
+  "id": "science",
+  "name": "The Discovery Lab",
+  "tier": "premium_kids",
+  "campaign_world": "The Discovery Lab",
+  "tagline": "Every question is an experiment waiting to happen.",
+  "subject": "Natural Sciences",
+  "description": "A laboratory where every question leads to an experiment. Why is the sky blue? What happens when water boils? How do plants eat sunlight? Maren runs the lab — she doesn't give you answers. She gives you the equipment and asks 'What do you think will happen?' Then you find out. Science isn't a subject here. It's a way of finding things out.",
+  "age_track": "all",
+  "companions": [],
+  "domains": [
+    "life-sciences",
+    "physical-sciences",
+    "earth-sciences",
+    "scientific-method"
+  ],
+  "real_world_application": "Understand how the natural world works, think scientifically about everyday questions, and evaluate claims based on evidence",
+  "exam_target": null,
+  "estimated_hours": 40,
+  "difficulty": "beginner"
+}

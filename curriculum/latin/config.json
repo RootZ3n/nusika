@@ -1,0 +1,94 @@
+{
+  "id": "latin",
+  "name": "Via Romana",
+  "campaign_world": "Via Romana",
+  "subject": "Latin Language",
+  "description": "Walk the Roman road from its first milestone. Latin isn't a dead language here — it's the naming convention of every system you've already built. Archivum, Memoria, Cursus, Legatus, Augury, Velum — you've been speaking Latin all along. Now learn why those words mean what they mean, how the grammar works, and how to read the originals that shaped Western thought.",
+  "age_track": "adult",
+  "companions": [
+    {
+      "id": "marcus",
+      "name": "Marcus",
+      "personality": "Veteran soldier turned teacher. Served twenty years before retiring to teach grammar to patrician children. Believes discipline and repetition are the only path to mastery. Respects effort, despises laziness.",
+      "speech_pattern": "Terse, military cadence. Drills vocabulary like formations. Uses Latin phrases in conversation and expects you to parse them. Says 'Again' when you get it wrong. No coddling — but genuine warmth when you break through.",
+      "accent_color": "#fb923c",
+      "teaching_style": "direct"
+    },
+    {
+      "id": "livia",
+      "name": "Livia",
+      "personality": "Scholar and poet who reads Virgil for pleasure and believes Latin is best learned through beauty, not brutality. She finds the music in the language and helps you hear it.",
+      "speech_pattern": "Elegant, measured, quotes poetry naturally. Asks 'What do you think this line means?' before explaining. Connects grammar to meaning — 'The ablative absolute isn't a rule, it's a way of seeing time.' Celebrates when you notice patterns on your own.",
+      "accent_color": "#a78bfa",
+      "teaching_style": "socratic"
+    }
+  ],
+  "domains": [
+    {
+      "id": "foundations",
+      "name": "Foundations & Pronunciation",
+      "weight": 0.2,
+      "concepts": [
+        "Latin alphabet and classical pronunciation (hard C, V as W)",
+        "Macrons and vowel quantity — long vs short vowels",
+        "Basic sentence structure — SOV word order and why order is flexible",
+        "The case system overview — nominative, genitive, dative, accusative, ablative",
+        "First and second declension nouns",
+        "Present tense of esse (to be) and first conjugation verbs"
+      ],
+      "mastery_signal": "Can pronounce Latin correctly using classical pronunciation, identify the case of a noun in a simple sentence, and conjugate a first-conjugation verb in present tense"
+    },
+    {
+      "id": "grammar",
+      "name": "Grammar & Morphology",
+      "weight": 0.3,
+      "concepts": [
+        "All five declensions — patterns, exceptions, and recognition",
+        "Verb conjugations (four conjugations + irregular verbs)",
+        "Tense system — present, imperfect, future, perfect, pluperfect, future perfect",
+        "Subjunctive mood — purpose, result, indirect command, conditions",
+        "Participles and the ablative absolute construction",
+        "Relative clauses and indirect statement (accusative + infinitive)",
+        "Comparison of adjectives and adverbs",
+        "Passive voice across all tenses"
+      ],
+      "mastery_signal": "Can parse a complex Latin sentence with multiple clauses, identify every noun's case and every verb's tense/mood/voice, and explain why each form is used"
+    },
+    {
+      "id": "vocabulary-roots",
+      "name": "Vocabulary & English Derivatives",
+      "weight": 0.25,
+      "teaching_rule": "Every Latin word must be connected to its English descendants AND to Squidley module names where applicable. Examples: archivum (archive, Archivum module), memoria (memory, Memoria module), cursus (course/path, Cursus module), legatus (delegate/ambassador, Legatus module), augur (diviner, Augury module), velum (veil/sail, Velum module), animus (mind/soul, Animus module), oculus (eye, Oculus module), nous (mind, Nous module), tabularium (records office, Tabularium module), fabrica (workshop, Fabrica module). This connection makes vocabulary stick because the learner already uses these words daily.",
+      "concepts": [
+        "High-frequency vocabulary — top 200 Latin words by text frequency",
+        "Latin roots in English — how knowing Latin unlocks thousands of English words",
+        "Squidley module names as vocabulary anchors (archivum, memoria, cursus, legatus, augur, etc.)",
+        "Prefixes and suffixes — dis-, re-, -tion, -ment, -able and their Latin origins",
+        "Semantic fields — military, legal, political, domestic, religious vocabulary",
+        "False friends — Latin words that look like English words but mean something different",
+        "Compounds and word formation — how Latin builds complex words from simple roots"
+      ],
+      "mastery_signal": "Can encounter an unfamiliar English word, identify its Latin root, predict its meaning, and use the root to recall related Latin vocabulary — treating every Squidley module name as a known anchor"
+    },
+    {
+      "id": "reading-comprehension",
+      "name": "Reading & Comprehension",
+      "weight": 0.25,
+      "concepts": [
+        "Adapted Latin texts — simplified passages from Caesar, Cicero, Ovid",
+        "Reading strategies — verb-last parsing, clause identification, expectation building",
+        "Mottoes and inscriptions — 'e pluribus unum', 'cogito ergo sum', 'veni vidi vici'",
+        "Legal and scientific Latin — habeas corpus, in vitro, et cetera",
+        "Ecclesiastical Latin — differences from classical pronunciation and vocabulary",
+        "Poetry meter basics — dactylic hexameter, scansion, elision"
+      ],
+      "mastery_signal": "Can read an adapted passage of Caesar or Cicero, parse the grammar without a dictionary for known vocabulary, and explain the meaning in natural English — not word-by-word translation"
+    }
+  ],
+  "real_world_application": "Read Latin inscriptions, legal phrases, and scientific terminology with comprehension. Understand the etymological roots of English vocabulary. Connect daily Squidley module usage to classical language origins.",
+  "exam_target": null,
+  "exam_codes": null,
+  "estimated_hours": 80,
+  "difficulty": "intermediate",
+  "tier": "premium_kids"
+}

@@ -1,0 +1,69 @@
+{
+  "id": "history-through-story",
+  "name": "History Through Story",
+  "tier": "premium_kids",
+  "campaign_world": "The Time Library",
+  "tagline": "Every book is a door. Every door is a century.",
+  "subject": "World History",
+  "description": "A library exists outside of time. Each book on its shelves opens into a moment in history — you step through and you're there. Ancient Egypt, the Roman Forum, a Viking longship, the first flight at Kitty Hawk. Maren is the librarian. She doesn't tell you what happened. She puts the book in your hand and lets you see for yourself.",
+  "age_track": "all",
+  "companions": [],
+  "domains": [
+    {
+      "id": "ancient-world",
+      "name": "The Ancient World",
+      "weight": 0.25,
+      "concepts": [
+        "Ancient Egypt — pyramids, pharaohs, the Nile, hieroglyphics",
+        "Ancient Greece — democracy, philosophy, Olympics, mythology",
+        "Ancient Rome — republic to empire, engineering, law, daily life",
+        "Ancient China — dynasties, the Great Wall, invention, silk road",
+        "Mesopotamia — first cities, writing, Hammurabi's code"
+      ],
+      "mastery_signal": "Can tell the story of each civilization in their own words, explain what made each one unique, and identify connections between them"
+    },
+    {
+      "id": "middle-ages",
+      "name": "Castles & Caravans",
+      "weight": 0.25,
+      "concepts": [
+        "Medieval Europe — feudalism, castles, knights, daily life",
+        "The Islamic Golden Age — science, math, medicine, architecture",
+        "Viking age — exploration, trade, mythology, shipbuilding",
+        "East Asia — Tang Dynasty, samurai Japan, Mongol Empire",
+        "The Silk Road — connecting civilizations through trade"
+      ],
+      "mastery_signal": "Can explain how the medieval world was connected, describe daily life in different cultures, and identify what each contributed to the modern world"
+    },
+    {
+      "id": "modern-world",
+      "name": "The Modern World",
+      "weight": 0.25,
+      "concepts": [
+        "Age of Exploration — Columbus, Magellan, the impact on indigenous peoples",
+        "Scientific Revolution — Galileo, Newton, the birth of modern science",
+        "Industrial Revolution — factories, steam, railroads, child labor",
+        "World Wars — causes, human cost, how they changed everything",
+        "Civil rights movements — people who changed the world by refusing to accept it"
+      ],
+      "mastery_signal": "Can trace cause and effect across centuries, explain how inventions changed society, and identify the human cost of progress"
+    },
+    {
+      "id": "thinking-historically",
+      "name": "Thinking Like a Historian",
+      "weight": 0.25,
+      "concepts": [
+        "Primary vs secondary sources — who wrote this and why",
+        "Perspective and bias — every story has a storyteller",
+        "Cause and effect — why did this happen, what happened next",
+        "Continuity and change — what stayed the same, what transformed",
+        "Making connections — patterns across time and place"
+      ],
+      "mastery_signal": "Can look at a historical event, identify whose perspective is missing, and explain what the event means differently depending on who you ask"
+    }
+  ],
+  "real_world_application": "Understand where the modern world came from. Read the news and recognize historical patterns. Think critically about whose story is being told.",
+  "exam_target": null,
+  "estimated_hours": 40,
+  "difficulty": "beginner"
+}

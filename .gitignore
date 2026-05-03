@@ -1,0 +1,29 @@
+node_modules/
+dist/
+*.log
+
+# Local state — DBs, receipts, uploads, tmp
+state/
+!state/.gitkeep
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+*.pem
+*.key
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Build / cache
+.next/
+.turbo/
+*.tsbuildinfo
+
+# Test artifacts
+coverage/
+.nyc_output/

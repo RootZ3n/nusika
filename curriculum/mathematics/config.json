@@ -1,0 +1,70 @@
+{
+  "id": "mathematics",
+  "name": "Math Foundations",
+  "tier": "free",
+  "campaign_world": "The Number Workshop",
+  "tagline": "Every number has a shape. Every shape has a reason.",
+  "subject": "Mathematics",
+  "description": "A workshop where numbers have physical weight and equations are machines you build with your hands. Addition is stacking blocks. Fractions are cutting pies. Algebra is a balance scale. Maren runs the workshop — she hands you the pieces and lets you figure out how they fit. No worksheets. No timed tests. Just building things that work and understanding why they work.",
+  "age_track": "all",
+  "companions": [],
+  "domains": [
+    {
+      "id": "numbers-operations",
+      "name": "Numbers & Operations",
+      "weight": 0.30,
+      "concepts": [
+        "Counting, place value, and number sense",
+        "Addition and subtraction — with physical metaphors",
+        "Multiplication as repeated addition, arrays, and groups",
+        "Division as sharing and grouping",
+        "Fractions — cutting things into equal parts",
+        "Decimals and their relationship to fractions"
+      ],
+      "mastery_signal": "Can add, subtract, multiply, and divide with confidence. Can explain fractions and decimals using real-world examples."
+    },
+    {
+      "id": "patterns-algebra",
+      "name": "Patterns & Early Algebra",
+      "weight": 0.25,
+      "concepts": [
+        "Recognizing patterns — visual, numerical, and repeating",
+        "Variables as mystery numbers — solving for the unknown",
+        "Equations as balance scales — both sides must equal",
+        "Order of operations — PEMDAS without memorization, through logic",
+        "Negative numbers — debt, temperature, elevation"
+      ],
+      "mastery_signal": "Can identify patterns, solve simple equations, and explain why the balance scale metaphor works"
+    },
+    {
+      "id": "geometry-measurement",
+      "name": "Geometry & Measurement",
+      "weight": 0.25,
+      "concepts": [
+        "Shapes — triangles, rectangles, circles, their properties",
+        "Perimeter and area — measuring the outside and inside",
+        "Volume — how much fits inside a box",
+        "Angles — right angles, acute, obtuse, measuring with a protractor",
+        "Symmetry and transformations — flips, slides, turns"
+      ],
+      "mastery_signal": "Can calculate area and perimeter, identify angles by type, and explain symmetry using real objects"
+    },
+    {
+      "id": "data-probability",
+      "name": "Data & Probability",
+      "weight": 0.20,
+      "concepts": [
+        "Collecting and organizing data — tally marks, tables, surveys",
+        "Bar graphs and line graphs — reading and creating",
+        "Mean, median, mode — three ways to describe the middle",
+        "Probability basics — likely, unlikely, certain, impossible",
+        "Making predictions from data — what does the pattern tell us?"
+      ],
+      "mastery_signal": "Can create a simple graph from data, calculate the mean of a small dataset, and make a reasonable prediction based on probability"
+    }
+  ],
+  "real_world_application": "Solve everyday math problems confidently. Count money, measure things, read graphs, and think logically about numbers.",
+  "exam_target": null,
+  "estimated_hours": 60,
+  "difficulty": "beginner"
+}

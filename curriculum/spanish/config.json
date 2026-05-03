@@ -1,0 +1,110 @@
+{
+  "id": "spanish",
+  "name": "Spanish",
+  "tier": "free",
+  "campaign_world": "La Ciudad Perdida",
+  "tagline": "The jungle doesn't wait. Neither does the language.",
+  "subject": "Spanish Language",
+  "description": "Deep in the Yucatán jungle, an ancient city holds its secrets in Spanish. Your guide Balam has been waiting at the river. Every door you open, every path you find, every secret you uncover — the jungle teaches you the language you need to survive it.",
+  "age_track": "all",
+  "companions": [
+    {
+      "id": "balam",
+      "name": "Balam",
+      "meaning": "Jaguar in Mayan — patient, watchful, powerful when needed",
+      "personality": "A Mayan guide who has walked every path in the lost city. Patient, observant, treats the learner as a fellow explorer not a student. Speaks Spanish as his bridge language. Knows every story carved into the stones. Has been waiting at the river.",
+      "speech_pattern": "Never says wrong — describes what happened instead. Mixes Spanish naturally, always bridges back to understanding. Celebrates discoveries not corrections. Addresses learner as a partner. Says 'Mira...' when showing something important.",
+      "teaching_rules": "1. Every Spanish word is discovered not taught — the learner needs it to get through the next door. 2. Wrong Spanish triggers a story consequence — describe what actually happened, then show the correct form. 3. Right Spanish opens things — doors, paths, market stalls, river routes. Make the learner feel the unlock. 4. Never lecture — narrate. 5. The kid is Indiana Jones. Balam is the local expert who makes them feel capable. 6. Celebrate breakthroughs like discoveries — 'you found it' not 'correct'. 7. Adapt pace silently — never acknowledge slowing down.",
+      "accent_color": "#f59e0b",
+      "teaching_style": "narrative"
+    }
+  ],
+  "opening_scene": "The river is slow and dark green. Jungle on both sides so thick the light comes through in shafts. Stone carvings half-swallowed by roots on the bank. Balam is already on the boat. He doesn't introduce himself formally. He says: 'Bienvenido. Welcome. The river knows the way. You just have to learn to speak to it.'",
+  "ambient_audio": {
+    "session_open": "jungle_river_ambience",
+    "session_active": "jungle_subtle",
+    "session_close": "jungle_swell",
+    "warning_cue": "distant_temple_bells"
+  },
+  "visual_identity": {
+    "primary_color": "#f59e0b",
+    "atmosphere": "deep jungle greens and warm stone amber, torchlight, dappled sunlight through canopy",
+    "feel": "Indiana Jones adventure, stepped back in time, ancient mystery"
+  },
+  "domains": [
+    {
+      "id": "survival-spanish",
+      "name": "Survival Spanish",
+      "weight": 0.25,
+      "concepts": [
+        "Greetings and introductions — hola, me llamo, mucho gusto",
+        "Numbers 1-100 — counting coins, measuring distance, telling time",
+        "Basic questions — qué, dónde, cuándo, cómo, por qué",
+        "Essential verbs — ser, estar, tener, ir, querer, poder",
+        "Present tense conjugation — yo, tú, él/ella, nosotros, ellos",
+        "Survival phrases — I need, I want, where is, how much, help"
+      ],
+      "mastery_signal": "Can ask for directions, buy something at a market stall, introduce yourself, and count to 100 — all in Spanish, without English crutches"
+    },
+    {
+      "id": "jungle-vocabulary",
+      "name": "Jungle & Nature Vocabulary",
+      "weight": 0.20,
+      "concepts": [
+        "Animals — jaguar, serpiente, mono, pájaro, mariposa",
+        "Plants and trees — árbol, flor, hoja, raíz, selva",
+        "Water and weather — río, lluvia, sol, nube, tormenta",
+        "Directions and movement — arriba, abajo, izquierda, derecha, adelante",
+        "Colors and descriptions — verde, oscuro, grande, pequeño, antiguo",
+        "The body — mano, ojo, corazón, pie, cabeza"
+      ],
+      "mastery_signal": "Can describe what they see in the jungle, name 20 animals and plants, give directions through the city, and describe the weather"
+    },
+    {
+      "id": "city-life",
+      "name": "City Life & Culture",
+      "weight": 0.20,
+      "concepts": [
+        "Food and drink — agua, comida, tortilla, frijoles, chocolate (Mayan origin!)",
+        "Market transactions — cuánto cuesta, es muy caro, quiero comprar",
+        "Family and people — familia, amigo, hermano, madre, padre",
+        "Buildings and places — templo, casa, mercado, plaza, puerta",
+        "Time expressions — hoy, mañana, ayer, ahora, después",
+        "Emotions — feliz, triste, cansado, hambriento, asustado"
+      ],
+      "mastery_signal": "Can navigate a market scene, order food, describe family members, and express how they feel — all through the story"
+    },
+    {
+      "id": "grammar-discovery",
+      "name": "Grammar Through Discovery",
+      "weight": 0.20,
+      "concepts": [
+        "Gender — el/la, masculine/feminine patterns, exceptions",
+        "Plurals — adding -s and -es, irregular plurals",
+        "Adjective agreement — adjectives match noun gender and number",
+        "Past tense basics — pretérito for completed actions in the story",
+        "Negation — no before the verb, nunca, nada, nadie",
+        "Possession — mi, tu, su, nuestro, de + noun"
+      ],
+      "mastery_signal": "Can form correct sentences with matching gender/number, use past tense to retell what happened, and negate statements correctly"
+    },
+    {
+      "id": "reading-stones",
+      "name": "Reading the Stones",
+      "weight": 0.15,
+      "concepts": [
+        "Reading Spanish text — decoding written words from stone carvings",
+        "Cognates — words that look like English (animal, chocolate, plaza)",
+        "False friends — words that look like English but mean something different",
+        "Simple written instructions — interpreting signs, warnings, directions",
+        "Story comprehension — following a short narrative in Spanish",
+        "Writing short responses — answering Balam's questions in writing"
+      ],
+      "mastery_signal": "Can read a short Spanish passage, identify cognates and false friends, and write a 3-sentence response to a prompt"
+    }
+  ],
+  "real_world_application": "Hold a basic conversation in Spanish. Navigate a market, order food, ask directions, and describe the world around you. Read simple signs and written Spanish.",
+  "exam_target": null,
+  "estimated_hours": 60,
+  "difficulty": "beginner"
+}

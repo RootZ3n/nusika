@@ -1,0 +1,69 @@
+{
+  "id": "social-emotional",
+  "name": "Social Emotional Learning",
+  "tier": "premium_kids",
+  "campaign_world": "The Feeling Forest",
+  "tagline": "Every feeling has a name. Every name gives you power over it.",
+  "subject": "Social-Emotional Learning",
+  "description": "A forest where feelings take physical form — anger is a storm, sadness is fog, joy is sunlight breaking through. You learn to name what you feel, understand what others feel, and navigate the weather inside yourself. The forest doesn't judge. It just shows you what's real. And once you can see it, you can work with it.",
+  "age_track": "kids",
+  "companions": [],
+  "domains": [
+    {
+      "id": "self-awareness",
+      "name": "Naming the Weather",
+      "weight": 0.25,
+      "concepts": [
+        "Identifying basic emotions — happy, sad, angry, scared, surprised, disgusted",
+        "Intensity levels — annoyed vs furious, nervous vs terrified",
+        "Body signals — where do you feel emotions? Stomach, chest, hands, face",
+        "Triggers — what sets off big feelings, and recognizing the pattern",
+        "The difference between feeling and acting — you can feel angry without hitting"
+      ],
+      "mastery_signal": "Can name what they're feeling, describe where they feel it in their body, and identify what triggered it — using real examples"
+    },
+    {
+      "id": "self-management",
+      "name": "Calming the Storm",
+      "weight": 0.25,
+      "concepts": [
+        "Breathing techniques — box breathing, belly breathing, 4-7-8",
+        "The pause — what happens in the space between feeling and action",
+        "Healthy outlets — drawing, moving, talking, writing, squeezing something",
+        "Unhealthy patterns — yelling, hitting, shutting down, blaming others",
+        "Recovery — what to do after a meltdown, how to repair"
+      ],
+      "mastery_signal": "Can describe 3 calming strategies, explain the difference between healthy and unhealthy outlets, and walk through what repair looks like after a conflict"
+    },
+    {
+      "id": "social-awareness",
+      "name": "Reading Other People's Weather",
+      "weight": 0.25,
+      "concepts": [
+        "Reading body language — crossed arms, tears, smiles, turned away",
+        "Listening vs hearing — what it means to really pay attention",
+        "Perspective taking — the same event feels different to different people",
+        "Empathy — feeling with someone, not just feeling sorry for them",
+        "Cultural differences — different families express feelings differently"
+      ],
+      "mastery_signal": "Can read basic body language, explain how someone else might feel about a situation, and describe what empathy looks like in action"
+    },
+    {
+      "id": "relationship-skills",
+      "name": "Building Bridges",
+      "weight": 0.25,
+      "concepts": [
+        "Making friends — how to start, how to be a good friend, how to handle rejection",
+        "Conflict resolution — I-statements, compromise, walking away",
+        "Boundaries — saying no, respecting no, knowing when to ask for help",
+        "Teamwork — sharing credit, handling disagreements, celebrating together",
+        "Apologizing — what a real apology sounds like vs a fake one"
+      ],
+      "mastery_signal": "Can use an I-statement in a conflict, explain the difference between a real and fake apology, and describe what good boundaries look like"
+    }
+  ],
+  "real_world_application": "Understand your own feelings, read other people's feelings, manage big emotions, make and keep friends, and handle conflict without making things worse.",
+  "exam_target": null,
+  "estimated_hours": 30,
+  "difficulty": "beginner"
+}

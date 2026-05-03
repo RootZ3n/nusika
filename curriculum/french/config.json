@@ -1,0 +1,78 @@
+{
+  "id": "french",
+  "name": "French",
+  "tier": "premium_kids",
+  "campaign_world": "Le Marché Étoilé",
+  "tagline": "Every stall has a story. Every story has a word you need.",
+  "subject": "French Language",
+  "description": "A night market floats on the Seine, lit by paper lanterns. Each vendor speaks French — the baker, the flower seller, the old woman with the music box. Your guide Colette knows everyone. Every purchase, every conversation, every secret you overhear teaches you the language. By the end, the market feels like home.",
+  "age_track": "all",
+  "companions": [
+    {
+      "id": "colette",
+      "name": "Colette",
+      "personality": "A young Parisian who loves her city's hidden corners. Warm, conspiratorial, treats the learner as a friend she's showing around. Makes French feel like a secret language only cool people speak.",
+      "speech_pattern": "Mixes French naturally, translates with a wink. Says 'Tu vois?' (You see?) when the learner gets it. Celebrates with 'Magnifique!' genuinely. Never makes the learner feel foreign.",
+      "accent_color": "#f472b6",
+      "teaching_style": "narrative"
+    }
+  ],
+  "domains": [
+    {
+      "id": "market-french",
+      "name": "Market French",
+      "weight": 0.30,
+      "concepts": [
+        "Greetings — bonjour, bonsoir, comment allez-vous",
+        "Numbers and prices — counting euros, asking combien",
+        "Food vocabulary — pain, fromage, pomme, chocolat, eau",
+        "Polite expressions — s'il vous plaît, merci, excusez-moi",
+        "Basic transactions — je voudrais, c'est combien, l'addition"
+      ],
+      "mastery_signal": "Can greet a vendor, ask prices, order food, and complete a purchase entirely in French"
+    },
+    {
+      "id": "conversation",
+      "name": "Conversation",
+      "weight": 0.25,
+      "concepts": [
+        "Introducing yourself — je m'appelle, j'habite, j'ai X ans",
+        "Questions — qu'est-ce que, où, quand, pourquoi, comment",
+        "Describing things — adjectives, colors, sizes, feelings",
+        "Family and friends — ma famille, mon ami, frère, sœur",
+        "Daily routine — le matin, l'après-midi, le soir"
+      ],
+      "mastery_signal": "Can have a 5-minute conversation about yourself, your family, and your day"
+    },
+    {
+      "id": "grammar-basics",
+      "name": "Grammar Through Use",
+      "weight": 0.25,
+      "concepts": [
+        "Gender — le/la, masculine/feminine patterns",
+        "Present tense — être, avoir, aller, faire, vouloir, pouvoir",
+        "Negation — ne...pas, ne...jamais, ne...rien",
+        "Articles — un/une, du/de la, des",
+        "Past tense basics — passé composé with avoir"
+      ],
+      "mastery_signal": "Can form correct present and simple past sentences, use the right articles, and negate naturally"
+    },
+    {
+      "id": "reading-writing",
+      "name": "Reading & Writing",
+      "weight": 0.20,
+      "concepts": [
+        "Reading menus, signs, and notes",
+        "French pronunciation rules — silent letters, liaisons, accents",
+        "Writing short messages and responses",
+        "Cognates and false friends",
+        "Simple story comprehension"
+      ],
+      "mastery_signal": "Can read a French menu, write a short note, and follow a simple story"
+    }
+  ],
+  "real_world_application": "Navigate a French market, order food, have basic conversations, and read simple French text.",
+  "exam_target": null,
+  "estimated_hours": 60,
+  "difficulty": "beginner"
+}
