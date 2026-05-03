@@ -10,6 +10,7 @@
  */
 
 import Fastify from "fastify";
+import multipart from "@fastify/multipart";
 import { MagisterDB } from "./db.js";
 import { scanCurriculum } from "./curriculum.js";
 import { registerAllRoutes } from "./routes/index.js";
@@ -48,6 +49,13 @@ async function main(): Promise<void> {
     if (req.method === "OPTIONS") {
       return reply.status(204).send();
     }
+  });
+
+  // Multipart support for STT audio uploads. 25 MB ceiling — whisper-cli
+  // chokes on much larger inputs anyway and we don't want to buffer arbitrary
+  // payloads in memory.
+  await app.register(multipart, {
+    limits: { fileSize: 25 * 1024 * 1024, files: 1, fields: 5 },
   });
 
   const db = new MagisterDB(dbPath());

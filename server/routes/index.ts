@@ -25,5 +25,5 @@ export async function registerAllRoutes(app: FastifyInstance, db: MagisterDB): P
   await registerCreativeRoutes(app, db);
   await registerConfigRoutes(app);
   await registerChatRoutes(app, db);
-  await registerVoiceRoutes(app, db);
+  await registerVoiceRoutes(app);
 }

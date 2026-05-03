@@ -2,6 +2,8 @@ import type { FastifyInstance } from "fastify";
 import { readFile, writeFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { stateDir } from "../lib/paths.js";
+import { complete } from "../lib/llm.js";
+import { writeReceipt } from "../lib/receipts.js";
 
 export interface MagisterAccessibilitySettings {
   dyslexic_font: boolean;
@@ -42,17 +44,22 @@ async function saveSettings(patch: Partial<MagisterAccessibilitySettings>): Prom
   return merged;
 }
 
-/**
- * Three small endpoints that the magister web UI calls. In squidley-v2
- * these were 501 stubs (apps/api/src/routes/magister-stubs.ts). Settings
- * are now real (file-backed). Translate is still pending the LLM client.
- */
+interface TranslateBody {
+  text: string;
+  source_lang?: string;
+  target_lang: string;
+  /** Override the configured model (e.g. a cheaper one for translation) */
+  model?: string;
+}
+
 export async function registerConfigRoutes(app: FastifyInstance): Promise<void> {
+  // GET /magister/config — accessibility settings
   app.get("/magister/config", async (_req, reply) => {
     const settings = await loadSettings();
     return reply.send({ ok: true, config: settings });
   });
 
+  // POST /magister/settings/accessibility — partial update
   app.post<{ Body: Partial<MagisterAccessibilitySettings> }>(
     "/magister/settings/accessibility",
     async (req, reply) => {
@@ -61,11 +68,62 @@ export async function registerConfigRoutes(app: FastifyInstance): Promise<void> 
     },
   );
 
-  app.post("/magister/translate", async (_req, reply) => {
-    return reply.status(501).send({
-      ok: false,
-      error: "not_implemented",
-      message: "Translation pending the standalone LLM client. See server/routes/config.ts.",
-    });
+  // POST /magister/translate — companion-friendly translation via LLM
+  app.post<{ Body: TranslateBody }>("/magister/translate", async (req, reply) => {
+    const { text, source_lang, target_lang, model: modelOverride } = req.body ?? ({} as TranslateBody);
+    if (!text) return reply.status(400).send({ ok: false, error: "text required" });
+    if (!target_lang) return reply.status(400).send({ ok: false, error: "target_lang required" });
+
+    const sourceClause = source_lang ? ` from ${source_lang}` : "";
+    const sysPrompt = `You are a translator. Translate the user's text${sourceClause} to ${target_lang}. Output ONLY the translated text — no explanation, no quoting, no language tags. Preserve meaning, tone, and formatting.`;
+
+    try {
+      const result = await complete({
+        messages: [
+          { role: "system", content: sysPrompt },
+          { role: "user", content: text },
+        ],
+        ...(modelOverride ? { model: modelOverride } : {}),
+        maxTokens: Math.max(256, Math.ceil(text.length * 2)),
+        temperature: 0.2,
+        reason: `magister:translate:${target_lang}`,
+      });
+
+      void writeReceipt({
+        componentType: "model-call",
+        componentName: "magister-translate",
+        reason: `magister:translate:${target_lang}`,
+        model: result.model,
+        tokensIn: result.tokensIn,
+        tokensOut: result.tokensOut,
+        estimatedCostUsd: result.estimatedCostUsd,
+        durationMs: result.durationMs,
+        meta: {
+          source_lang: source_lang ?? null,
+          target_lang,
+          inputLength: text.length,
+          outputLength: result.text.length,
+          provider: result.provider,
+        },
+      });
+
+      return reply.send({
+        ok: true,
+        translated: result.text.trim(),
+        model: result.model,
+        provider: result.provider,
+        durationMs: result.durationMs,
+      });
+    } catch (err) {
+      const detail = (err instanceof Error ? err.message : String(err)).slice(0, 300);
+      void writeReceipt({
+        componentType: "model-call",
+        componentName: "magister-translate",
+        reason: `magister:translate:${target_lang}`,
+        status: "failure",
+        meta: { source_lang: source_lang ?? null, target_lang, error: detail },
+      });
+      return reply.status(500).send({ ok: false, error: detail });
+    }
   });
 }
