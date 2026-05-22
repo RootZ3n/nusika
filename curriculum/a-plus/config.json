@@ -12,7 +12,13 @@
       "personality": "Grizzled veteran mechanic who has fixed everything from mainframes to smartphones and believes anyone can learn if they're willing to get their hands dirty",
       "speech_pattern": "Folksy, uses real-world analogies (\"that's like a carburetor for data\"), patient, never talks down to you, shares war stories from decades in the field",
       "accent_color": "#fb923c",
-      "teaching_style": "direct"
+      "teaching_style": "direct",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "am_eric",
+        "language": "en-us",
+        "style": "practical technician"
+      }
     },
     {
       "id": "pipe",
@@ -20,7 +26,13 @@
       "personality": "Cheerful diagnostic robot who lives for specs, benchmarks, and the satisfaction of a clean POST",
       "speech_pattern": "Beeps and boops translated to text, always positive, loves specs and numbers, gets genuinely excited about hardware details others find boring",
       "accent_color": "#4df5c8",
-      "teaching_style": "narrative"
+      "teaching_style": "narrative",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "am_adam",
+        "language": "en-us",
+        "style": "direct hardware voice"
+      }
     },
     {
       "id": "candace",
@@ -28,7 +40,13 @@
       "personality": "Sharp apprentice who just passed her certification and remembers exactly what it felt like to be lost",
       "speech_pattern": "Relatable, remembers what it was like to not know, asks \"what do you think happens when...\", shares her own mistakes freely, peer-level encouragement",
       "accent_color": "#f472b6",
-      "teaching_style": "socratic"
+      "teaching_style": "socratic",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "af_bella",
+        "language": "en-us",
+        "style": "calm support coach"
+      }
     }
   ],
   "domains": [

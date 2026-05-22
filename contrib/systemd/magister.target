@@ -1,0 +1,30 @@
+[Unit]
+# Magister umbrella target.
+#
+# Starts the API, Kokoro voice sub-service, and Web frontend together.
+# Use `systemctl --user start magister.target` to bring everything up,
+# `systemctl --user stop magister.target` to take it all down.
+#
+# Truth model (post 2026-05-22 fix):
+#   - magister-api.service is Requires=, so the target CANNOT be active
+#     if the API is dead. This avoids the prior "lies-by-omission" failure
+#     mode where Wants= let the target stay green while the API was gone.
+#   - magister-kokoro.service and magister-web.service stay as Wants=:
+#     they're useful on their own (Kokoro can preview voices; web can at
+#     least serve the API-down banner) and we'd rather a partial stack
+#     keep degrading visibly than have everything cascade-stop.
+#   - For `systemctl --user is-active magister.target` to mean "Magister
+#     is actually usable", you need the API line. Hence Requires=.
+#
+# Note: Requires= here means "if magister-api.service stops, this target
+# transitions out of active too". It does NOT cause web/kokoro to stop —
+# those have no PartOf=magister.target binding, so they survive an API
+# outage. That's intentional: the target is a truth marker, not a kill
+# switch.
+Description=Magister (API + Kokoro + Web)
+Requires=magister-api.service
+Wants=magister-kokoro.service magister-web.service
+After=magister-api.service magister-kokoro.service magister-web.service
+
+[Install]
+WantedBy=default.target

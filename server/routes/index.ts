@@ -10,6 +10,12 @@ import { registerCreativeRoutes } from "./creative.js";
 import { registerConfigRoutes } from "./config.js";
 import { registerChatRoutes } from "./chat.js";
 import { registerVoiceRoutes } from "./voice.js";
+import { registerInkwellRoutes } from "./inkwell.js";
+import { registerRecapRoutes } from "./recap.js";
+import { registerLessonRoutes } from "./lessons.js";
+import { registerDmRoutes } from "./dm.js";
+import { registerDmNarrationRoutes } from "./dm-narration.js";
+import { registerVoicesRoute } from "./voices.js";
 
 /**
  * Single source of truth for HTTP route registration.
@@ -25,5 +31,11 @@ export async function registerAllRoutes(app: FastifyInstance, db: MagisterDB): P
   await registerCreativeRoutes(app, db);
   await registerConfigRoutes(app);
   await registerChatRoutes(app, db);
-  await registerVoiceRoutes(app);
+  await registerVoiceRoutes(app, db);
+  await registerInkwellRoutes(app, db);
+  await registerRecapRoutes(app, db);
+  await registerLessonRoutes(app, db);
+  await registerDmRoutes(app, db);
+  await registerDmNarrationRoutes(app, db);
+  await registerVoicesRoute(app, db);
 }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
+import Link from "next/link";
 import { MarkdownMessage } from "./components/MarkdownMessage";
 
 const API_BASE = "/api/proxy";
@@ -54,22 +55,10 @@ interface ModuleProgress {
   exam_readiness: number | null;
 }
 
-interface MagisterProductConfig {
-  mode: { local_only: boolean; cloud_enabled: boolean };
-  providers: {
-    llm_primary: string;
-    llm_local_fallback: string;
-    voice_mode: "local" | "premium";
-    premium_voice_provider: string;
-    premium_voice_enabled: boolean;
-    minimax_model: string;
-    local_model: string;
-    local_provider: string;
-  };
-  safety: { child_safe_mode: boolean; prompt_injection_defense: boolean; output_filtering: boolean; receipt_logging: boolean };
-  visibility: { show_receipts: boolean; show_provider_details: boolean };
-}
-
+// The server's GET /magister/config returns
+//   { ok, config: AccessibilitySettings, narrator: NarratorIdentity }.
+// Provider/mode/safety/visibility envelopes are not yet exposed — when
+// they are, widen this type to match.
 interface AccessibilitySettings {
   dyslexic_font: boolean;
   wide_spacing: boolean;
@@ -79,14 +68,25 @@ interface AccessibilitySettings {
   comfort_mode: boolean;
 }
 
-interface AdaptiveEnvelope {
-  level: "supportive" | "steady" | "stretch";
-  pace: "slow" | "standard" | "fast";
-  scaffolding: "high" | "medium" | "low";
-  feedback_line: string;
-  micro_task: string;
-  lesson_loop: string;
+interface NarratorIdentity {
+  id: string;
+  name: string;
+  role: string;
+  personality: string;
+  speech_pattern: string;
+  greeting_idle: string;
+  greeting_active: string;
 }
+
+const DEFAULT_NARRATOR: NarratorIdentity = {
+  id: "varros",
+  name: "Varros",
+  role: "Magister Narrator & Guide",
+  personality: "",
+  speech_pattern: "",
+  greeting_idle: "Welcome. I'm Varros. Take a look around — when something here calls to you, tell me and we'll begin.",
+  greeting_active: "You're back. Where would you like to pick up?",
+};
 
 type Screen = "hall" | "session" | "map" | "advanced" | "inkwell";
 
@@ -220,10 +220,8 @@ export default function MagisterPage() {
   const [wideLetterSpacing, setWideLetterSpacing] = useState(false);
   const [comfortOpen, setComfortOpen] = useState(false);
   const [comfortMode, setComfortMode] = useState(false);
-  const [productConfig, setProductConfig] = useState<MagisterProductConfig | null>(null);
   const [sessionSettings, setSessionSettings] = useState<AccessibilitySettings | null>(null);
-  const [sessionAdaptive, setSessionAdaptive] = useState<AdaptiveEnvelope | null>(null);
-  const [providerState, setProviderState] = useState<{ provider?: string; model?: string; local_only?: boolean; cloud_enabled?: boolean } | null>(null);
+  const [narrator, setNarrator] = useState<NarratorIdentity>(DEFAULT_NARRATOR);
 
   // Translate + Repeat
   const [translatedText, setTranslatedText] = useState<string | null>(null);
@@ -265,6 +263,12 @@ export default function MagisterPage() {
   // Streak
   const [streak, setStreak] = useState(0);
 
+  // Session-end recap status (clears after 6s).
+  const [recapStatus, setRecapStatus] = useState<string | null>(null);
+
+  // Companion-chat error banner (cleared on next send or by dismiss).
+  const [chatError, setChatError] = useState<string | null>(null);
+
   // ── TTS helper ────────────────────────────────────────────────────────────
 
   function stripForTTS(text: string): string {
@@ -279,11 +283,10 @@ export default function MagisterPage() {
   const playTTS = useCallback(async (text: string, companionRole?: string) => {
     const clean = stripForTTS(text);
     if (!clean || sessionSettings?.narration_enabled === false) return;
+    // Always route through local Piper. ElevenLabs path exists server-side
+    // but there is no product-level toggle to switch on yet.
     try {
-      const endpoint = productConfig?.providers.voice_mode === "premium"
-        ? `${API_BASE}/magister/tts/elevenlabs`
-        : `${API_BASE}/magister/tts`;
-      const ttsRes = await fetch(endpoint, {
+      const ttsRes = await fetch(`${API_BASE}/magister/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: clean, ...(companionRole ? { role: companionRole } : {}) }),
@@ -296,20 +299,21 @@ export default function MagisterPage() {
         audio.onended = () => URL.revokeObjectURL(url);
       }
     } catch { /* TTS failed silently */ }
-  }, [productConfig, sessionSettings?.narration_enabled]);
+  }, [sessionSettings?.narration_enabled]);
 
   const fetchProductConfig = useCallback(async () => {
     try {
       const res = await fetch(`${API_BASE}/magister/config`);
       if (!res.ok) return;
-      const data = await res.json();
-      setProductConfig(data.config ?? null);
-      setSessionSettings(data.settings ?? null);
-      if (data.settings) {
-        setUseDyslexicFont(!!data.settings.dyslexic_font);
-        setWideLetterSpacing(!!data.settings.wide_spacing);
-        setAmbientVolume(typeof data.settings.narration_volume === "number" ? data.settings.narration_volume : 0.15);
-        setComfortMode(!!data.settings.comfort_mode);
+      const data = await res.json() as { config?: AccessibilitySettings; narrator?: NarratorIdentity };
+      const settings = data.config ?? null;
+      setSessionSettings(settings);
+      if (data.narrator) setNarrator(data.narrator);
+      if (settings) {
+        setUseDyslexicFont(!!settings.dyslexic_font);
+        setWideLetterSpacing(!!settings.wide_spacing);
+        setAmbientVolume(typeof settings.narration_volume === "number" ? settings.narration_volume : 0.15);
+        setComfortMode(!!settings.comfort_mode);
       }
     } catch { /* silent */ }
   }, []);
@@ -409,13 +413,6 @@ export default function MagisterPage() {
                 setContentText(reply);
                 setSpeechBubbles([reply.length > 200 ? reply.slice(0, 200) + "..." : reply]);
                 setLastReceipt({ model: chatData.model, tokensIn: chatData.tokensIn, tokensOut: chatData.tokensOut, costUsd: chatData.costUsd, durationMs: chatData.durationMs });
-                setSessionAdaptive(chatData.adaptive ?? null);
-                setProviderState({
-                  provider: chatData.provider ?? chatData.providerSelection?.provider,
-                  model: chatData.model,
-                  local_only: chatData.state?.local_only,
-                  cloud_enabled: chatData.state?.cloud_enabled,
-                });
                 // Auto-play TTS for opening message — use companion's Nous voice role
                 void playTTS(reply, session.companion_id);
               }
@@ -430,6 +427,14 @@ export default function MagisterPage() {
     setLoading(true);
     Promise.all([fetchModules(), fetchSessions(), fetchProductConfig()]).finally(() => setLoading(false));
   }, [fetchModules, fetchSessions, fetchProductConfig]);
+
+  // Refresh Inkwell drafts whenever the user enters the Inkwell screen.
+  useEffect(() => {
+    if (screen === "inkwell") void fetchInkwellDrafts();
+    // fetchInkwellDrafts is stable in this component; not adding it to deps
+    // would create the same render loop the old in-render call had.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [screen]);
 
   useEffect(() => {
     if (!sessionSettings) return;
@@ -591,6 +596,52 @@ export default function MagisterPage() {
     }
   }, [activeSessionId]);
 
+  // End the active session, then fire a best-effort recap. Failures don't
+  // block the user from leaving — they're surfaced as a quiet status line.
+  const endActiveSession = useCallback(async () => {
+    if (!activeSessionId) return;
+    setSessionRunning(false);
+    const sessionId = activeSessionId;
+    try {
+      await fetch(`${API_BASE}/magister/sessions/${sessionId}/end`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+    } catch { /* silent */ }
+
+    // Fire recap, but don't block on it.
+    let recapMsg = "Session ended.";
+    try {
+      const res = await fetch(`${API_BASE}/magister/sessions/${sessionId}/recap`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      if (res.ok) {
+        const data = await res.json() as { ok?: boolean; saved?: boolean; skipped?: boolean; reason?: string };
+        if (data.saved) recapMsg = "Session ended. Memory recap saved.";
+        else if (data.skipped) recapMsg = `Session ended. ${data.reason ?? "Recap skipped."}`;
+      } else if (res.status === 502) {
+        recapMsg = "Session ended. Memory recap unavailable because no LLM backend is configured.";
+      } else if (res.status === 422) {
+        recapMsg = "Session ended. Memory recap was rejected (schema validation).";
+      } else {
+        recapMsg = `Session ended. Recap failed (HTTP ${res.status}).`;
+      }
+    } catch {
+      recapMsg = "Session ended. Memory recap could not be reached.";
+    }
+
+    setRecapStatus(recapMsg);
+    setTimeout(() => setRecapStatus(null), 6000);
+
+    setActiveSessionId(null);
+    setActiveSession(null);
+    setScreen("hall");
+    void fetchSessions();
+  }, [activeSessionId, fetchSessions]);
+
   const resumeSession = useCallback(() => {
     setSessionRunning(true);
   }, []);
@@ -599,6 +650,7 @@ export default function MagisterPage() {
   const sendUserMessage = useCallback(async () => {
     if (!editorText.trim() || !activeSessionId || sendingMessage) return;
     setSendingMessage(true);
+    setChatError(null);
     try {
       const res = await fetch(`${API_BASE}/magister/sessions/${activeSessionId}/chat`, {
         method: "POST",
@@ -609,7 +661,6 @@ export default function MagisterPage() {
         const data = await res.json() as {
           reply?: string; text?: string; model?: string; provider?: string;
           tokensIn?: number; tokensOut?: number; costUsd?: number; durationMs?: number;
-          adaptive?: AdaptiveEnvelope; state?: { local_only?: boolean; cloud_enabled?: boolean };
         };
         const reply = data.reply ?? data.text ?? "";
         if (reply) {
@@ -617,11 +668,18 @@ export default function MagisterPage() {
           setSpeechBubbles(prev => [...prev.slice(-4), reply.length > 200 ? reply.slice(0, 200) + "..." : reply]);
         }
         setLastReceipt({ model: data.model, tokensIn: data.tokensIn, tokensOut: data.tokensOut, costUsd: data.costUsd, durationMs: data.durationMs });
-        setSessionAdaptive(data.adaptive ?? null);
-        setProviderState({ provider: data.provider, model: data.model, local_only: data.state?.local_only, cloud_enabled: data.state?.cloud_enabled });
         setEditorText("");
+      } else {
+        const data = await res.json().catch(() => ({})) as { error?: string; detail?: string };
+        if (res.status === 502) {
+          setChatError(data.error ?? "Chat unavailable because no LLM backend is configured.");
+        } else {
+          setChatError(data.error ?? `Chat failed (HTTP ${res.status}).`);
+        }
       }
-    } catch { /* silent */ }
+    } catch (err) {
+      setChatError(`Chat request failed. Check whether the Magister API is running. ${err instanceof Error ? err.message : ""}`.trim());
+    }
     setSendingMessage(false);
   }, [editorText, activeSessionId, sendingMessage]);
 
@@ -884,27 +942,44 @@ export default function MagisterPage() {
   function renderHall() {
     return (
       <div style={{ padding: "20px 16px", maxWidth: 1200, margin: "0 auto", display: "flex", flexDirection: "column", gap: 24 }}>
+        {recapStatus && (
+          <div style={{
+            padding: "10px 14px", borderRadius: 10,
+            background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.18)",
+            fontFamily: "var(--font-body)", fontSize: 14, color: "var(--text-secondary)",
+          }}>
+            {recapStatus}
+          </div>
+        )}
         {/* Welcome + Streak */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
           <div>
             <h1 style={{ fontFamily: "var(--font-display)", fontSize: "24px", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
               The Hall
             </h1>
-            {/* Maren's greeting */}
+            {/* Product narrator greeting (Varros by default) */}
             <div style={{
               display: "flex", alignItems: "flex-start", gap: 10, marginTop: 10,
               padding: "12px 16px", borderRadius: 12,
               background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.12)",
             }}>
-              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#a78bfa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "#060810", flexShrink: 0 }}>M</div>
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#a78bfa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "#060810", flexShrink: 0 }}>
+                {narrator.name.charAt(0)}
+              </div>
               <div style={{
                 fontFamily: useDyslexicFont ? "'OpenDyslexic', var(--font-body)" : "var(--font-body)",
                 fontSize: "15px", color: "var(--text-secondary)", lineHeight: 1.8,
                 letterSpacing: wideLetterSpacing ? "0.08em" : undefined,
               }}>
-                {activeSessions.length > 0
-                  ? `Ah, you're back. ${activeSessions[0]?.companion_name ? `${activeSessions[0].companion_name} was asking about you` : "Your companion was waiting"} — the world doesn't close when you leave, it just gets quieter. Where would you like to go today?`
-                  : "Welcome. I'm Maren. I've been keeping these worlds for a long time. Take a look around — there's no rush. When you find one that calls to you, I'll take you there."}
+                {activeSessions.length > 0 ? narrator.greeting_active : narrator.greeting_idle}
+                <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
+                  <Link href="/teach" style={{ color: ACCENT, textDecoration: "underline", textDecorationColor: "rgba(167,139,250,0.5)" }}>
+                    Ask {narrator.name} to teach you anything →
+                  </Link>
+                  <Link href="/dm" style={{ color: ACCENT, textDecoration: "underline", textDecorationColor: "rgba(167,139,250,0.5)" }}>
+                    Play a campaign with {narrator.name} as DM →
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
@@ -1498,15 +1573,6 @@ export default function MagisterPage() {
               ))}
             </div>
 
-            <div style={{ ...panelStyle, padding: 12 }}>
-              <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
-                Lesson Path
-              </div>
-              <div style={{ fontFamily: "var(--font-body)", fontSize: 13, color: "var(--text-primary)", lineHeight: 1.6 }}>
-                {providerState?.local_only ? "Local Only is active." : "Approved cloud mode is available."}{" "}
-                {providerState?.provider ? `Using ${providerState.provider.split(".").pop()}${providerState.model ? ` · ${providerState.model}` : ""}.` : ""}
-              </div>
-            </div>
           </div>
 
           {/* Content Area */}
@@ -1522,6 +1588,23 @@ export default function MagisterPage() {
                 letterSpacing: wideLetterSpacing ? "0.08em" : undefined,
               }}>
                 <MarkdownMessage content={contentText} />
+
+                {chatError && (
+                  <div role="alert" style={{
+                    marginTop: 12, padding: "8px 12px", borderRadius: 8,
+                    background: "rgba(248,113,113,0.08)",
+                    border: "1px solid rgba(248,113,113,0.3)",
+                    color: "#fca5a5", fontSize: 13, lineHeight: 1.6,
+                    display: "flex", alignItems: "flex-start", gap: 8,
+                  }}>
+                    <span style={{ flex: 1 }}>{chatError}</span>
+                    <button
+                      onClick={() => setChatError(null)}
+                      style={{ background: "none", border: "none", color: "inherit", cursor: "pointer", fontSize: 13, padding: 0 }}
+                      aria-label="Dismiss error"
+                    >✕</button>
+                  </div>
+                )}
 
                 {/* Translate + Repeat buttons */}
                 {contentText && contentText !== "Begin your session to start learning..." && contentText !== "Your companion is preparing..." && (
@@ -1577,32 +1660,10 @@ export default function MagisterPage() {
                   </div>
                 )}
 
-                {sessionAdaptive && (
-                  <div style={{
-                    marginTop: 14,
-                    padding: "12px 14px",
-                    borderRadius: 10,
-                    background: "rgba(77,245,200,0.06)",
-                    border: "1px solid rgba(77,245,200,0.18)",
-                  }}>
-                    <div style={{ fontFamily: "var(--font-mono)", fontSize: 11, color: "#4df5c8", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>
-                      Adaptive Guidance
-                    </div>
-                    <div style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--text-primary)", lineHeight: 1.7 }}>
-                      {sessionAdaptive.feedback_line}
-                    </div>
-                    <div style={{ marginTop: 8, fontFamily: "var(--font-body)", fontSize: 13, color: "var(--text-secondary)", lineHeight: 1.7 }}>
-                      Next micro task: {sessionAdaptive.micro_task}
-                    </div>
-                  </div>
-                )}
-
                 {/* Receipt line */}
                 {lastReceipt?.model && (
                   <div style={{ fontSize: 12, fontFamily: "var(--font-mono)", color: "var(--text-muted)", marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
                     <span style={{ color: companion.color, fontWeight: 600 }}>{lastReceipt.model.split("/").pop()}</span>
-                    {providerState?.provider && <><span style={{ opacity: 0.5 }}>·</span><span>{providerState.provider.split(".").pop()}</span></>}
-                    {providerState?.local_only !== undefined && <><span style={{ opacity: 0.5 }}>·</span><span>{providerState.local_only ? "LOCAL ONLY" : "CLOUD OK"}</span></>}
                     {lastReceipt.tokensIn != null && <><span style={{ opacity: 0.5 }}>·</span><span>{lastReceipt.tokensIn}↑ {lastReceipt.tokensOut}↓</span></>}
                     {lastReceipt.costUsd != null && <><span style={{ opacity: 0.5 }}>·</span><span style={{ color: "#4ade80" }}>${lastReceipt.costUsd.toFixed(6)}</span></>}
                     {lastReceipt.durationMs != null && <><span style={{ opacity: 0.5 }}>·</span><span>{lastReceipt.durationMs}ms</span></>}
@@ -1761,6 +1822,9 @@ export default function MagisterPage() {
                     Resume
                   </button>
                 )}
+                <button style={btnGhost} onClick={() => void endActiveSession()}>
+                  End Session
+                </button>
               </div>
             </div>
             <div style={{ position: "fixed", right: 20, bottom: 24, zIndex: 40 }}>
@@ -2180,14 +2244,25 @@ export default function MagisterPage() {
 
   // ── Render: The Inkwell ──────────────────────────────────────────────────
 
-  // Fetch Inkwell drafts.
-  // TODO(magister-standalone): Squidley sourced drafts from Archivum
-  // (GET /archivum/entries filtered by topic). The standalone has
-  // /magister/creative/<moduleId> as the closest analogue but it's
-  // module-scoped, not topic-tagged. Returning an empty list keeps the
-  // UI rendable while the standalone Archivum story is decided.
+  // Drafts persistence is wired to GET/POST /magister/inkwell/drafts, which
+  // maps onto magister_creative under module_id="inkwell".
   async function fetchInkwellDrafts() {
-    setInkwellDrafts([]);
+    try {
+      const res = await fetch(`${API_BASE}/magister/inkwell/drafts`);
+      if (!res.ok) return;
+      const data = await res.json() as {
+        ok?: boolean;
+        drafts?: Array<{ id: string; title: string | null; content: string | null; feedback: string | null; createdAt: string }>;
+      };
+      const drafts = (data.drafts ?? []).map(d => ({
+        id: d.id,
+        title: d.title ?? "Untitled Draft",
+        content: d.content ?? "",
+        feedback: d.feedback ?? undefined,
+        createdAt: new Date(d.createdAt).getTime(),
+      }));
+      setInkwellDrafts(drafts);
+    } catch { /* silent */ }
   }
 
   async function shareWithMaren() {
@@ -2195,22 +2270,23 @@ export default function MagisterPage() {
     setInkwellFeedbackLoading(true);
     setInkwellFeedback("");
     try {
-      // Maren's feedback used to call squidley's /chat. The standalone routes
-      // companion turns through /magister/sessions/:id/chat, so we treat this as
-      // a one-shot translate-style call: a fresh request to /magister/translate
-      // with a feedback-style "target" prompt is overkill, so we go via a
-      // dedicated /magister/inkwell/feedback endpoint when it lands. Until then,
-      // tell the user clearly.
-      const sysPrompt = "You are Maren, senior editor and writing guide. Read carefully and respond as a thoughtful editor: what works, what doesn't, what you want to know more about. Celebrate strong sentences specifically. Ask one focused question. Direct, honest, no false encouragement. One piece of feedback at a time.";
-      // Use the magister chat endpoint with a temporary session-less wrapper:
-      // fall back to a clear unavailable message if the standalone isn't yet
-      // wired for session-less LLM calls (it isn't).
-      // TODO(magister-standalone): wire POST /magister/inkwell/feedback that
-      // calls llm.complete with the prompt above + inkwellText.
-      void sysPrompt;
-      setInkwellFeedback("Maren's feedback is being rewired for the standalone build. Until /magister/inkwell/feedback lands, please use the companion chat in a study session.");
-    } catch {
-      setInkwellFeedback("Failed to reach Maren.");
+      const res = await fetch(`${API_BASE}/magister/inkwell/feedback`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: inkwellText,
+          ...(inkwellTitle.trim() ? { title: inkwellTitle.trim() } : {}),
+        }),
+      });
+      const data = await res.json() as { ok?: boolean; feedback?: string; error?: string; detail?: string };
+      if (res.ok && data.ok && typeof data.feedback === "string") {
+        setInkwellFeedback(data.feedback);
+      } else {
+        const detail = data.error ?? `HTTP ${res.status}`;
+        setInkwellFeedback(`Maren is unavailable right now: ${detail}`);
+      }
+    } catch (err) {
+      setInkwellFeedback(`Failed to reach Maren: ${err instanceof Error ? err.message : String(err)}`);
     }
     setInkwellFeedbackLoading(false);
   }
@@ -2219,20 +2295,22 @@ export default function MagisterPage() {
     if (!inkwellText.trim()) return;
     const title = inkwellTitle.trim() || inkwellText.split("\n")[0]?.slice(0, 60) || "Untitled Draft";
     try {
-      const fullContent = inkwellFeedback
-        ? `${inkwellText}\n\n---\n\nMaren's feedback:\n${inkwellFeedback}`
-        : inkwellText;
-      // TODO(magister-standalone): Squidley persisted Inkwell drafts to Archivum
-      // (POST /archivum/paste with a tag). The standalone equivalent is
-      // /magister/creative/<moduleId> but Inkwell isn't bound to a single module.
-      // Stubbing as a save-confirmation only until we add a generalized
-      // /magister/drafts endpoint or pin Inkwell to a "writing" module.
-      void fullContent;
-      const res = { ok: true };
+      const res = await fetch(`${API_BASE}/magister/inkwell/drafts`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          content: inkwellText,
+          ...(inkwellFeedback ? { feedback: inkwellFeedback } : {}),
+        }),
+      });
       if (res.ok) {
-        setInkwellSaveMsg(`Saved: ${title} (note: persistence pending)`);
+        setInkwellSaveMsg(`Saved: ${title}`);
         setTimeout(() => setInkwellSaveMsg(null), 3000);
         await fetchInkwellDrafts();
+      } else {
+        setInkwellSaveMsg("Save failed");
+        setTimeout(() => setInkwellSaveMsg(null), 3000);
       }
     } catch {
       setInkwellSaveMsg("Save failed");
@@ -2240,12 +2318,32 @@ export default function MagisterPage() {
     }
   }
 
-  function renderInkwell() {
-    // Fetch drafts on first render
-    if (inkwellDrafts.length === 0 && screen === "inkwell") {
-      void fetchInkwellDrafts();
+  async function deleteInkwellDraft(draftId: string, draftTitle: string) {
+    if (!confirm(`Delete draft "${draftTitle}"? This cannot be undone.`)) return;
+    try {
+      const res = await fetch(`${API_BASE}/magister/inkwell/drafts/${draftId}`, { method: "DELETE" });
+      if (res.ok) {
+        // If the deleted draft is the one currently in the editor, clear it.
+        const currentlyEditing = inkwellDrafts.find(d =>
+          d.id === draftId && d.content === inkwellText && d.title === inkwellTitle,
+        );
+        if (currentlyEditing) {
+          setInkwellText(""); setInkwellTitle(""); setInkwellFeedback("");
+        }
+        setInkwellSaveMsg(`Deleted: ${draftTitle}`);
+        setTimeout(() => setInkwellSaveMsg(null), 3000);
+        await fetchInkwellDrafts();
+      } else {
+        setInkwellSaveMsg("Delete failed");
+        setTimeout(() => setInkwellSaveMsg(null), 3000);
+      }
+    } catch {
+      setInkwellSaveMsg("Delete failed");
+      setTimeout(() => setInkwellSaveMsg(null), 3000);
     }
+  }
 
+  function renderInkwell() {
     const INKWELL_ACCENT = "#a78bfa";
     const mono: React.CSSProperties = { fontFamily: "var(--font-mono)", fontSize: 14 };
 
@@ -2259,14 +2357,21 @@ export default function MagisterPage() {
             style={{ ...mono, padding: "6px 10px", borderRadius: 6, border: `1px solid ${INKWELL_ACCENT}30`, background: `${INKWELL_ACCENT}10`, color: INKWELL_ACCENT, cursor: "pointer", fontWeight: 700, textAlign: "left" }}
           >+ New Draft</button>
           {inkwellDrafts.map(d => (
-            <button
-              key={d.id}
-              onClick={() => { setInkwellText(d.content); setInkwellTitle(d.title); setInkwellFeedback(d.feedback ?? ""); }}
-              style={{ ...mono, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", background: "rgba(17,21,40,0.5)", color: "var(--text-primary)", cursor: "pointer", textAlign: "left" }}
-            >
-              <div style={{ fontWeight: 600, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.title}</div>
-              <div style={{ color: "var(--text-muted)", fontSize: 14 }}>{d.createdAt ? new Date(d.createdAt).toLocaleDateString() : ""}</div>
-            </button>
+            <div key={d.id} style={{ display: "flex", gap: 4, alignItems: "stretch" }}>
+              <button
+                onClick={() => { setInkwellText(d.content); setInkwellTitle(d.title); setInkwellFeedback(d.feedback ?? ""); }}
+                style={{ ...mono, flex: 1, padding: "8px 10px", borderRadius: 8, border: "1px solid var(--border)", background: "rgba(17,21,40,0.5)", color: "var(--text-primary)", cursor: "pointer", textAlign: "left", minWidth: 0 }}
+              >
+                <div style={{ fontWeight: 600, marginBottom: 2, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{d.title}</div>
+                <div style={{ color: "var(--text-muted)", fontSize: 14 }}>{d.createdAt ? new Date(d.createdAt).toLocaleDateString() : ""}</div>
+              </button>
+              <button
+                onClick={(e) => { e.stopPropagation(); void deleteInkwellDraft(d.id, d.title); }}
+                aria-label="Delete draft"
+                title="Delete draft"
+                style={{ ...mono, flex: "0 0 28px", padding: "0 8px", borderRadius: 8, border: "1px solid var(--border)", background: "transparent", color: "var(--text-muted)", cursor: "pointer", fontSize: 14 }}
+              >✕</button>
+            </div>
           ))}
           {inkwellDrafts.length === 0 && (
             <div style={{ ...mono, color: "var(--text-muted)", padding: 8 }}>No drafts yet. Start writing.</div>

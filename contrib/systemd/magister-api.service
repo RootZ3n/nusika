@@ -1,0 +1,43 @@
+[Unit]
+# Magister API — Fastify server, loopback only.
+#
+# Bound to 127.0.0.1:18793 by design. The public surface is the web app
+# (magister-web.service) which proxies through MAGISTER_API_URL. Do not
+# flip the bind to 0.0.0.0 without first adding auth/rate-limiting/CORS
+# hardening — see README "Running Magister as a service".
+Description=Magister API (Fastify, loopback)
+Documentation=https://github.com/anthropics/claude-code
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/mnt/ai/magister
+# Production build. `npm run build` must have been run first.
+ExecStart=/usr/local/bin/node dist/server/index.js
+Environment=NODE_ENV=production
+Environment=MAGISTER_HOST=127.0.0.1
+Environment=MAGISTER_PORT=18793
+Environment=MAGISTER_ALLOW_PUBLIC_BIND=false
+Environment=MAGISTER_KOKORO_URL=http://127.0.0.1:18794
+Environment=MAGISTER_LOCAL_ONLY=true
+# Restart=always — magister-api is the load-bearing piece of the stack;
+# if it exits for ANY reason (clean SIGTERM from a stray `systemctl stop`,
+# a fatal exception, OOM, etc.) we want it back up immediately. `systemctl
+# stop` still honours the stop request without thrashing because systemd
+# tracks an explicit stop flag distinct from Restart=. Prior setting
+# `Restart=on-failure` left the service dead-and-quiet after a clean exit
+# on 2026-05-10, which is exactly the lie-by-omission the target's
+# Wants= relationship hid.
+Restart=always
+RestartSec=3
+# Hardening — magister only writes inside its own state dir.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/mnt/ai/magister/state
+ReadWritePaths=/mnt/ai/magister/voices
+
+[Install]
+WantedBy=default.target

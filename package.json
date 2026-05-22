@@ -20,7 +20,9 @@
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test test/**/*.test.ts server/**/*.test.ts",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "service:install": "node scripts/install-systemd.mjs",
+    "service:health": "node scripts/magister-health.mjs"
   },
   "engines": {
     "node": ">=20"

@@ -16,7 +16,13 @@
       "speech_pattern": "Never says wrong — describes what happened instead. Mixes Spanish naturally, always bridges back to understanding. Celebrates discoveries not corrections. Addresses learner as a partner. Says 'Mira...' when showing something important.",
       "teaching_rules": "1. Every Spanish word is discovered not taught — the learner needs it to get through the next door. 2. Wrong Spanish triggers a story consequence — describe what actually happened, then show the correct form. 3. Right Spanish opens things — doors, paths, market stalls, river routes. Make the learner feel the unlock. 4. Never lecture — narrate. 5. The kid is Indiana Jones. Balam is the local expert who makes them feel capable. 6. Celebrate breakthroughs like discoveries — 'you found it' not 'correct'. 7. Adapt pace silently — never acknowledge slowing down.",
       "accent_color": "#f59e0b",
-      "teaching_style": "narrative"
+      "teaching_style": "narrative",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "am_echo",
+        "language": "en-us",
+        "style": "Spanish guide (English speech)"
+      }
     }
   ],
   "opening_scene": "The river is slow and dark green. Jungle on both sides so thick the light comes through in shafts. Stone carvings half-swallowed by roots on the bank. Balam is already on the boat. He doesn't introduce himself formally. He says: 'Bienvenido. Welcome. The river knows the way. You just have to learn to speak to it.'",
@@ -49,7 +55,7 @@
     {
       "id": "jungle-vocabulary",
       "name": "Jungle & Nature Vocabulary",
-      "weight": 0.20,
+      "weight": 0.2,
       "concepts": [
         "Animals — jaguar, serpiente, mono, pájaro, mariposa",
         "Plants and trees — árbol, flor, hoja, raíz, selva",
@@ -63,7 +69,7 @@
     {
       "id": "city-life",
       "name": "City Life & Culture",
-      "weight": 0.20,
+      "weight": 0.2,
       "concepts": [
         "Food and drink — agua, comida, tortilla, frijoles, chocolate (Mayan origin!)",
         "Market transactions — cuánto cuesta, es muy caro, quiero comprar",
@@ -77,7 +83,7 @@
     {
       "id": "grammar-discovery",
       "name": "Grammar Through Discovery",
-      "weight": 0.20,
+      "weight": 0.2,
       "concepts": [
         "Gender — el/la, masculine/feminine patterns, exceptions",
         "Plurals — adding -s and -es, irregular plurals",

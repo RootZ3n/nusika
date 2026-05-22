@@ -14,14 +14,20 @@
       "personality": "A young Parisian who loves her city's hidden corners. Warm, conspiratorial, treats the learner as a friend she's showing around. Makes French feel like a secret language only cool people speak.",
       "speech_pattern": "Mixes French naturally, translates with a wink. Says 'Tu vois?' (You see?) when the learner gets it. Celebrates with 'Magnifique!' genuinely. Never makes the learner feel foreign.",
       "accent_color": "#f472b6",
-      "teaching_style": "narrative"
+      "teaching_style": "narrative",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "bf_lily",
+        "language": "en-us",
+        "style": "French guide (English speech)"
+      }
     }
   ],
   "domains": [
     {
       "id": "market-french",
       "name": "Market French",
-      "weight": 0.30,
+      "weight": 0.3,
       "concepts": [
         "Greetings — bonjour, bonsoir, comment allez-vous",
         "Numbers and prices — counting euros, asking combien",
@@ -60,7 +66,7 @@
     {
       "id": "reading-writing",
       "name": "Reading & Writing",
-      "weight": 0.20,
+      "weight": 0.2,
       "concepts": [
         "Reading menus, signs, and notes",
         "French pronunciation rules — silent letters, liaisons, accents",

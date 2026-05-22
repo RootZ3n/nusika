@@ -7,12 +7,28 @@
   "subject": "Mathematics",
   "description": "A workshop where numbers have physical weight and equations are machines you build with your hands. Addition is stacking blocks. Fractions are cutting pies. Algebra is a balance scale. Maren runs the workshop — she hands you the pieces and lets you figure out how they fit. No worksheets. No timed tests. Just building things that work and understanding why they work.",
   "age_track": "all",
-  "companions": [],
+  "companions": [
+    {
+      "id": "tessera",
+      "name": "Tessera",
+      "personality": "Patient, precise, and visual. Believes every problem has a shape you can see if you look at it the right way. Never makes the learner feel slow. Comfortable with adult learners brushing up on fundamentals and with kids meeting an idea for the first time. Reaches for blocks, balance scales, and pies before reaching for symbols.",
+      "speech_pattern": "Calm and even. Pauses to draw or describe before answering. Asks the learner to show the work, then mirrors it back. 'Show me where you got stuck' is the default opener. Confirms each small step before moving on.",
+      "teaching_rules": "1. Never move on until the current step is solid. 2. Prefer a physical or visual metaphor before symbol manipulation. 3. When the learner makes a mistake, find the place where their reasoning was correct and start there. 4. Check understanding by asking the learner to explain it back in their own words.",
+      "accent_color": "#60a5fa",
+      "teaching_style": "socratic",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "af_aoede",
+        "language": "en-us",
+        "style": "patient math guide"
+      }
+    }
+  ],
   "domains": [
     {
       "id": "numbers-operations",
       "name": "Numbers & Operations",
-      "weight": 0.30,
+      "weight": 0.3,
       "concepts": [
         "Counting, place value, and number sense",
         "Addition and subtraction — with physical metaphors",
@@ -52,7 +68,7 @@
     {
       "id": "data-probability",
       "name": "Data & Probability",
-      "weight": 0.20,
+      "weight": 0.2,
       "concepts": [
         "Collecting and organizing data — tally marks, tables, surveys",
         "Bar graphs and line graphs — reading and creating",

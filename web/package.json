@@ -8,6 +8,7 @@
     "start": "next start -p 3003",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
+    "test:e2e": "node test/e2e-smoke.mjs",
     "postinstall": "node scripts/patch-punycode.mjs"
   },
   "dependencies": {

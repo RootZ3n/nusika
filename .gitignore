@@ -33,3 +33,11 @@ state/
 # Test artifacts
 coverage/
 .nyc_output/
+
+# Aedis repo index — external tool cache, regenerated on demand.
+.aedis/
+
+# Voices: per-sub-service artifacts (kokoro/.venv at ~5 GB, kokoro/__pycache__,
+# generated *.wav scratch) are handled by voices/kokoro/.gitignore.
+# Any future voice engine added under voices/ should ship its own nested
+# .gitignore so we never accidentally stage gigabytes of model/venv state.

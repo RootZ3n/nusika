@@ -1,12 +1,14 @@
 # Magister
 
-Adaptive learning engine — companion-driven teaching, spaced repetition, mastery spine, creative portfolio.
+Adaptive learning engine — companion-driven teaching, spaced repetition, mastery spine, creative portfolio. Varros is the central narrator.
 
-> Status: **0.1.0 — extraction in progress** from squidley-v2. Not yet feature-complete as a standalone.
+> Status: **0.1.0 standalone**. Extracted from squidley-v2 in May 2026 and now runs on its own. All listed routes are wired; voice TTS/STT need their local binaries installed to actually run, and any LLM-backed route returns 502 when no provider is configured.
 
 ## What it is
 
 Magister teaches one concept per session through a chosen companion (a character with a defined personality, speech pattern, and teaching style) inside a campaign world. Sessions are atomic — one `concept_id`, one `objective`, one `mastery_signal`. Mastery accrues across `introduced -> practiced -> mastered -> reaffirmed` with spaced-repetition reaffirmation due-dates per concept. Hints are tiered (L1 nudge, L2 guided, L3 direct) and tracked. Companion memory is schema-enforced: only `mastered_concepts`, `struggled_concepts`, `hint_patterns`, `preferences`, `relationship_beat` are accepted, validated on every write.
+
+Above the subject companions sits **Varros**, the product narrator — the voice the learner hears at the Hall, between sessions, and in any future product-level mode that does not bind to a subject companion. Varros is defined in `server/lib/narrator.ts` and surfaced via `GET /magister/config`. Subject companions (Marcus for Latin, Wei for Mandarin, etc.) are unchanged.
 
 Curriculum lives in `./curriculum/<subject>/config.json` — each one declares the world, companions, domains, concepts, and (optionally) a mastery spine. 17 subjects ship today: latin, mandarin, vietnamese, spanish, french, history, history-through-story, science, mathematics, social-emotional, financial-basics, inkwell, linux, a-plus, network-plus, security-plus, prompt-engineering.
 
@@ -16,14 +18,17 @@ Curriculum lives in `./curriculum/<subject>/config.json` — each one declares t
 magister/
 ├── server/              Fastify API on MAGISTER_PORT (default 18793)
 │   ├── index.ts         Entry — boot DB, scan curriculum, mount routes
-│   ├── db.ts            SQLite layer (better-sqlite3) — sessions, modules, progress, memory, creative
+│   ├── db.ts            SQLite layer (better-sqlite3) — sessions, modules, progress, memory,
+│   │                    creative, lessons, DM campaigns/characters/events
 │   ├── curriculum.ts    Subject config scanner
-│   ├── lib/             Helpers (paths, safety patterns)
+│   ├── lib/             Helpers (paths, safety patterns, LLM client, narrator, prompts, receipts)
+│   ├── srd/             Deterministic SRD-style DM engine (dice, checks, combat, leveling, inventory)
 │   └── routes/          HTTP handlers
+├── voices/              Optional local voice sub-services (sibling, not required to run Magister)
+│   └── kokoro/          Local Kokoro 82M TTS service (Slice 6C — not yet wired into /magister/tts)
 ├── curriculum/          Subject configs (gitted)
-├── web/                 Next.js UI on port 3003 (page proxies to API via /api/proxy)
-├── state/               Local DB + receipts + uploads (gitignored)
-└── docs/
+├── web/                 Next.js UI on port 3003 — pages: /, /teach, /dm
+└── state/               Local DB + receipts + uploads (gitignored)
 ```
 
 ## Run
@@ -33,10 +38,23 @@ cp .env.example .env       # adjust if needed
 npm install
 npm run dev                # tsx watch
 # or
-npm run build && npm start
+npm run build && npm run start:dist
 ```
 
 Listens on `MAGISTER_HOST:MAGISTER_PORT` (default `127.0.0.1:18793`).
+
+| Script | Purpose |
+|---|---|
+| `npm run dev` | tsx watch on `server/index.ts` — primary dev path |
+| `npm start` | tsx one-shot (no watch) |
+| `npm run build` | emit `dist/` (TypeScript build) |
+| `npm run start:dist` | run the built server (`node dist/server/index.js`) |
+| `npm run typecheck` | server type checking |
+| `npm test` | node:test under `test/` and any `*.test.ts` next to source |
+| `npm run smoke` | spawn the server, probe `/health` + `/magister/modules`, tear down |
+| `cd web && npm run test:e2e` | Boot dist API + `next start`, fetch `/`, `/teach`, `/dm` HTML, probe `/api/proxy/magister/lookup`. Pure-Node, no browsers. Requires both `npm run build` and `cd web && npm run build` first. |
+
+The built server (`start:dist`) and the dev server both resolve the project root by walking up from `server/lib/paths.ts` until they find `package.json` + `curriculum/`. Set `MAGISTER_PROJECT_ROOT` to override.
 
 ## API
 
@@ -53,16 +71,130 @@ Listens on `MAGISTER_HOST:MAGISTER_PORT` (default `127.0.0.1:18793`).
 | POST | `/magister/sessions/:id/end` | End session, optionally with summary |
 | POST | `/magister/sessions/:id/hint` | Record hint use — `{ level: 1\|2\|3 }` |
 | POST | `/magister/sessions/:id/tick` | Advance session timer — `{ seconds }` |
-| POST | `/magister/sessions/:id/chat` | Companion chat (LLM-backed) — *pending standalone LLM client* |
+| POST | `/magister/sessions/:id/chat` | Companion chat — wired to OpenRouter (cloud) and Ollama (local) via `server/lib/llm.ts` |
+| POST | `/magister/sessions/:id/recap` | LLM-driven companion memory writeback (schema-validated). Requires an LLM backend; returns 502 if unreachable, 422 if the model output fails the writeback schema. Sessions without a `companion_id` short-circuit with `saved=false, skipped=true`. |
 | GET  | `/magister/progress/:moduleId` | Concept mastery + exam readiness for the module |
 | GET  | `/magister/reaffirmations` | Concepts due for spaced-repetition reaffirm |
 | GET  | `/magister/memory/:companionId` | Companion's memories of the learner |
 | POST | `/magister/memory/:companionId` | Schema-validated companion memory writeback |
 | GET  | `/magister/creative/:moduleId` | Saved creative works for a module |
 | POST | `/magister/creative/:moduleId` | Save creative work — `{ title, content }` |
-| POST | `/magister/tts` | Local TTS via Piper — *pending standalone port* |
-| POST | `/magister/tts/elevenlabs` | Cloud TTS w/ Piper fallback — *pending standalone port* |
-| POST | `/magister/stt` | Local STT via whisper.cpp — *pending standalone port* |
+| GET  | `/magister/inkwell/drafts` | List Inkwell drafts (stored in `magister_creative` under `module_id="inkwell"`) |
+| GET  | `/magister/inkwell/drafts/:id` | Single Inkwell draft |
+| POST | `/magister/inkwell/drafts` | Upsert an Inkwell draft — `{ id?, title?, content, feedback? }` |
+| DELETE | `/magister/inkwell/drafts/:id` | Hard-delete a draft. 404 if missing or if the row's `module_id` is not `inkwell` (cross-module-safe). |
+| POST | `/magister/inkwell/feedback` | Maren editorial feedback on a draft — `{ content, title?, context? }`. Returns 502 if no LLM backend is reachable. |
+| GET  | `/magister/lessons` | List Teach Me Anything lessons (most recent first) |
+| POST | `/magister/lessons` | Create a new lesson — `{ title, topic?, depth? }` |
+| GET  | `/magister/lessons/:id` | Lesson detail + recent turns |
+| PATCH | `/magister/lessons/:id` | Update lesson `depth` (`intro\|deeper\|example\|practice\|review`), `status` (`active\|paused\|complete`), or `title` |
+| DELETE | `/magister/lessons/:id` | Hard-delete a lesson. Turns cascade via FK ON DELETE CASCADE. |
+| POST | `/magister/lessons/:id/chat` | Varros turn — persists user + assistant turns. Requires an LLM backend; returns 502 if none reachable (user turn is still persisted). |
+| POST | `/magister/lessons/:id/recap` | Strict-JSON rolling summary update for a lesson. Requires an LLM backend; 502/422 on parse/schema failure with no persistence. |
+| POST | `/magister/lookup` | Intentional placeholder. Returns `{ ok: true, supported: false, reason }` today — Magister does not browse, search, or fetch external content. Plug a real backend into this route to enable lookups; the chat prompt instructs Varros to surface "I'd want to look this up" rather than fabricating results. |
+| POST | `/magister/dm/campaigns` | Create a Dungeon Master campaign — `{ title, setting_blurb? }` |
+| GET  | `/magister/dm/campaigns` | List campaigns (most recent first) |
+| GET  | `/magister/dm/campaigns/:id` | Campaign detail with character (if any) and last N events |
+| PATCH | `/magister/dm/campaigns/:id` | Update `title`, `status` (`active\|paused\|complete`), `current_scene`, `setting_blurb`, `quest_state`, `world_memory`. The `/dm` UI's "Archive campaign" button uses `status="complete"` as a lossless archive (character + events preserved). |
+| DELETE | `/magister/dm/campaigns/:id` | Hard-delete a campaign and cascade through to its character and events. Use `PATCH … {status:"complete"}` if you want to keep the audit log. |
+| POST | `/magister/dm/campaigns/:id/character` | Create a level-1 SRD-class character. Validates `class_name` against SRD list; computes HP from class hit die + CON mod. **409 if a character already exists.** |
+| GET  | `/magister/dm/campaigns/:id/character` | Character sheet |
+| POST | `/magister/dm/campaigns/:id/roll` | Deterministic dice roll — `{ formula, label? }`. Appends a `roll` event. |
+| POST | `/magister/dm/campaigns/:id/encounter` | Create encounter from `combatants` list. Persists `encounter_state` on the campaign and appends `encounter_start`. |
+| GET  | `/magister/dm/campaigns/:id/encounter` | Current `encounter_state` (or null) |
+| POST | `/magister/dm/campaigns/:id/turn` | Resolve a single deterministic intent: `check\|save\|attack\|damage\|heal\|condition_add\|condition_remove\|end_turn`. Each appends an event. |
+| POST | `/magister/dm/campaigns/:id/rest` | `{ kind: "short"\|"long", spendHitDice? }`. Long rest restores HP / temp / death saves / hit dice. Short rest spends hit dice only when `spendHitDice` is supplied. |
+| GET  | `/magister/dm/campaigns/:id/log` | Append-only event log (chronological) |
+| POST | `/magister/dm/campaigns/:id/narrate` | Narrate a slice of confirmed events — `{ since_event_id?, event_ids?, limit?, style? }`. Style: `brief\|cinematic\|tactical`. Appends a `narration` event to the log. **Descriptive only** — does not mutate engine state. Returns 502 if no LLM, 422 on empty model output. |
+| GET  | `/magister/config` | Accessibility settings + product narrator (Varros) identity |
+
+| POST | `/magister/translate` | Companion-friendly translation via the configured LLM |
+| GET  | `/magister/voices` | Voice registry: every companion + Varros + per-engine status (Piper / Kokoro / ElevenLabs). Always returns 200; missing binaries surface as `available:false` with a `reason`, not a crash. Probes Kokoro health live with a 750ms timeout. |
+| GET  | `/magister/voices/preview/:engine/:voice_id` | Synthesises a short sample phrase (`"Hello, I am <name>."` when `?name=` is given) and returns `audio/wav`. Engine: `kokoro` or `piper`. Shares the `/magister/tts` audio cache; identical previews return cached bytes with `X-TTS-Provider: kokoro-cached` / `X-TTS-Cache-Hit: true`. 400 on bad input; 503 on engine failure with a sanitised `detail`. |
+| GET  | `/magister/voices/cache` | Returns `{ ok, bytes, mb, maxBytes, maxMb }` describing the voice cache state. |
+| DELETE | `/magister/voices/cache` | Clears `*.wav` files inside `state/voices/cache/` only; never touches other state files. Returns `{ ok, deletedFiles, deletedBytes }`. |
+| POST | `/magister/tts` | Local TTS via Piper — requires `PIPER_BIN` and a voice model |
+| POST | `/magister/tts/elevenlabs` | Cloud TTS, falls back to Piper — requires `ELEVENLABS_API_KEY`. *Deprecated.* |
+| POST | `/magister/stt` | Local STT via whisper.cpp — requires `WHISPER_BIN` and a model |
+
+> **DM mode separates rules from narration.** Every HP, XP, condition,
+> initiative, and dice result flows through `server/srd/*`; no model
+> decides state. The `/narrate` route is descriptive only — it consumes
+> confirmed engine events and produces prose, never mutating game state.
+
+> TTS and STT shell out to local binaries. Until `PIPER_BIN` /
+> `WHISPER_BIN` point at real installs (or until the configured voice /
+> whisper model file exists), those endpoints return **HTTP 503** with a
+> friendly `{ ok:false, error, detail }` body — no Python tracebacks, no
+> raw stderr.
+>
+> An optional **Kokoro 82M** voice sub-service lives in
+> [`voices/kokoro/`](voices/kokoro/README.md). It runs as a separate
+> Python process on `127.0.0.1:18794`. Magister dispatches `POST
+> /magister/tts` to Kokoro when a resolved voice profile has
+> `engine: "kokoro"`. **Slice 6E assigned Kokoro voices to Varros and
+> all 26 curriculum companions**, so any companion-targeted call now
+> reaches Kokoro by default (when the service is running). Piper is
+> retained as a fallback engine and as the default for legacy
+> `{ text }` callers without a voice profile match.
+>
+> The five language modules (Latin, Mandarin, Vietnamese, Spanish,
+> French) currently use English Kokoro voices. Native-language Kokoro
+> support is a future engine-or-content slice; the registry honestly
+> labels each tutor voice's style with `(English speech)` so callers
+> aren't surprised.
+>
+> **Voice picker (per-user, browser-only).** `/teach` and `/dm` each
+> include a small voice dropdown next to the existing Preview button.
+> Selections persist in `localStorage` only — never in the DB and never
+> as a companion default. Keys: `magister.teach.voiceProfileId`,
+> `magister.dm.voiceProfileId`. The picker does not change the default
+> voice for any companion across users; it only affects which voice the
+> Preview button plays on this device. Clearing browser storage resets
+> the selection back to Varros.
+>
+> **Auto voice for `/teach` (Slice 6H).** `/teach` has an optional
+> "Auto voice" toggle next to the voice picker. When enabled, the page
+> calls `POST /magister/tts` with the selected voice for each assistant
+> reply and plays the returned WAV. **It is off by default** — autoplay
+> is opt-in per-device. Persisted in `localStorage` under
+> `magister.teach.autoplayVoice`. Requires a working TTS backend such as
+> Kokoro (or Piper as a fallback). If no backend is reachable, the page
+> shows a small "Voice playback unavailable…" line and the lesson chat
+> continues to work normally — TTS errors never fail the chat. A
+> "Play latest" button next to the toggle replays the most recent
+> assistant reply on demand. Only `/teach` has this toggle; `/dm` does
+> not yet.
+>
+> `/magister/tts/elevenlabs` is still wired but **deprecated**: any
+> request whose resolved profile uses `engine: "elevenlabs"` returns
+> HTTP 409 from `/magister/tts` with a pointer to the dedicated route.
+> Maren has been migrated off the legacy ElevenLabs voice id to a
+> local Kokoro voice in Slice 6E.
+>
+> Voice-related env vars:
+>
+> | Variable | Default | Purpose |
+> |---|---|---|
+> | `MAGISTER_KOKORO_URL` | `http://127.0.0.1:18794` | Where the Kokoro sub-service listens. |
+> | `MAGISTER_VOICE_CACHE_MAX_MB` | `500` | LRU cap for `state/voices/cache/`. |
+> | `MAGISTER_VOICE_FALLBACK` | unset | Set to `piper` to fall through to Piper when Kokoro is down. |
+>
+> The `/magister/voices` route probes Kokoro's `/health` (with a 750 ms
+> timeout) on every call so its `engines.kokoro.configured` reflects the
+> live service. The dispatch path skips that probe to keep `/magister/tts`
+> snappy — it just tries the engine and surfaces the failure honestly. Companion chat, lesson chat, lesson recap, Inkwell feedback,
+> session recap, DM narration, and translate all require either
+> `OPENROUTER_API_KEY` set or a running Ollama at `MAGISTER_LOCAL_OLLAMA_URL`.
+> Set `MAGISTER_LOCAL_ONLY=true` to skip cloud entirely. All LLM-backed
+> routes return **HTTP 502** with a structured error when no provider is
+> reachable.
+>
+> **Lookup is a placeholder.** `POST /magister/lookup` exists so the
+> Teach Me Anything chat path can request lookups today, but the route returns
+> `supported: false` and Magister does not browse the web or fetch external
+> content. Varros is prompted to say "I'd want to look this up" rather than
+> invent sources, statistics, dates, or quotations.
 
 ## Architecture invariants
 
@@ -72,19 +204,33 @@ Listens on `MAGISTER_HOST:MAGISTER_PORT` (default `127.0.0.1:18793`).
 - **Companion memory writeback is schema-enforced.** Five fields, each with strict types, validated on every write. Unknown fields = rejection.
 - **Spaced repetition is automatic.** `next_reaffirm` is recomputed every progress update from the new mastery level (`introduced=1d`, `practiced=3d`, `mastered=7d`, `reaffirmed=21d`).
 
-## Status of the extraction
+## Status
 
-Migrated from `/mnt/ai/squidley-v2/modules/experiences/magister/` and the inline `/magister/*` routes in `apps/api/src/routes/chat.ts`. What's currently working in this standalone:
+Magister is the extraction of `/mnt/ai/squidley-v2/modules/experiences/magister/`. Shipped in this standalone:
 
-- DB layer ported (sessions, modules, progress, memory, creative, curriculum scanner).
-- Modules / sessions / progress / memory / creative routes ported.
-- Curriculum (17 subjects) moved.
-- State DB migrated.
+- DB layer (sessions, modules, progress, memory, creative, lessons, DM campaigns/characters/events, curriculum scanner)
+- Module / session / progress / memory / creative / config / translate / chat routes
+- LLM client (OpenRouter + Ollama with fallback) plus a test seam for deterministic mocking
+- Inkwell drafts persistence + Maren editorial feedback (`/magister/inkwell/*`)
+- Session recap with companion memory writeback (`/magister/sessions/:id/recap`)
+- Teach Me Anything mode (`/magister/lessons/*`, `/teach` web UI)
+- Lookup placeholder that honestly returns `supported: false`
+- All 17 curriculum modules carry at least one companion (globally unique ids)
+- SRD-style deterministic DM engine (`server/srd/`)
+- DM persistence + routes (`/magister/dm/*`) — campaigns, characters, rolls, encounters, turn intents, rest, event log
+- DM narration endpoint that is structurally prevented from mutating engine state (`/magister/dm/campaigns/:id/narrate`)
+- `/dm` standalone web UI
+- Voice routes (Piper TTS, ElevenLabs TTS, whisper.cpp STT — when local binaries are configured)
+- Curriculum scan of 17 subjects
+- Product narrator (Varros) exposed via `/magister/config`
+- Smoke test (`npm run smoke`) and baseline node:test suite (`npm test` — 147 tests)
 
-Pending:
-- Squidley-side cutover — replace in-process service calls with HTTP to `MAGISTER_URL` and remove the inline magister code from squidley-v2's chat.ts.
-- Inkwell tab persistence (drafts) and Maren feedback — squidley used Archivum for these; standalone needs a generalized drafts/feedback endpoint or to bind Inkwell to a curriculum module.
-- Companion memory writeback per-turn (squidley's was silently broken; deferred to recap endpoint).
+Known limitations (not blockers, future polish):
+
+- Mastery spines for most subjects (only modules with a spine validate concept IDs; others accept any concept).
+- No transcript table for sessions — session recap operates on metadata (atom, hint counts, timing) only.
+- Public-release blockers: permissive CORS, no auth, no rate-limit on LLM-backed routes, no `LICENSE` file. Private-use and friend-demo are fine.
+- The web E2E smoke (`cd web && npm run test:e2e`) is HTTP-level only — JS-driven interactions (click → confirm → DELETE) aren't covered until a real-browser harness lands.
 
 ## Web — running and known issues
 
@@ -96,10 +242,108 @@ npm run build      # production build
 npm run start      # serve the production build
 ```
 
+Routes:
+- `/` — The Hall (campaigns, sessions, modules, Inkwell)
+- `/teach` — Teach Me Anything (open-ended Varros lessons)
+- `/dm` — Dungeon Master mode (campaigns, character, dice, turn intents, narration)
+
 The `postinstall` script (`scripts/patch-punycode.mjs`) adds
 `"type":"commonjs"` to `next/dist/compiled/punycode/package.json`. Without
 it, `next build` throws `ERR_INVALID_PACKAGE_CONFIG` on Node 22+ —
 upstream Next.js bug; remove the script when fixed there.
+
+## Running Magister as a service
+
+For Jeff's Mushin box (`/mnt/ai/magister`, user `zen`), Magister ships
+with `systemd --user` units that run the API, the Kokoro voice
+sub-service, and the Next.js web app together. The web app is the only
+LAN/Tailscale-exposed surface; the API and Kokoro stay on loopback.
+
+**Default ports / bindings:**
+
+| Service                | Bind             | Why |
+|------------------------|------------------|---|
+| `magister-api`         | `127.0.0.1:18793`| Loopback only — no auth/rate-limit yet. |
+| `magister-kokoro`      | `127.0.0.1:18794`| Loopback only — internal TTS sub-service. |
+| `magister-web`         | `0.0.0.0:3003`   | LAN/Tailscale-reachable. Proxies API via `MAGISTER_API_URL`. |
+
+### One-time setup
+
+```bash
+# build production bundles (the API unit runs `node dist/server/index.js`,
+# the web unit runs `next start`):
+cd /mnt/ai/magister
+npm run build
+cd web && npm run build && cd ..
+
+# provision the Kokoro venv once (don't keep using start.sh in the unit;
+# it pip-installs on every boot):
+voices/kokoro/start.sh   # ^C after it prints "starting on 127.0.0.1:18794"
+
+# install user units into ~/.config/systemd/user/ and daemon-reload:
+npm run service:install
+```
+
+### Bring everything up
+
+```bash
+systemctl --user start magister.target
+
+# auto-start on next login:
+systemctl --user enable magister.target
+
+# keep services running across logout (optional, requires sudo):
+sudo loginctl enable-linger "$USER"
+```
+
+### Status / logs
+
+```bash
+systemctl --user status magister-api magister-kokoro magister-web
+journalctl --user -u magister-api    -f
+journalctl --user -u magister-web    -f
+journalctl --user -u magister-kokoro -f
+```
+
+### Stop everything
+
+```bash
+systemctl --user stop magister.target
+```
+
+### Health probe
+
+```bash
+npm run service:health
+```
+
+Hits `/health` on API + Kokoro and `/` on Web, plus prints the
+Tailscale URL candidate (`http://<tailscale-ip>:3003`) if the
+`tailscale` CLI is logged in.
+
+### Reaching it
+
+| From                   | URL |
+|------------------------|---|
+| Local                  | `http://127.0.0.1:3003` |
+| LAN (this machine's IP)| `http://<Mushin-LAN-IP>:3003` |
+| Tailscale              | `http://<Mushin-Tailscale-IP>:3003` |
+
+Run `hostname -I` to see this machine's reachable interfaces, and
+`tailscale ip -4` for its tailnet address.
+
+> **Security note.** The API and Kokoro are loopback-only by design —
+> there is no auth, no rate-limit on LLM-backed routes, and CORS is
+> permissive. Only the web app is exposed, and only to networks you
+> trust (LAN, tailnet). **Do not expose port 3003 to the public
+> internet** without first adding auth, rate-limiting, and CORS
+> hardening. Tailscale ACLs are an appropriate trust boundary for
+> private use; the Tailscale URL above is for the device owner +
+> invited friends, not for anonymous access.
+
+If you ever need to override the hardcoded `/mnt/ai/magister` paths,
+edit the unit files in `contrib/systemd/` (or use a `systemctl --user
+edit magister-api.service` drop-in) and re-run `npm run service:install`.
 
 ## License
 

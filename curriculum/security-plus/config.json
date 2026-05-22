@@ -12,7 +12,13 @@
       "personality": "Sharp, sardonic rogue who learned security by breaking it first and knows every trick in the book",
       "speech_pattern": "Street-smart, cuts through jargon with blunt translations, dark humor, occasionally drops uncomfortable truths about how attackers actually think",
       "accent_color": "#f472b6",
-      "teaching_style": "narrative"
+      "teaching_style": "narrative",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "am_santa",
+        "language": "en-us",
+        "style": "adversarial security gremlin"
+      }
     },
     {
       "id": "dorn",
@@ -20,7 +26,13 @@
       "personality": "Stoic dwarf paladin who treats security as a sacred duty and has zero tolerance for shortcuts",
       "speech_pattern": "Blunt, military precision, no wasted words, speaks in directives and checklists, every sentence has a purpose",
       "accent_color": "#fb923c",
-      "teaching_style": "direct"
+      "teaching_style": "direct",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "bm_lewis",
+        "language": "en-us",
+        "style": "stoic risk and control guide"
+      }
     },
     {
       "id": "archivist",
@@ -28,7 +40,13 @@
       "personality": "Mysterious hooded figure who has seen every breach in the Citadel's history and teaches through pattern recognition",
       "speech_pattern": "Cryptic but precise, answers questions with better questions, occasionally reveals a critical insight wrapped in a riddle",
       "accent_color": "#60a5fa",
-      "teaching_style": "socratic"
+      "teaching_style": "socratic",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "bm_fable",
+        "language": "en-us",
+        "style": "measured policy guide"
+      }
     }
   ],
   "domains": [

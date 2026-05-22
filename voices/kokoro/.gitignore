@@ -1,0 +1,17 @@
+# Magister Kokoro service — local artifacts only.
+
+# Python virtual environment (created by start.sh).
+.venv/
+
+# Python bytecode and caches.
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Generated audio scratch files from manual probes / smoke runs.
+*.wav
+
+# HuggingFace cache lives in ~/.cache/huggingface by default; if you
+# point HF_HOME inside the service folder, ignore it here too.
+hf-cache/

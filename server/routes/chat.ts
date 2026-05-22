@@ -38,8 +38,7 @@ interface ModuleConfig {
  * Companion memory writeback is intentionally NOT performed here — the
  * strict schema enforced by saveCompanionMemory is mismatched with the
  * lightweight signals we'd extract per-turn. End-of-session writeback
- * is the canonical entry; it lives in the future /sessions/:id/end
- * recap endpoint (TODO once recap is wired).
+ * lives in POST /magister/sessions/:id/recap (server/routes/recap.ts).
  */
 export async function registerChatRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
   app.post<{ Params: { id: string }; Body: ChatBody }>(
@@ -161,7 +160,13 @@ export async function registerChatRoutes(app: FastifyInstance, db: MagisterDB): 
           status: "failure",
           meta: { sessionId: req.params.id, companionId, moduleId, error: detail },
         });
-        return reply.status(500).send({ ok: false, error: detail });
+        // 502: the route reached us, but the upstream LLM provider failed.
+        // No assistant content is persisted — the chat history is unaffected.
+        return reply.status(502).send({
+          ok: false,
+          error: "Session chat is unavailable: no LLM backend reachable.",
+          detail,
+        });
       }
     },
   );

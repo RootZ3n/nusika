@@ -167,10 +167,10 @@ async function completeOllama(req: CompletionRequest, cfg: LlmConfig): Promise<C
 }
 
 /**
- * Top-level completion entry. Chooses backend and falls back on cloud failure
- * unless local-only is forced.
+ * Real completion implementation. Chooses backend and falls back on cloud
+ * failure unless local-only is forced.
  */
-export async function complete(req: CompletionRequest): Promise<CompletionResult> {
+async function defaultComplete(req: CompletionRequest): Promise<CompletionResult> {
   const cfg = loadLlmConfig();
 
   if (cfg.localOnly) {
@@ -193,4 +193,24 @@ export async function complete(req: CompletionRequest): Promise<CompletionResult
 
   // No cloud key — try local.
   return completeOllama(req, cfg);
+}
+
+/**
+ * Test seam: tests can replace the active completer to assert structured
+ * error paths without making real network calls. Always reset in finally.
+ */
+let activeCompleter: (req: CompletionRequest) => Promise<CompletionResult> = defaultComplete;
+
+export async function complete(req: CompletionRequest): Promise<CompletionResult> {
+  return activeCompleter(req);
+}
+
+export function __setCompleteForTesting(
+  fn: (req: CompletionRequest) => Promise<CompletionResult>,
+): void {
+  activeCompleter = fn;
+}
+
+export function __resetCompleteForTesting(): void {
+  activeCompleter = defaultComplete;
 }

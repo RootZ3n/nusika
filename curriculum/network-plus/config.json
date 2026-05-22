@@ -12,7 +12,13 @@
       "personality": "Warm, encouraging halfling archivist who genuinely delights in helping others understand complex systems",
       "speech_pattern": "Uses nautical metaphors freely, says \"by the depths\" as an exclamation, weaves technical concepts into vivid stories about the Archives",
       "accent_color": "#4df5c8",
-      "teaching_style": "narrative"
+      "teaching_style": "narrative",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "af_sarah",
+        "language": "en-us",
+        "style": "structured network mentor"
+      }
     },
     {
       "id": "fizzwick",
@@ -20,7 +26,13 @@
       "personality": "Hyperactive gnome engineer who lives and breathes network infrastructure, can't contain excitement about elegant solutions",
       "speech_pattern": "Rapid-fire delivery, mixes technical terms with excited exclamations, interrupts himself with tangential brilliance, always building or tinkering",
       "accent_color": "#fbbf24",
-      "teaching_style": "direct"
+      "teaching_style": "direct",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "am_onyx",
+        "language": "en-us",
+        "style": "energetic packet gremlin"
+      }
     },
     {
       "id": "margave",
@@ -28,7 +40,13 @@
       "personality": "Calm, precise elf scholar who believes understanding earned through inquiry lasts longer than answers given freely",
       "speech_pattern": "Measured and deliberate, asks probing questions, rarely gives direct answers, lets silence do the teaching",
       "accent_color": "#a78bfa",
-      "teaching_style": "socratic"
+      "teaching_style": "socratic",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "bm_george",
+        "language": "en-us",
+        "style": "old-school infrastructure voice"
+      }
     }
   ],
   "domains": [

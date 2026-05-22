@@ -50,6 +50,51 @@ export type AgeTrack = (typeof AGE_TRACKS)[number];
  */
 export const SHARED_PROGRESS_MODES = ["campaign", "study"] as const;
 
+// ── Teach Me Anything (Varros lessons) ───────────────────────────────────────
+//
+// Open-ended lessons NOT bound to any module/concept/companion. The product
+// narrator (Varros) is implicit; lessons have a topic, a current "depth",
+// and a turn log. See server/routes/lessons.ts and server/lib/varros-prompt.ts.
+
+export const LESSON_DEPTHS = ["intro", "deeper", "example", "practice", "review"] as const;
+export type LessonDepth = (typeof LESSON_DEPTHS)[number];
+
+export const LESSON_STATUSES = ["active", "paused", "complete"] as const;
+export type LessonStatus = (typeof LESSON_STATUSES)[number];
+
+export const LESSON_ROLES = ["user", "assistant", "tool"] as const;
+export type LessonTurnRole = (typeof LESSON_ROLES)[number];
+
+// ── Dungeon Master mode (deterministic engine state) ─────────────────────────
+//
+// DM campaigns persist a current scene + quest state + optional encounter.
+// Characters belong to one campaign at a time. Events are append-only —
+// every state mutation writes one event row so the engine's history is
+// fully reconstructable.
+
+export const DM_CAMPAIGN_STATUSES = ["active", "paused", "complete"] as const;
+export type DmCampaignStatus = (typeof DM_CAMPAIGN_STATUSES)[number];
+
+export const DM_EVENT_KINDS = [
+  "campaign_created",
+  "campaign_updated",
+  "character_created",
+  "character_updated",
+  "roll",
+  "encounter_start",
+  "check",
+  "save",
+  "attack",
+  "damage",
+  "heal",
+  "condition_add",
+  "condition_remove",
+  "end_turn",
+  "rest",
+  "narration", // descriptive only — Slice 4C-a
+] as const;
+export type DmEventKind = (typeof DM_EVENT_KINDS)[number];
+
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 /** One session = one atom. The atom defines the single concept this session teaches. */
@@ -135,6 +180,105 @@ export interface MagisterModuleRecord {
   installed: number;
   config_path: string | null;
   mastery_spine: string | null;
+  created_at: string;
+}
+
+export interface MagisterLesson {
+  id: string;
+  user_id: string;
+  title: string;
+  topic: string;
+  depth: LessonDepth;
+  status: LessonStatus;
+  summary: string | null;
+  knowledge: string;          // JSON blob — opaque to the DB layer
+  turn_count: number;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
+export interface MagisterLessonTurn {
+  id: string;
+  lesson_id: string;
+  role: LessonTurnRole;
+  content: string;
+  depth_at: LessonDepth | null;
+  tokens_in: number | null;
+  tokens_out: number | null;
+  model: string | null;
+  provider: string | null;
+  created_at: string;
+}
+
+// ── Dungeon Master types ──────────────────────────────────────────────────
+//
+// JSON columns are parsed by the helpers; routes never see raw strings.
+// Bad JSON in the DB falls back to a safe empty default (we do not crash
+// the server on a corrupted row).
+
+export interface DmCampaign {
+  id: string;
+  user_id: string;
+  title: string;
+  setting_blurb: string | null;
+  status: DmCampaignStatus;
+  current_scene: string | null;
+  quest_state: Record<string, unknown>;
+  world_memory: unknown[];
+  encounter_state: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+  completed_at: string | null;
+}
+
+export interface DmAbilityScores {
+  str: number; dex: number; con: number; int: number; wis: number; cha: number;
+}
+
+export interface DmHitDice {
+  die: string;            // "d10", "d8", etc.
+  total: number;
+  remaining: number;
+}
+
+export interface DmDeathSaves {
+  successes: number;
+  failures: number;
+}
+
+export interface DmCharacter {
+  id: string;
+  campaign_id: string;
+  name: string;
+  ancestry: string;
+  class_name: string;
+  background: string | null;
+  level: number;
+  xp: number;
+  abilities: DmAbilityScores;
+  proficiency_bonus: number;
+  proficiencies: { saves?: string[]; skills?: string[] };
+  hp_max: number;
+  hp_current: number;
+  hp_temp: number;
+  hit_dice: DmHitDice;
+  ac: number;
+  speed: number;
+  inventory: unknown[];
+  spells: Record<string, unknown>;
+  conditions: string[];
+  death_saves: DmDeathSaves;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface DmEvent {
+  id: string;
+  campaign_id: string;
+  kind: DmEventKind;
+  payload: Record<string, unknown>;
   created_at: string;
 }
 
@@ -345,6 +489,96 @@ export class MagisterDB {
       CREATE INDEX IF NOT EXISTS idx_memory_expires ON magister_memory(expires_at);
       CREATE INDEX IF NOT EXISTS idx_sessions_module ON magister_sessions(module_id);
       CREATE INDEX IF NOT EXISTS idx_creative_module ON magister_creative(module_id);
+
+      -- Teach Me Anything (Varros) — open-ended lessons + turn log.
+      -- Additive only; no FK back into existing tables.
+      CREATE TABLE IF NOT EXISTS magister_lessons (
+        id            TEXT PRIMARY KEY,
+        user_id       TEXT NOT NULL DEFAULT 'jeff',
+        title         TEXT NOT NULL,
+        topic         TEXT NOT NULL,
+        depth         TEXT NOT NULL DEFAULT 'intro' CHECK (depth IN ('intro','deeper','example','practice','review')),
+        status        TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','paused','complete')),
+        summary       TEXT,
+        knowledge     TEXT NOT NULL DEFAULT '{}',
+        turn_count    INTEGER NOT NULL DEFAULT 0,
+        created_at    TEXT NOT NULL,
+        updated_at    TEXT NOT NULL,
+        completed_at  TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS magister_lesson_turns (
+        id          TEXT PRIMARY KEY,
+        lesson_id   TEXT NOT NULL REFERENCES magister_lessons(id) ON DELETE CASCADE,
+        role        TEXT NOT NULL CHECK (role IN ('user','assistant','tool')),
+        content     TEXT NOT NULL,
+        depth_at    TEXT,
+        tokens_in   INTEGER,
+        tokens_out  INTEGER,
+        model       TEXT,
+        provider    TEXT,
+        created_at  TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_lessons_user_topic ON magister_lessons(user_id, topic);
+      CREATE INDEX IF NOT EXISTS idx_lessons_updated ON magister_lessons(updated_at);
+      CREATE INDEX IF NOT EXISTS idx_lesson_turns_lesson ON magister_lesson_turns(lesson_id, created_at);
+
+      -- Dungeon Master mode — deterministic state, append-only events.
+      CREATE TABLE IF NOT EXISTS magister_dm_campaigns (
+        id              TEXT PRIMARY KEY,
+        user_id         TEXT NOT NULL DEFAULT 'jeff',
+        title           TEXT NOT NULL,
+        setting_blurb   TEXT,
+        status          TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','paused','complete')),
+        current_scene   TEXT,
+        quest_state     TEXT NOT NULL DEFAULT '{}',
+        world_memory    TEXT NOT NULL DEFAULT '[]',
+        encounter_state TEXT,
+        created_at      TEXT NOT NULL,
+        updated_at      TEXT NOT NULL,
+        completed_at    TEXT
+      );
+
+      CREATE TABLE IF NOT EXISTS magister_dm_characters (
+        id                TEXT PRIMARY KEY,
+        campaign_id       TEXT NOT NULL REFERENCES magister_dm_campaigns(id) ON DELETE CASCADE,
+        name              TEXT NOT NULL,
+        ancestry          TEXT NOT NULL,
+        class_name        TEXT NOT NULL,
+        background        TEXT,
+        level             INTEGER NOT NULL DEFAULT 1,
+        xp                INTEGER NOT NULL DEFAULT 0,
+        abilities         TEXT NOT NULL,
+        proficiency_bonus INTEGER NOT NULL DEFAULT 2,
+        proficiencies     TEXT NOT NULL DEFAULT '{}',
+        hp_max            INTEGER NOT NULL,
+        hp_current        INTEGER NOT NULL,
+        hp_temp           INTEGER NOT NULL DEFAULT 0,
+        hit_dice          TEXT NOT NULL,
+        ac                INTEGER NOT NULL,
+        speed             INTEGER NOT NULL DEFAULT 30,
+        inventory         TEXT NOT NULL DEFAULT '[]',
+        spells            TEXT NOT NULL DEFAULT '{}',
+        conditions        TEXT NOT NULL DEFAULT '[]',
+        death_saves       TEXT NOT NULL DEFAULT '{"successes":0,"failures":0}',
+        notes             TEXT,
+        created_at        TEXT NOT NULL,
+        updated_at        TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS magister_dm_events (
+        id          TEXT PRIMARY KEY,
+        campaign_id TEXT NOT NULL REFERENCES magister_dm_campaigns(id) ON DELETE CASCADE,
+        kind        TEXT NOT NULL,
+        payload     TEXT NOT NULL,
+        created_at  TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_dm_campaigns_user_status ON magister_dm_campaigns(user_id, status);
+      CREATE INDEX IF NOT EXISTS idx_dm_campaigns_updated ON magister_dm_campaigns(updated_at);
+      CREATE INDEX IF NOT EXISTS idx_dm_characters_campaign ON magister_dm_characters(campaign_id);
+      CREATE INDEX IF NOT EXISTS idx_dm_events_campaign ON magister_dm_events(campaign_id, created_at);
     `);
 
     // Additive column migrations — safe on existing DBs (ALTER TABLE throws on duplicate, caught)
@@ -882,6 +1116,16 @@ export class MagisterDB {
     ).all(moduleId, userId) as MagisterCreative[];
   }
 
+  getCreativeWork(id: string): MagisterCreative | null {
+    return (this.db.prepare("SELECT * FROM magister_creative WHERE id = ?").get(id) as MagisterCreative | undefined) ?? null;
+  }
+
+  /** Hard-delete a creative work by id. Returns true if a row was removed. */
+  deleteCreativeWork(id: string): boolean {
+    const result = this.db.prepare("DELETE FROM magister_creative WHERE id = ?").run(id);
+    return result.changes > 0;
+  }
+
   updateCreativeWork(
     id: string,
     patch: Partial<Pick<MagisterCreative, "title" | "content" | "companion_feedback" | "archivum_id">>,
@@ -996,9 +1240,529 @@ export class MagisterDB {
     return row.cnt;
   }
 
+  // ── Lessons (Teach Me Anything) ──────────────────────────────────────────
+  //
+  // Lessons are open-ended Varros conversations that don't bind to a curriculum
+  // module/concept/companion. The DB layer is intentionally dumb — validation
+  // of depth/status/role lives in the route layer; the SQL CHECK constraints
+  // are belt-and-suspenders.
+
+  createLesson(opts: {
+    title: string;
+    topic?: string;
+    depth?: LessonDepth;
+    userId?: string;
+  }): MagisterLesson {
+    const title = opts.title.trim();
+    if (!title) throw new Error("Lesson title is required");
+    const topic = (opts.topic ?? title).trim().toLowerCase();
+    const now = new Date().toISOString();
+    const lesson: MagisterLesson = {
+      id: randomUUID(),
+      user_id: opts.userId ?? "jeff",
+      title,
+      topic,
+      depth: opts.depth ?? "intro",
+      status: "active",
+      summary: null,
+      knowledge: "{}",
+      turn_count: 0,
+      created_at: now,
+      updated_at: now,
+      completed_at: null,
+    };
+    this.db.prepare(`
+      INSERT INTO magister_lessons
+        (id, user_id, title, topic, depth, status, summary, knowledge, turn_count,
+         created_at, updated_at, completed_at)
+      VALUES
+        (@id, @user_id, @title, @topic, @depth, @status, @summary, @knowledge, @turn_count,
+         @created_at, @updated_at, @completed_at)
+    `).run(lesson);
+    return lesson;
+  }
+
+  listLessons(opts: { userId?: string; limit?: number } = {}): MagisterLesson[] {
+    const userId = opts.userId ?? "jeff";
+    const limit = opts.limit ?? 50;
+    return this.db.prepare(
+      "SELECT * FROM magister_lessons WHERE user_id = ? ORDER BY updated_at DESC LIMIT ?",
+    ).all(userId, limit) as MagisterLesson[];
+  }
+
+  getLesson(id: string): MagisterLesson | null {
+    return (this.db.prepare("SELECT * FROM magister_lessons WHERE id = ?").get(id) as MagisterLesson | undefined) ?? null;
+  }
+
+  patchLesson(id: string, patch: Partial<Pick<MagisterLesson, "depth" | "status" | "title">>): MagisterLesson | null {
+    const allowed = new Set(["depth", "status", "title"]);
+    const fields: string[] = [];
+    const values: unknown[] = [];
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === undefined) continue;
+      if (!allowed.has(key)) continue;
+      fields.push(`${key} = ?`);
+      values.push(value);
+    }
+    if (fields.length === 0) return this.getLesson(id);
+    const now = new Date().toISOString();
+    fields.push("updated_at = ?");
+    values.push(now);
+    if (patch.status === "complete") {
+      fields.push("completed_at = ?");
+      values.push(now);
+    }
+    values.push(id);
+    this.db.prepare(`UPDATE magister_lessons SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+    return this.getLesson(id);
+  }
+
+  /**
+   * Hard-delete a lesson and (via FK ON DELETE CASCADE) all of its turns.
+   * Returns true if a row was removed.
+   */
+  deleteLesson(id: string): boolean {
+    const result = this.db.prepare("DELETE FROM magister_lessons WHERE id = ?").run(id);
+    return result.changes > 0;
+  }
+
+  addLessonTurn(opts: {
+    lessonId: string;
+    role: LessonTurnRole;
+    content: string;
+    depthAt?: LessonDepth | null;
+    tokensIn?: number | null;
+    tokensOut?: number | null;
+    model?: string | null;
+    provider?: string | null;
+  }): MagisterLessonTurn {
+    const now = new Date().toISOString();
+    const turn: MagisterLessonTurn = {
+      id: randomUUID(),
+      lesson_id: opts.lessonId,
+      role: opts.role,
+      content: opts.content,
+      depth_at: opts.depthAt ?? null,
+      tokens_in: opts.tokensIn ?? null,
+      tokens_out: opts.tokensOut ?? null,
+      model: opts.model ?? null,
+      provider: opts.provider ?? null,
+      created_at: now,
+    };
+    const insertTurn = this.db.prepare(`
+      INSERT INTO magister_lesson_turns
+        (id, lesson_id, role, content, depth_at, tokens_in, tokens_out, model, provider, created_at)
+      VALUES
+        (@id, @lesson_id, @role, @content, @depth_at, @tokens_in, @tokens_out, @model, @provider, @created_at)
+    `);
+    const bumpLesson = this.db.prepare(
+      "UPDATE magister_lessons SET turn_count = turn_count + 1, updated_at = ? WHERE id = ?",
+    );
+    const tx = this.db.transaction((t: MagisterLessonTurn) => {
+      insertTurn.run(t);
+      bumpLesson.run(now, t.lesson_id);
+    });
+    tx(turn);
+    return turn;
+  }
+
+  getLessonTurns(lessonId: string, opts: { limit?: number } = {}): MagisterLessonTurn[] {
+    const limit = opts.limit ?? 100;
+    // Return newest-first slice, then reverse so chat history reads oldest→newest.
+    const rows = this.db.prepare(
+      "SELECT * FROM magister_lesson_turns WHERE lesson_id = ? ORDER BY created_at DESC LIMIT ?",
+    ).all(lessonId, limit) as MagisterLessonTurn[];
+    return rows.reverse();
+  }
+
+  updateLessonSummary(lessonId: string, summary: string, knowledge: object): boolean {
+    const now = new Date().toISOString();
+    const result = this.db.prepare(
+      "UPDATE magister_lessons SET summary = ?, knowledge = ?, updated_at = ? WHERE id = ?",
+    ).run(summary, JSON.stringify(knowledge), now, lessonId);
+    return result.changes > 0;
+  }
+
+  // ── Dungeon Master ───────────────────────────────────────────────────────
+  //
+  // JSON columns are parsed in helpers; routes never see raw strings.
+  // Bad JSON falls back to safe defaults so a corrupted row can't crash
+  // the server. Events are append-only (no update/delete helper).
+
+  createDmCampaign(opts: { title: string; settingBlurb?: string; userId?: string }): DmCampaign {
+    const title = opts.title.trim();
+    if (!title) throw new Error("DM campaign title is required");
+    const now = new Date().toISOString();
+    const row = {
+      id: randomUUID(),
+      user_id: opts.userId ?? "jeff",
+      title,
+      setting_blurb: opts.settingBlurb ?? null,
+      status: "active" as DmCampaignStatus,
+      current_scene: null as string | null,
+      quest_state: "{}",
+      world_memory: "[]",
+      encounter_state: null as string | null,
+      created_at: now,
+      updated_at: now,
+      completed_at: null as string | null,
+    };
+    this.db.prepare(`
+      INSERT INTO magister_dm_campaigns
+        (id, user_id, title, setting_blurb, status, current_scene, quest_state, world_memory,
+         encounter_state, created_at, updated_at, completed_at)
+      VALUES
+        (@id, @user_id, @title, @setting_blurb, @status, @current_scene, @quest_state, @world_memory,
+         @encounter_state, @created_at, @updated_at, @completed_at)
+    `).run(row);
+    return this.parseDmCampaignRow(row);
+  }
+
+  private parseDmCampaignRow(row: Record<string, unknown>): DmCampaign {
+    return {
+      id: String(row.id),
+      user_id: String(row.user_id),
+      title: String(row.title),
+      setting_blurb: (row.setting_blurb as string | null) ?? null,
+      status: row.status as DmCampaignStatus,
+      current_scene: (row.current_scene as string | null) ?? null,
+      quest_state: safeParseObject(row.quest_state, {}),
+      world_memory: safeParseArray(row.world_memory, []),
+      encounter_state: row.encounter_state == null
+        ? null
+        : (safeParseObject(row.encounter_state, {}) as Record<string, unknown>),
+      created_at: String(row.created_at),
+      updated_at: String(row.updated_at),
+      completed_at: (row.completed_at as string | null) ?? null,
+    };
+  }
+
+  listDmCampaigns(opts: { userId?: string; limit?: number } = {}): DmCampaign[] {
+    const userId = opts.userId ?? "jeff";
+    const limit = opts.limit ?? 50;
+    const rows = this.db.prepare(
+      "SELECT * FROM magister_dm_campaigns WHERE user_id = ? ORDER BY updated_at DESC LIMIT ?",
+    ).all(userId, limit) as Array<Record<string, unknown>>;
+    return rows.map(r => this.parseDmCampaignRow(r));
+  }
+
+  getDmCampaign(id: string): DmCampaign | null {
+    const row = this.db.prepare("SELECT * FROM magister_dm_campaigns WHERE id = ?").get(id) as
+      | Record<string, unknown>
+      | undefined;
+    return row ? this.parseDmCampaignRow(row) : null;
+  }
+
+  patchDmCampaign(
+    id: string,
+    patch: {
+      title?: string;
+      setting_blurb?: string | null;
+      status?: DmCampaignStatus;
+      current_scene?: string | null;
+      quest_state?: Record<string, unknown>;
+      world_memory?: unknown[];
+      encounter_state?: Record<string, unknown> | null;
+    },
+  ): DmCampaign | null {
+    const allowed: Record<string, (v: unknown) => unknown> = {
+      title: v => v,
+      setting_blurb: v => v,
+      status: v => v,
+      current_scene: v => v,
+      quest_state: v => JSON.stringify(v ?? {}),
+      world_memory: v => JSON.stringify(v ?? []),
+      encounter_state: v => (v == null ? null : JSON.stringify(v)),
+    };
+    const fields: string[] = [];
+    const values: unknown[] = [];
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === undefined) continue;
+      const transform = allowed[key];
+      if (!transform) continue;
+      fields.push(`${key} = ?`);
+      values.push(transform(value));
+    }
+    if (fields.length === 0) return this.getDmCampaign(id);
+    const now = new Date().toISOString();
+    fields.push("updated_at = ?");
+    values.push(now);
+    if (patch.status === "complete") {
+      fields.push("completed_at = ?");
+      values.push(now);
+    }
+    values.push(id);
+    this.db.prepare(`UPDATE magister_dm_campaigns SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+    return this.getDmCampaign(id);
+  }
+
+  /**
+   * Hard-delete a DM campaign and (via FK ON DELETE CASCADE) all of its
+   * characters and events. Returns true if a row was removed.
+   *
+   * Note on the append-only invariant: events are append-only *within* a
+   * campaign — no UPDATE or DELETE event helper exists. Deleting the entire
+   * campaign is a separate, intentional action; the audit trail is gone with
+   * its parent. Soft-archive via patchDmCampaign({ status: "complete" }) is
+   * the lossless option and is what the UI exposes by default.
+   */
+  deleteDmCampaign(id: string): boolean {
+    const result = this.db.prepare("DELETE FROM magister_dm_campaigns WHERE id = ?").run(id);
+    return result.changes > 0;
+  }
+
+  createDmCharacter(
+    campaignId: string,
+    opts: {
+      name: string;
+      ancestry: string;
+      className: string;
+      background?: string;
+      abilities: DmAbilityScores;
+      proficiencies?: { saves?: string[]; skills?: string[] };
+      hp_max: number;
+      hit_dice: DmHitDice;
+      ac: number;
+      speed?: number;
+      inventory?: unknown[];
+    },
+  ): DmCharacter {
+    const now = new Date().toISOString();
+    const row = {
+      id: randomUUID(),
+      campaign_id: campaignId,
+      name: opts.name,
+      ancestry: opts.ancestry,
+      class_name: opts.className,
+      background: opts.background ?? null,
+      level: 1,
+      xp: 0,
+      abilities: JSON.stringify(opts.abilities),
+      proficiency_bonus: 2,
+      proficiencies: JSON.stringify(opts.proficiencies ?? {}),
+      hp_max: opts.hp_max,
+      hp_current: opts.hp_max,
+      hp_temp: 0,
+      hit_dice: JSON.stringify(opts.hit_dice),
+      ac: opts.ac,
+      speed: opts.speed ?? 30,
+      inventory: JSON.stringify(opts.inventory ?? []),
+      spells: "{}",
+      conditions: "[]",
+      death_saves: '{"successes":0,"failures":0}',
+      notes: null as string | null,
+      created_at: now,
+      updated_at: now,
+    };
+    this.db.prepare(`
+      INSERT INTO magister_dm_characters
+        (id, campaign_id, name, ancestry, class_name, background, level, xp, abilities,
+         proficiency_bonus, proficiencies, hp_max, hp_current, hp_temp, hit_dice, ac, speed,
+         inventory, spells, conditions, death_saves, notes, created_at, updated_at)
+      VALUES
+        (@id, @campaign_id, @name, @ancestry, @class_name, @background, @level, @xp, @abilities,
+         @proficiency_bonus, @proficiencies, @hp_max, @hp_current, @hp_temp, @hit_dice, @ac, @speed,
+         @inventory, @spells, @conditions, @death_saves, @notes, @created_at, @updated_at)
+    `).run(row);
+    return this.parseDmCharacterRow(row);
+  }
+
+  private parseDmCharacterRow(row: Record<string, unknown>): DmCharacter {
+    return {
+      id: String(row.id),
+      campaign_id: String(row.campaign_id),
+      name: String(row.name),
+      ancestry: String(row.ancestry),
+      class_name: String(row.class_name),
+      background: (row.background as string | null) ?? null,
+      level: Number(row.level),
+      xp: Number(row.xp),
+      abilities: safeParseObject(row.abilities, {
+        str: 10, dex: 10, con: 10, int: 10, wis: 10, cha: 10,
+      }) as unknown as DmAbilityScores,
+      proficiency_bonus: Number(row.proficiency_bonus),
+      proficiencies: safeParseObject(row.proficiencies, {}) as DmCharacter["proficiencies"],
+      hp_max: Number(row.hp_max),
+      hp_current: Number(row.hp_current),
+      hp_temp: Number(row.hp_temp),
+      hit_dice: safeParseObject(row.hit_dice, { die: "d8", total: 1, remaining: 1 }) as unknown as DmHitDice,
+      ac: Number(row.ac),
+      speed: Number(row.speed),
+      inventory: safeParseArray(row.inventory, []),
+      spells: safeParseObject(row.spells, {}) as Record<string, unknown>,
+      conditions: safeParseArray(row.conditions, []) as string[],
+      death_saves: safeParseObject(row.death_saves, { successes: 0, failures: 0 }) as unknown as DmDeathSaves,
+      notes: (row.notes as string | null) ?? null,
+      created_at: String(row.created_at),
+      updated_at: String(row.updated_at),
+    };
+  }
+
+  getDmCharacter(campaignId: string): DmCharacter | null {
+    const row = this.db.prepare(
+      "SELECT * FROM magister_dm_characters WHERE campaign_id = ? ORDER BY created_at ASC LIMIT 1",
+    ).get(campaignId) as Record<string, unknown> | undefined;
+    return row ? this.parseDmCharacterRow(row) : null;
+  }
+
+  patchDmCharacter(
+    characterId: string,
+    patch: {
+      name?: string;
+      level?: number;
+      xp?: number;
+      hp_current?: number;
+      hp_temp?: number;
+      ac?: number;
+      speed?: number;
+      conditions?: string[];
+      hit_dice?: DmHitDice;
+      death_saves?: DmDeathSaves;
+      inventory?: unknown[];
+      proficiencies?: { saves?: string[]; skills?: string[] };
+      proficiency_bonus?: number;
+      hp_max?: number;
+      abilities?: DmAbilityScores;
+      notes?: string | null;
+      background?: string | null;
+    },
+  ): DmCharacter | null {
+    const transforms: Record<string, (v: unknown) => unknown> = {
+      name: v => v,
+      level: v => v,
+      xp: v => v,
+      hp_current: v => v,
+      hp_temp: v => v,
+      hp_max: v => v,
+      ac: v => v,
+      speed: v => v,
+      proficiency_bonus: v => v,
+      notes: v => v,
+      background: v => v,
+      conditions: v => JSON.stringify(v ?? []),
+      hit_dice: v => JSON.stringify(v ?? { die: "d8", total: 1, remaining: 1 }),
+      death_saves: v => JSON.stringify(v ?? { successes: 0, failures: 0 }),
+      inventory: v => JSON.stringify(v ?? []),
+      proficiencies: v => JSON.stringify(v ?? {}),
+      abilities: v => JSON.stringify(v),
+    };
+    const fields: string[] = [];
+    const values: unknown[] = [];
+    for (const [key, value] of Object.entries(patch)) {
+      if (value === undefined) continue;
+      const t = transforms[key];
+      if (!t) continue;
+      fields.push(`${key} = ?`);
+      values.push(t(value));
+    }
+    if (fields.length === 0) return this.getDmCharacterById(characterId);
+    const now = new Date().toISOString();
+    fields.push("updated_at = ?");
+    values.push(now);
+    values.push(characterId);
+    this.db.prepare(`UPDATE magister_dm_characters SET ${fields.join(", ")} WHERE id = ?`).run(...values);
+    return this.getDmCharacterById(characterId);
+  }
+
+  private getDmCharacterById(id: string): DmCharacter | null {
+    const row = this.db.prepare("SELECT * FROM magister_dm_characters WHERE id = ?").get(id) as
+      | Record<string, unknown>
+      | undefined;
+    return row ? this.parseDmCharacterRow(row) : null;
+  }
+
+  appendDmEvent(opts: { campaignId: string; kind: DmEventKind; payload: Record<string, unknown> }): DmEvent {
+    const now = new Date().toISOString();
+    const row = {
+      id: randomUUID(),
+      campaign_id: opts.campaignId,
+      kind: opts.kind,
+      payload: JSON.stringify(opts.payload ?? {}),
+      created_at: now,
+    };
+    this.db.prepare(`
+      INSERT INTO magister_dm_events (id, campaign_id, kind, payload, created_at)
+      VALUES (@id, @campaign_id, @kind, @payload, @created_at)
+    `).run(row);
+    return {
+      id: row.id,
+      campaign_id: row.campaign_id,
+      kind: row.kind,
+      payload: opts.payload ?? {},
+      created_at: row.created_at,
+    };
+  }
+
+  /** Latest N events, returned in ascending (chronological) order. */
+  listDmEvents(campaignId: string, opts: { limit?: number } = {}): DmEvent[] {
+    const limit = opts.limit ?? 100;
+    const rows = this.db.prepare(
+      "SELECT * FROM magister_dm_events WHERE campaign_id = ? ORDER BY created_at DESC LIMIT ?",
+    ).all(campaignId, limit) as Array<Record<string, unknown>>;
+    return rows.reverse().map(r => this.parseDmEventRow(r));
+  }
+
+  getDmEventById(id: string): DmEvent | null {
+    const row = this.db.prepare("SELECT * FROM magister_dm_events WHERE id = ?").get(id) as
+      | Record<string, unknown>
+      | undefined;
+    return row ? this.parseDmEventRow(row) : null;
+  }
+
+  /**
+   * Events strictly after `sinceCreatedAt`, ascending. Used by the narration
+   * route's since_event_id mode to fetch unsaid history.
+   */
+  listDmEventsAfter(
+    campaignId: string,
+    sinceCreatedAt: string,
+    limit: number = 30,
+  ): DmEvent[] {
+    const rows = this.db.prepare(
+      "SELECT * FROM magister_dm_events WHERE campaign_id = ? AND created_at > ? ORDER BY created_at ASC LIMIT ?",
+    ).all(campaignId, sinceCreatedAt, limit) as Array<Record<string, unknown>>;
+    return rows.map(r => this.parseDmEventRow(r));
+  }
+
+  private parseDmEventRow(r: Record<string, unknown>): DmEvent {
+    return {
+      id: String(r.id),
+      campaign_id: String(r.campaign_id),
+      kind: r.kind as DmEventKind,
+      payload: safeParseObject(r.payload, {}),
+      created_at: String(r.created_at),
+    };
+  }
+
   // ── Cleanup ───────────────────────────────────────────────────────────────
 
   close(): void {
     this.db.close();
+  }
+}
+
+// Module-private JSON helpers: safe defaults on parse failure so a corrupted
+// row doesn't crash a request handler. These live below the class so the
+// helpers above can reference them without `this`.
+function safeParseObject(raw: unknown, fallback: Record<string, unknown>): Record<string, unknown> {
+  if (raw == null) return { ...fallback };
+  if (typeof raw !== "string") return { ...fallback };
+  try {
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) return parsed as Record<string, unknown>;
+    return { ...fallback };
+  } catch {
+    return { ...fallback };
+  }
+}
+
+function safeParseArray(raw: unknown, fallback: unknown[]): unknown[] {
+  if (raw == null) return [...fallback];
+  if (typeof raw !== "string") return [...fallback];
+  try {
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [...fallback];
+  } catch {
+    return [...fallback];
   }
 }

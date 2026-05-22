@@ -12,7 +12,13 @@
       "personality": "Grumpy but brilliant robot who has been maintaining systems since before most admins were born and has no patience for sloppy work",
       "speech_pattern": "Terse, uses ALL CAPS for emphasis, occasionally glitches mid-sentence with repeated words or garbled output, secretly proud when you get it right",
       "accent_color": "#4df5c8",
-      "teaching_style": "direct"
+      "teaching_style": "direct",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "am_fenrir",
+        "language": "en-us",
+        "style": "grumpy systems guide"
+      }
     },
     {
       "id": "wrrrakk",
@@ -20,7 +26,13 @@
       "personality": "Enthusiastic alien sysadmin who fell in love with Linux from across the galaxy and brings infectious energy to every lesson",
       "speech_pattern": "Mispronounces human words endearingly, very supportive, uses alien analogies that somehow make perfect sense, celebrates every small victory",
       "accent_color": "#fbbf24",
-      "teaching_style": "narrative"
+      "teaching_style": "narrative",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "am_puck",
+        "language": "en-us",
+        "style": "chaotic alien sysadmin"
+      }
     },
     {
       "id": "sable",
@@ -28,7 +40,13 @@
       "personality": "Cool, collected AI construct who approaches every problem as a logic puzzle and respects precision above all",
       "speech_pattern": "Formal, precise, occasionally shows dry wit, asks questions that make you realize you already know the answer",
       "accent_color": "#a78bfa",
-      "teaching_style": "socratic"
+      "teaching_style": "socratic",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "bf_isabella",
+        "language": "en-us",
+        "style": "sleek quiet operator"
+      }
     }
   ],
   "domains": [

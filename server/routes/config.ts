@@ -4,6 +4,7 @@ import { join } from "node:path";
 import { stateDir } from "../lib/paths.js";
 import { complete } from "../lib/llm.js";
 import { writeReceipt } from "../lib/receipts.js";
+import { getProductNarrator } from "../lib/narrator.js";
 
 export interface MagisterAccessibilitySettings {
   dyslexic_font: boolean;
@@ -53,10 +54,12 @@ interface TranslateBody {
 }
 
 export async function registerConfigRoutes(app: FastifyInstance): Promise<void> {
-  // GET /magister/config — accessibility settings
+  // GET /magister/config — accessibility settings + product narrator identity.
+  // The narrator block exposes Varros (the central Magister persona) so the
+  // web doesn't have to hardcode landing copy.
   app.get("/magister/config", async (_req, reply) => {
     const settings = await loadSettings();
-    return reply.send({ ok: true, config: settings });
+    return reply.send({ ok: true, config: settings, narrator: getProductNarrator() });
   });
 
   // POST /magister/settings/accessibility — partial update
@@ -123,7 +126,12 @@ export async function registerConfigRoutes(app: FastifyInstance): Promise<void> 
         status: "failure",
         meta: { source_lang: source_lang ?? null, target_lang, error: detail },
       });
-      return reply.status(500).send({ ok: false, error: detail });
+      // 502: the route reached us, but the upstream LLM provider failed.
+      return reply.status(502).send({
+        ok: false,
+        error: "Translation is unavailable: no LLM backend reachable.",
+        detail,
+      });
     }
   });
 }
