@@ -10,7 +10,16 @@ Magister teaches one concept per session through a chosen companion (a character
 
 Above the subject companions sits **Varros**, the product narrator — the voice the learner hears at the Hall, between sessions, and in any future product-level mode that does not bind to a subject companion. Varros is defined in `server/lib/narrator.ts` and surfaced via `GET /magister/config`. Subject companions (Marcus for Latin, Wei for Mandarin, etc.) are unchanged.
 
-Curriculum lives in `./curriculum/<subject>/config.json` — each one declares the world, companions, domains, concepts, and (optionally) a mastery spine. 17 subjects ship today: latin, mandarin, vietnamese, spanish, french, history, history-through-story, science, mathematics, social-emotional, financial-basics, inkwell, linux, a-plus, network-plus, security-plus, prompt-engineering.
+Curriculum lives in `./curriculum/<subject>/config.json` — each one declares the world, companions, domains, concepts, and (optionally) a mastery spine. 19 subjects ship today: latin, mandarin, vietnamese, spanish, french, history, history-through-story, science, mathematics, social-emotional, financial-basics, inkwell, linux, a-plus, network-plus, security-plus, prompt-engineering, **ai-literacy**, **ai-systems**.
+
+### AI Literacy and AI Systems
+
+Two modules focused on using and operating AI well — added because Magister is meant to be an AI-native open-source learning environment, and the literature in this space tends toward either marketing or vendor lock-in. These are deliberately neither.
+
+- **AI Literacy** (`curriculum/ai-literacy/`, beginner, `all` ages) — ten lessons covering what large language models actually do, how to write prompts that work, recognising hallucinations and verifying answers, the trade-off between local and cloud AI, privacy and data boundaries, and practical workflows for learning, writing, and coding with AI. The mentor (Iris) is patient and plain-spoken; the second companion (Field) is an evidence-first researcher who teaches verification habits alongside use. No hype, no brand recommendations, and a strong default toward verifying anything that matters before acting.
+- **AI Systems & Agent Operations** (`curriculum/ai-systems/`, intermediate, `adult`) — ten lessons on what makes an agent different from a chatbot, tool calls and action boundaries, capability contracts, memory vs chat history, runtime truth and health checks, receipts and audit trails, approval gates and operator authority, model routing, drift detection, and release readiness with backups and rollback. Atlas (the release captain) and Pico (an agent engineer) co-teach. Anchors the systems angle the rest of Magister already lives by: a system that cannot be inspected, paused, or rolled back is not a system you control.
+
+Both modules expose `learning_objectives`, `lessons[]` (each with `objectives`, `key_concepts`, `practice`, and a `mastery_checkpoint`), `practice_activities[]` for free-form exercises, and `review_questions[]` with model answers — the structured fields are available via `GET /magister/modules/:id` for any UI that wants to render them outside of the companion-driven session flow.
 
 ## Architecture
 
@@ -221,9 +230,9 @@ Magister is the extraction of `/mnt/ai/squidley-v2/modules/experiences/magister/
 - DM narration endpoint that is structurally prevented from mutating engine state (`/magister/dm/campaigns/:id/narrate`)
 - `/dm` standalone web UI
 - Voice routes (Piper TTS, ElevenLabs TTS, whisper.cpp STT — when local binaries are configured)
-- Curriculum scan of 17 subjects
+- Curriculum scan of 19 subjects (now includes `ai-literacy` and `ai-systems`)
 - Product narrator (Varros) exposed via `/magister/config`
-- Smoke test (`npm run smoke`) and baseline node:test suite (`npm test` — 147 tests)
+- Smoke test (`npm run smoke`) and baseline node:test suite (`npm test` — 241 tests)
 
 Known limitations (not blockers, future polish):
 

@@ -138,16 +138,21 @@ async function bootRegistryHarness(): Promise<{ db: MagisterDB; cleanup: () => P
   };
 }
 
-test("buildVoiceRegistry surfaces 27 profiles (Varros + 26 companions) when probing live disk", async () => {
+test("buildVoiceRegistry surfaces 31 profiles (Varros + 30 companions) when probing live disk", async () => {
+  // Count expectation tracks the curriculum on disk. Adding/removing a
+  // companion in any module/*/config.json should bump this number — the
+  // test exists to catch silent loss of a voice, not to enforce a
+  // constant. Last bumped 2026-05-22 when ai-literacy + ai-systems
+  // added iris, field, atlas, pico.
   __setKokoroFetchForTesting(async () => { throw new Error("stub: not reachable"); });
   const { db, cleanup } = await bootRegistryHarness();
   try {
     const reg = await buildVoiceRegistry(db, { probeKokoro: true });
-    assert.equal(reg.voices.length, 27, `expected 27 voices, got ${reg.voices.length}`);
+    assert.equal(reg.voices.length, 31, `expected 31 voices, got ${reg.voices.length}`);
     const ids = new Set(reg.voices.map(v => v.id));
     assert.ok(ids.has("varros-default"));
     // Spot-check a few companions across different modules.
-    for (const cid of ["maren", "cronk", "marcus", "tessera", "sol"]) {
+    for (const cid of ["maren", "cronk", "marcus", "tessera", "sol", "iris", "atlas"]) {
       assert.ok(ids.has(`${cid}-default`), `expected ${cid}-default in registry`);
     }
   } finally {
@@ -206,7 +211,8 @@ test("no profile in the live registry uses engine:'elevenlabs' (Maren migrated)"
   }
 });
 
-test("GET /magister/voices returns exactly 27 entries when run against the real curriculum", async () => {
+test("GET /magister/voices returns exactly 31 entries when run against the real curriculum", async () => {
+  // Mirror of the buildVoiceRegistry count above. Bump together.
   __setKokoroFetchForTesting(async () => { throw new Error("stub"); });
   const dir = mkdtempSync(join(tmpdir(), "magister-6e-route-"));
   const db = new MagisterDB(join(dir, "test.db"));
@@ -221,7 +227,7 @@ test("GET /magister/voices returns exactly 27 entries when run against the real 
     assert.equal(res.statusCode, 200);
     const body = res.json() as { ok: boolean } & VoiceRegistry;
     assert.equal(body.ok, true);
-    assert.equal(body.voices.length, 27);
+    assert.equal(body.voices.length, 31);
     // Anti-faking guard: when Kokoro is unreachable, no Kokoro voice may
     // simultaneously claim available:true.
     const fake = body.voices.find(v => v.engine === "kokoro" && v.available === true);

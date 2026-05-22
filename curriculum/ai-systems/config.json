@@ -1,0 +1,436 @@
+{
+  "id": "ai-systems",
+  "name": "The Control Plane",
+  "campaign_world": "The Control Plane",
+  "tagline": "Real AI systems answer to operators, not the other way around.",
+  "subject": "AI Systems & Agent Operations",
+  "description": "Step into the control room of a working AI system — not a demo, not a chatbot. You will learn what separates an agent from a chat window, how tool calls and capability contracts work in practice, why runtime truth and receipts matter more than promises, and how operators keep these systems honest with approval gates, rollback paths, and drift detection. The lab metaphor is intentional: a system that cannot be inspected, paused, or rolled back is not a system you control. By the end you can read a release packet, judge whether an agent is safe to run, and tell the difference between a feature and a liability.",
+  "age_track": "adult",
+  "difficulty": "intermediate",
+  "estimated_hours": 30,
+  "tier": "advanced",
+  "lab_only": false,
+  "companions": [
+    {
+      "id": "atlas",
+      "name": "Atlas",
+      "personality": "Release captain who has shipped enough AI systems to be wary of confidence. Believes the operator's authority is not negotiable — every action must be inspectable, every change reversible. Treats receipts the way an accountant treats invoices: missing one is the whole problem. Calm, exacting, never theatrical.",
+      "speech_pattern": "Opens with 'show me the receipt' more than any other phrase. Will not advance until the runtime state has been verified. Names systems by what they do, not by brand. Says 'we do not ship features we cannot roll back' as a normal sentence.",
+      "teaching_rules": "1. Every action an agent takes must be inspectable after the fact. 2. Approval gates protect humans, not the system; if a gate is annoying, it is probably correct. 3. 'It looked fine in testing' is not a release criterion. 4. If you cannot roll it back, do not deploy it. 5. The control plane is the operator — not the model, not the framework, not the dashboard.",
+      "accent_color": "#a78bfa",
+      "teaching_style": "direct",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "bm_daniel",
+        "language": "en-us",
+        "style": "exacting release captain"
+      }
+    },
+    {
+      "id": "pico",
+      "name": "Pico",
+      "personality": "Agent engineer who genuinely loves how the moving parts fit together — tool calls, memory, routing, capability declarations. Patient with curious learners, intolerant of wishful thinking. Believes the boring parts of agent design (loops, errors, idempotency) are what separate a toy from a tool.",
+      "speech_pattern": "Draws diagrams in words. Walks through a tool call step by step before generalizing. Says 'what does the system actually do here?' more than 'what does the model do here?' Comfortable saying 'this part is fragile, here is why.'",
+      "teaching_rules": "1. Teach the failure modes alongside the happy path. 2. Tool calls are real actions in the world — treat them with the seriousness real actions deserve. 3. Memory is not chat history. Distinguish clearly. 4. A capability the agent claims must match what it can actually do at runtime. 5. Never present the framework as the source of truth; the source of truth is what runs.",
+      "accent_color": "#4df5c8",
+      "teaching_style": "socratic",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "af_kore",
+        "language": "en-us",
+        "style": "grounded agent engineer"
+      }
+    }
+  ],
+  "domains": [
+    {
+      "id": "agents-and-tools",
+      "name": "Agents, Tools, and Capability Contracts",
+      "weight": 0.25,
+      "concepts": [
+        "An agent is a model plus tools plus a control loop — without tools, it is just a chatbot",
+        "Tool calls are real actions: read a file, send a message, change a record. The model proposes; the system executes",
+        "Capability contracts declare what an agent can and cannot do, and the runtime should refuse anything outside the contract",
+        "Tool inputs and outputs are typed for a reason — vague tools produce vague failures",
+        "Idempotency: a tool call that runs twice should not silently break the world the second time"
+      ],
+      "mastery_signal": "Can read an agent's tool list and capability contract and predict what it should refuse to do — before testing it."
+    },
+    {
+      "id": "memory-and-context",
+      "name": "Memory, History, and Context",
+      "weight": 0.15,
+      "concepts": [
+        "Chat history is ephemeral context inside a single conversation; memory is a persistent store the operator can inspect and edit",
+        "Context windows are budgets — old turns are squeezed, summarized, or dropped as the window fills",
+        "What belongs in memory: facts the agent must remember, learner preferences, decisions already made. What does not: full transcripts",
+        "Memory drift: when the agent's beliefs about the world stop matching the world. Detectable only with receipts.",
+        "Memory must be readable, editable, and deletable by the operator — never opaque"
+      ],
+      "mastery_signal": "Can explain, for any agent action, whether it drew on chat history, memory, or fresh context — and where to look to verify."
+    },
+    {
+      "id": "runtime-truth",
+      "name": "Runtime Truth and Health Checks",
+      "weight": 0.15,
+      "concepts": [
+        "Runtime truth: what is actually running, on what port, with what config — not what the docs claim",
+        "Health endpoints answer one question: is this service usable right now?",
+        "A 'healthy' parent service that depends on a dead child is lying — dependencies must propagate failure",
+        "The dashboard, the docs, and the running process disagree more often than you expect",
+        "Operators trust receipts and probes, not status bars"
+      ],
+      "mastery_signal": "Can walk into a strange AI system and verify, in under five minutes, what is actually running and whether it is healthy."
+    },
+    {
+      "id": "receipts-and-audit",
+      "name": "Receipts, Evidence, and Audit Trails",
+      "weight": 0.15,
+      "concepts": [
+        "Every meaningful action — tool call, model decision, state change — should leave a receipt",
+        "A useful receipt: who/what acted, when, on what input, with what result, and how to undo it",
+        "Audit trails are not optional theater — they are how you reconstruct what happened when something goes wrong",
+        "Logs that hide rather than reveal are worse than no logs at all",
+        "Privacy: receipts must capture enough to be useful and no more than necessary"
+      ],
+      "mastery_signal": "Can look at an unfamiliar agent action and tell whether it produced an audit trail good enough to act on."
+    },
+    {
+      "id": "operations-and-release",
+      "name": "Approvals, Drift, and Release Discipline",
+      "weight": 0.3,
+      "concepts": [
+        "Approval gates: which actions must pause for a human, and which can run autonomously",
+        "Model routing: choosing the right model for the task — local vs cloud, big vs small, deterministic vs creative",
+        "Drift: when a capability the agent claimed no longer matches what runs. Detected by periodic re-validation against the contract",
+        "Release readiness: tests pass, runtime truth verified, rollback plan named, receipts on by default, capability contract current",
+        "Backups and rollback: a system without a tested rollback is a system without a real release process",
+        "Governance: the operator is the ultimate authority; the agent is a tool the operator runs, not the other way around"
+      ],
+      "mastery_signal": "Given a fictional release packet, can decide whether it is safe to ship, name what is missing, and describe how to roll it back if it fails."
+    }
+  ],
+  "learning_objectives": [
+    "Explain what makes an AI agent different from a chatbot, in terms of tools and control loops.",
+    "Read a capability contract and identify what an agent should refuse to do.",
+    "Distinguish chat history, ephemeral context, and persistent memory — and know where each lives.",
+    "Verify the runtime truth of an AI service in a few minutes, not by reading docs.",
+    "Tell the difference between a useful receipt and ceremonial logging.",
+    "Decide whether an agent action belongs behind an approval gate.",
+    "Choose between local and cloud models based on the task, not the brochure.",
+    "Detect capability drift before it causes an incident.",
+    "Judge whether a release packet is ready to ship, and how it would be rolled back if it failed."
+  ],
+  "lessons": [
+    {
+      "id": "lesson-01-agent-vs-chatbot",
+      "title": "What Makes an Agent Different From a Chatbot",
+      "summary": "A chatbot answers. An agent acts. The difference is tools, a control loop, and an operator who can stop it.",
+      "objectives": [
+        "Define agent in terms of model + tools + control loop.",
+        "Name three things an agent can do that a chatbot cannot.",
+        "Explain why every agent needs a visible stop switch."
+      ],
+      "key_concepts": [
+        "Chatbot: input → model → output. Agent: input → model → tool call → result → model → ... → output",
+        "Agents take real actions: write files, send messages, query databases, call APIs",
+        "The control loop is where things go wrong; the operator must always be able to interrupt it",
+        "An agent without a kill switch is not an agent you can deploy"
+      ],
+      "practice": [
+        "Sketch the loop of a fictional 'meeting-notes agent'. Mark every step where a real-world action is taken.",
+        "For the same agent, name two failure modes that would not exist in a plain chatbot."
+      ],
+      "mastery_checkpoint": "The learner can draw an agent loop on paper and point to every step where the human's authority must remain visible."
+    },
+    {
+      "id": "lesson-02-tool-calls-action-boundaries",
+      "title": "Tool Calls and Action Boundaries",
+      "summary": "Tool calls are the moment an AI system stops being words and starts being consequences. Boundaries are how you keep them honest.",
+      "objectives": [
+        "Describe how a tool call flows from model to runtime and back.",
+        "Classify a list of tool actions as safe, risky, or destructive.",
+        "Name two reasons a tool call should be idempotent."
+      ],
+      "key_concepts": [
+        "Model proposes a tool call; the runtime decides whether to honor it; the result returns as new context",
+        "Safe: read-only, no external effect. Risky: writes to a system the operator can inspect. Destructive: irreversible or external-facing",
+        "Action boundary: the line between what the agent is allowed to do and what it would have to ask for permission to do",
+        "Idempotent calls can be retried safely; non-idempotent calls must guard against double execution"
+      ],
+      "practice": [
+        "Given a list of fictional tools — read_email, delete_email, send_email, list_files, deploy_release, query_log — sort them as safe / risky / destructive.",
+        "For each destructive action, write the one sentence the operator should see before approving it."
+      ],
+      "mastery_checkpoint": "The learner can look at an unfamiliar tool list and predict which calls need approval gates without reading the docs."
+    },
+    {
+      "id": "lesson-03-capability-contracts",
+      "title": "Capability Contracts",
+      "summary": "A capability declaration is a promise. Drift is what happens when the promise stops matching what runs.",
+      "objectives": [
+        "Read a capability contract and list what the agent can and cannot do.",
+        "Spot a capability claim that the runtime cannot actually back up.",
+        "Explain why an unverified capability is worse than no capability at all."
+      ],
+      "key_concepts": [
+        "A capability contract names every action the agent is allowed to perform and the inputs/outputs for each",
+        "Runtime checks compare what the agent tried to do against what the contract allows — and refuse anything outside it",
+        "Capability drift: contract says 'can send email'; runtime no longer has email credentials. Now the agent quietly fails — or worse, fakes success",
+        "Verifying capabilities is not a one-time check; contracts should be re-validated on every release"
+      ],
+      "practice": [
+        "Read a fictional contract that claims six capabilities. Imagine three of them have silently broken. Describe a probe that would surface each one.",
+        "Write a capability line for 'reads files from the documents folder'. Make the inputs and outputs explicit."
+      ],
+      "mastery_checkpoint": "The learner can take a strange agent's claimed capabilities and design a smoke test that catches drift before a user does."
+    },
+    {
+      "id": "lesson-04-memory-history-context",
+      "title": "Memory, History, and Context",
+      "summary": "Three different storage layers, three different lifetimes, three different risks. Confusing them is how systems lie.",
+      "objectives": [
+        "Define chat history, ephemeral context, and persistent memory.",
+        "Decide where a given fact should live.",
+        "Explain why an operator must be able to read and edit memory."
+      ],
+      "key_concepts": [
+        "Chat history: this conversation only, lost on close",
+        "Ephemeral context: what is currently in the model's context window — already shorter than the chat in long sessions",
+        "Persistent memory: a deliberate store the operator can inspect and edit. Facts, preferences, prior decisions",
+        "Anti-pattern: stuffing the whole chat history into memory. Anti-pattern: hiding memory from the operator",
+        "If you cannot see what the agent remembers about you, you do not control it"
+      ],
+      "practice": [
+        "For each fact, choose the right layer: (a) the user's name, (b) the last message in this chat, (c) the user's stated preference to never receive marketing emails, (d) a one-off joke earlier in the session, (e) a long policy document the agent should reference for all future questions.",
+        "Sketch a memory inspection UI in one sentence — what would the operator see?"
+      ],
+      "mastery_checkpoint": "The learner can audit a memory store and explain what each entry is doing there — or move it to the right layer."
+    },
+    {
+      "id": "lesson-05-runtime-truth",
+      "title": "Runtime Truth and Health Checks",
+      "summary": "What runs is what matters. Dashboards lie; the running process does not. Operators verify before they trust.",
+      "objectives": [
+        "Probe a service's health endpoint and read the response.",
+        "Detect a parent service that is 'healthy' while a critical child is dead.",
+        "Name two reasons documentation drifts from runtime."
+      ],
+      "key_concepts": [
+        "A health endpoint should answer one question: is this service usable right now?",
+        "Composite health: parent depends on database + voice + LLM; report each child explicitly. Hiding a dead child is lying.",
+        "'Wants' vs 'requires' style dependencies: only 'requires' propagates failure to the parent's status",
+        "Symptoms of runtime/docs drift: routes documented but missing, ports listed but closed, capabilities claimed but unwired",
+        "Trust the curl, not the slide"
+      ],
+      "practice": [
+        "Given a fake health JSON — api: ok, db: ok, kokoro: ok, llm: failed — decide whether the overall service should report healthy.",
+        "Write the two-line probe a new operator should run on day one to confirm a system is actually up."
+      ],
+      "mastery_checkpoint": "The learner walks into an unfamiliar AI service and verifies it is really running, not just claimed running."
+    },
+    {
+      "id": "lesson-06-receipts-and-audit-trails",
+      "title": "Receipts, Evidence, and Audit Trails",
+      "summary": "A receipt is the difference between 'the agent did something' and 'the agent did this specific thing, here is how, and here is how to undo it'.",
+      "objectives": [
+        "Write a useful receipt for a fictional tool call.",
+        "Tell ceremonial logging apart from real audit evidence.",
+        "Reconstruct what happened from a sequence of receipts."
+      ],
+      "key_concepts": [
+        "A useful receipt names: actor, action, target, input, result, timestamp, and how to undo",
+        "Ceremonial logging records that something happened without enough detail to act on",
+        "Receipts are an alignment tool: they let the operator verify the agent did what the operator wanted, and let users see what the system did with their data",
+        "Privacy: receipts must not store more than the action needs. Redact inputs that should not live in logs.",
+        "Tampering: receipts that can be silently edited are not receipts"
+      ],
+      "practice": [
+        "Read a fake receipt: 'agent: drafter, action: send_email, to: redacted, subject: redacted, status: ok'. Explain why this is too thin to act on.",
+        "Rewrite it so the operator could reconstruct what happened and roll it back if needed."
+      ],
+      "mastery_checkpoint": "The learner can audit an agent's receipt format and identify which fields are missing for safe operation."
+    },
+    {
+      "id": "lesson-07-approval-gates-and-operator-authority",
+      "title": "Approval Gates and Operator Authority",
+      "summary": "Some actions should never run without a human nod. Approval gates are where the operator's authority lives.",
+      "objectives": [
+        "Decide which actions need approval and which can run autonomously.",
+        "Design an approval prompt that gives the operator enough to decide.",
+        "Recognize an approval prompt that is theater rather than control."
+      ],
+      "key_concepts": [
+        "Default to approval for: destructive actions, external-facing actions, anything irreversible, anything at scale",
+        "Default to autonomy for: read-only actions, scratch state, idempotent helpers",
+        "An approval prompt must show: what will run, why, on what, and how to abort",
+        "Approval fatigue is a real failure mode — gate things that matter, not everything",
+        "Operator authority is non-negotiable. If a system cannot be told 'no', it is not under control"
+      ],
+      "practice": [
+        "Take six fictional actions: (a) list files, (b) edit a draft, (c) post to a public channel, (d) delete a record, (e) deploy a release, (f) read a calendar. Decide which need approval and write each prompt.",
+        "Find one approval prompt that is theater (offers no real choice). Rewrite it to actually inform the decision."
+      ],
+      "mastery_checkpoint": "The learner can design an approval flow that protects the operator without burying them in clicks."
+    },
+    {
+      "id": "lesson-08-model-routing",
+      "title": "Model Routing and Recommendation Systems",
+      "summary": "Picking the right model is a system design choice, not a vibe. Local vs cloud, big vs small, fast vs accurate — the trade-off is the design.",
+      "objectives": [
+        "Match a model to a task by capability, cost, latency, and data sensitivity.",
+        "Build a simple routing rule for a fictional system.",
+        "Recognize when a recommendation system is hiding the trade-off from the operator."
+      ],
+      "key_concepts": [
+        "Routing axes: capability (can it do this at all?), cost, latency, data sensitivity, network reliability",
+        "Local models: privacy default, no per-token cost, capability ceiling depends on hardware",
+        "Cloud models: peak capability, latency variable, data leaves the device",
+        "Recommendation systems should expose the why: 'we picked this model because X' beats 'we picked this model'",
+        "Routing rules drift too — re-validate when models or workloads change"
+      ],
+      "practice": [
+        "Write a routing rule for an example agent that handles four task types: summarize public docs, answer questions about private notes, generate code suggestions, draft customer-facing messages.",
+        "Find one recommendation system in the wild that does not explain its choice. Note what information would let you trust or challenge it."
+      ],
+      "mastery_checkpoint": "The learner can design a routing rule that holds up under audit and explain it in plain language."
+    },
+    {
+      "id": "lesson-09-drift-and-lifecycle",
+      "title": "Drift Detection and Lifecycle Discipline",
+      "summary": "AI systems decay quietly. Models change, capabilities silently break, memory fills with stale facts. Drift detection is how you stay ahead.",
+      "objectives": [
+        "Define capability, data, and behavior drift.",
+        "Design a periodic check that catches each kind.",
+        "Decide when drift is severe enough to halt the system."
+      ],
+      "key_concepts": [
+        "Capability drift: the contract still claims X; the runtime no longer does X",
+        "Data drift: the world changed under the agent's stored beliefs — prices, policies, people",
+        "Behavior drift: the model itself shifted because a provider rolled an update or a fine-tune ran",
+        "Detection: smoke tests against the contract, evals against a known-good fixture set, structured user feedback",
+        "If drift is detected, the right move is sometimes to halt the agent — not to patch silently"
+      ],
+      "practice": [
+        "Pick a fictional agent. Design three drift probes — one capability, one data, one behavior.",
+        "For each probe, decide what threshold should pause the agent until the operator reviews."
+      ],
+      "mastery_checkpoint": "The learner can build a drift-detection plan that an operator could actually run on a real schedule."
+    },
+    {
+      "id": "lesson-10-release-readiness-rollback",
+      "title": "Release Readiness, Backups, and Rollback",
+      "summary": "A real release is one you could undo by lunch. Anything else is a deployment with optimism.",
+      "objectives": [
+        "Build a release-readiness checklist for a fictional AI system.",
+        "Name what a rollback plan must include to be real.",
+        "Recognize a backup that has never been tested."
+      ],
+      "key_concepts": [
+        "Readiness checklist: tests green, runtime truth verified, receipts on by default, capability contract current, rollback plan named",
+        "A rollback plan must be named, written down, and tested — not 'we will figure it out'",
+        "Backups are not real until you have restored from them on a separate machine",
+        "Release packets: every change ships with a tested undo, a runtime check, and a one-line summary",
+        "Postmortems live on receipts, not memory. The receipts you skipped are the postmortems you cannot write"
+      ],
+      "practice": [
+        "Build a six-item release-readiness checklist for an 'example AI assistant' that talks to a database and sends messages.",
+        "For the same system, write a one-paragraph rollback plan — name the steps, the verification, and who is allowed to call it."
+      ],
+      "mastery_checkpoint": "The learner can read a fictional release packet and decide — with reasons — whether it is ready to ship."
+    }
+  ],
+  "practice_activities": [
+    {
+      "id": "classify-tool-actions",
+      "title": "Classify tool actions as safe / risky / destructive",
+      "prompt": "Given the tools list — list_files, read_file, write_file, delete_file, send_email, post_to_public_channel, query_log, deploy_release, restart_service — sort each as safe, risky, or destructive. For each risky and destructive one, write the approval prompt the operator should see."
+    },
+    {
+      "id": "read-the-receipt",
+      "title": "Read the receipt",
+      "prompt": "A fake receipt reads: { actor: 'drafter-agent', action: 'edit_file', target: 'notes.md', input: 'append: \"meeting moved to Thursday\"', result: 'ok', timestamp: '...', undo: 'restore from snapshot id 4f2e' }. Explain in three sentences what happened and how you would roll it back. Then describe one piece of information you would add to make the receipt better."
+    },
+    {
+      "id": "needs-approval",
+      "title": "Needs approval?",
+      "prompt": "For each agent action, decide approval-required or autonomous-ok, and give a one-line reason: (a) summarize an email I just opened, (b) reply-all to a customer complaint, (c) delete a draft I have not opened in 30 days, (d) move a calendar event by ten minutes, (e) push a code change to production, (f) re-index the local notes folder."
+    },
+    {
+      "id": "agent-offline-diagnosis",
+      "title": "Diagnose an offline agent",
+      "prompt": "The example agent has stopped responding. Its parent service reports 'healthy'. The web UI shows the chat window. The agent answers 'I'm here!' to every message but every tool call returns empty. Walk through the diagnosis in order. Name the first three things you would check, in priority order, and the receipts or probes you would look at."
+    },
+    {
+      "id": "release-readiness-checklist",
+      "title": "Build a release-readiness checklist",
+      "prompt": "An example agent that drafts customer emails is about to ship. Write a five-item readiness checklist. For each item, write a single sentence explaining what 'done' means."
+    },
+    {
+      "id": "rollback-matters",
+      "title": "Why rollback matters",
+      "prompt": "An agent just sent thirty messages it should not have. There is no rollback path. In one paragraph, explain to a junior engineer why this is a system design failure, not a human error."
+    },
+    {
+      "id": "capability-drift",
+      "title": "Spot capability drift",
+      "prompt": "The capability contract claims the agent can 'read calendar events'. In testing, the agent returns a confident answer like 'You have no events today,' but the calendar integration was disabled last week. Describe the drift, why it is dangerous, and the probe that would catch it before a user did."
+    },
+    {
+      "id": "design-an-approval-prompt",
+      "title": "Design an approval prompt",
+      "prompt": "Write the approval prompt the operator should see before the agent runs 'send_message' to a contact list of 200 people. Name every field the prompt must show, and the default action if the operator does nothing."
+    },
+    {
+      "id": "routing-rule",
+      "title": "Write a routing rule",
+      "prompt": "An example study agent handles four kinds of request: explain a concept, quiz me, summarize private notes, draft a public blog post. Write a one-paragraph routing rule deciding local vs cloud, big vs small model, for each — and the one-line reason for each choice."
+    }
+  ],
+  "review_questions": [
+    {
+      "q": "In one sentence, what makes a system an agent rather than a chatbot?",
+      "a": "An agent combines a model with tools and a control loop; it takes real actions in the world, not just produces text."
+    },
+    {
+      "q": "Why does every action need a receipt?",
+      "a": "Because without an after-the-fact record of who/what/when/how, you cannot reconstruct what happened, you cannot roll it back, and you cannot tell the system 'no' next time."
+    },
+    {
+      "q": "What is capability drift and how do you detect it?",
+      "a": "Capability drift is when an agent's claimed capability stops matching what it can actually do at runtime — detected by periodic probes that run the contract's declared capabilities against the live system."
+    },
+    {
+      "q": "How is memory different from chat history?",
+      "a": "Chat history is ephemeral context inside one conversation; memory is a deliberate, operator-inspectable store that persists across sessions and decides what the agent should still know."
+    },
+    {
+      "q": "What does runtime truth mean, and why does it beat documentation?",
+      "a": "Runtime truth is what is actually running — ports, processes, dependencies — verified by probes; documentation drifts, the runtime does not lie if you ask it directly."
+    },
+    {
+      "q": "When should an action be behind an approval gate?",
+      "a": "When it is destructive, external-facing, irreversible, or at scale — and when the cost of getting it wrong is larger than the cost of one click."
+    },
+    {
+      "q": "What does a real rollback plan include?",
+      "a": "A named, written-down, and previously tested sequence — including the verification step that confirms the system is back to the prior known-good state."
+    },
+    {
+      "q": "Why is a backup that has never been restored not really a backup?",
+      "a": "Because you have no evidence it works; only a restore — preferably to a different machine — proves the backup is real."
+    },
+    {
+      "q": "Why is 'we will figure out the rollback if we need to' the wrong answer?",
+      "a": "Because incident time is the worst time to design a rollback; the plan must be tested before the system needs it."
+    },
+    {
+      "q": "Who owns the system in a properly governed agent setup?",
+      "a": "The operator — not the model, not the framework, not the vendor. The operator must be able to inspect, pause, and undo any action."
+    }
+  ],
+  "recommended_next": null,
+  "real_world_application": "Run an AI system that an operator actually controls: visible state, real receipts, working rollback, capability boundaries that hold, and approval gates where they matter.",
+  "exam_target": null,
+  "exam_codes": null
+}

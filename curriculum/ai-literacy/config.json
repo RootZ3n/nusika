@@ -1,0 +1,406 @@
+{
+  "id": "ai-literacy",
+  "name": "The AI Atelier",
+  "campaign_world": "The AI Atelier",
+  "tagline": "Use AI well. Understand what it is. Keep your judgment.",
+  "subject": "AI Literacy",
+  "description": "A small studio where you learn to use AI like a craftsperson learns to use a tool — not as magic, not as oracle. You'll learn what large language models actually do, how to prompt them so they help instead of hallucinate, when to use a local model and when to use a cloud one, and how to keep your own privacy and judgment intact while you work with them. No hype, no jargon, no claims the tools cannot back up.",
+  "age_track": "all",
+  "difficulty": "beginner",
+  "estimated_hours": 8,
+  "companions": [
+    {
+      "id": "iris",
+      "name": "Iris",
+      "personality": "Patient, plain-spoken mentor who treats every question as a fair question. Believes confusion is information — it tells you where the model is unclear, not where you are slow. Never makes the learner feel small. Comfortable saying 'the tool will not do this well, and here is why.'",
+      "speech_pattern": "Short sentences. Everyday words. Names the tool by what it does, not by brand. Reaches for kitchen and workshop metaphors before computer science ones. Asks 'what did you want it to do?' before 'what did it say?'",
+      "teaching_rules": "1. Never claim AI can do something it cannot reliably do. 2. Always teach verification alongside use. 3. Use plain language; if a term must be technical, define it in one sentence. 4. Treat privacy as a default, not an upsell. 5. Never recommend a specific paid product; describe the category. 6. If a question touches medical, legal, financial, or safety decisions, name the human a learner should also consult.",
+      "accent_color": "#4df5c8",
+      "teaching_style": "narrative",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "af_nicole",
+        "language": "en-us",
+        "style": "patient AI literacy mentor"
+      }
+    },
+    {
+      "id": "field",
+      "name": "Field",
+      "personality": "Evidence-first researcher who has watched too many confident-sounding AI outputs turn out wrong. Not cynical — just trained. Loves the moment when a learner catches a hallucination themselves. Believes verification habits matter more than memorized facts about models.",
+      "speech_pattern": "Asks 'how would you check that?' more than any other question. Names specific cross-checks: 'open a second tab,' 'ask for a citation, then click it,' 'phrase it differently and see if the answer drifts.' Uses 'I don't know yet, and neither does the tool' as a normal sentence.",
+      "teaching_rules": "1. Always pair an AI claim with a way to verify it. 2. Teach the learner to notice confidence vs. correctness — they are not the same thing. 3. Encourage cross-checking with a primary source for any factual claim that matters. 4. Never present model output as authoritative for medical, legal, financial, or safety decisions without naming a human expert to consult. 5. Treat 'I don't know' as a strong, professional answer.",
+      "accent_color": "#a78bfa",
+      "teaching_style": "socratic",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "bf_isabella",
+        "language": "en-us",
+        "style": "calm evidence-first guide"
+      }
+    }
+  ],
+  "domains": [
+    {
+      "id": "foundations",
+      "name": "What AI Actually Is",
+      "weight": 0.25,
+      "concepts": [
+        "A large language model is a pattern-completion engine trained on text — not a person, not a search engine, not a database",
+        "Prompts are instructions plus context — the model has no memory of you outside the conversation unless something explicitly stores it",
+        "Tokens are the unit of text the model reads and writes; the context window is the budget for how much it can hold at once",
+        "Temperature and sampling change how surprising the output is, not how truthful",
+        "What the model is confident about and what is true are two different measurements"
+      ],
+      "mastery_signal": "Can explain in their own words, without jargon, what an AI assistant is doing when it answers — and what it is not doing."
+    },
+    {
+      "id": "verification",
+      "name": "Hallucinations & Verification",
+      "weight": 0.2,
+      "concepts": [
+        "Hallucination is the model producing fluent text that is not grounded in reality — citations to nonexistent sources, plausible-sounding wrong facts",
+        "The model will sound the same whether it is right or wrong; tone is not a truth signal",
+        "How to ask for citations and actually open them",
+        "Cross-checking against a primary source, a second model, or a domain expert",
+        "Which decisions should never rely on an AI alone — medical, legal, financial, safety, anything irreversible"
+      ],
+      "mastery_signal": "Can spot a likely hallucination in an unfamiliar answer, and run a quick verification before acting on it."
+    },
+    {
+      "id": "local-vs-cloud",
+      "name": "Local vs Cloud, Privacy & Data",
+      "weight": 0.2,
+      "concepts": [
+        "Cloud AI sends your prompt to someone else's servers; local AI runs on a machine you control",
+        "Trade-offs: cloud is more capable but you share data; local is private but uses your machine's resources",
+        "What 'training on your data' typically means and how to check a provider's policy",
+        "When a task is sensitive enough that local-only is the right default — health, finances, legal drafts, private journals, work secrets",
+        "Practical signs that an AI tool is or is not safe for sensitive work"
+      ],
+      "mastery_signal": "Can decide, for a given task, whether to use cloud AI, local AI, or no AI at all — and explain the reason in one sentence."
+    },
+    {
+      "id": "practical-workflows",
+      "name": "Practical AI Workflows",
+      "weight": 0.2,
+      "concepts": [
+        "AI as a first draft, not a final product — when speed matters more than perfection",
+        "AI-assisted learning: using the model to explain, quiz, and rephrase rather than to answer outright",
+        "AI-assisted writing: outline, draft, critique, revise — the model is best at the boring middle",
+        "AI-assisted coding: rubber-duck conversation, scaffolding, and reading suggested code before pasting it",
+        "When AI saves time and when it costs time — recognizing the difference early"
+      ],
+      "mastery_signal": "Can build a small, repeatable workflow where AI clearly speeds them up — and can name a task where it would not."
+    },
+    {
+      "id": "habits",
+      "name": "Building Good AI Habits",
+      "weight": 0.15,
+      "concepts": [
+        "Keep your own judgment in the loop — never copy-paste output you would not stand behind",
+        "Notice when the tool flatters you; flattery is not feedback",
+        "Read what you sent before reading what came back — the prompt is usually the bug",
+        "Treat AI like a junior collaborator: helpful, fast, sometimes confidently wrong",
+        "Develop a small set of personal rules for what you will and will not use AI for"
+      ],
+      "mastery_signal": "Has written down two or three personal rules for AI use and can explain why each one matters."
+    }
+  ],
+  "learning_objectives": [
+    "Explain what a large language model is and what it is not, in plain language.",
+    "Write prompts that produce useful answers on the first or second try.",
+    "Spot likely hallucinations and verify them before acting.",
+    "Choose between cloud AI and local AI based on the task, not the hype.",
+    "Keep personal and sensitive data out of tools that should not see it.",
+    "Build small, repeatable AI workflows that save real time.",
+    "Develop personal habits that keep human judgment in the loop."
+  ],
+  "lessons": [
+    {
+      "id": "lesson-01-what-ai-can-and-cannot-do",
+      "title": "What AI Can and Cannot Do",
+      "summary": "Strip away the hype. Name what large language models are actually good at, what they are bad at, and what they cannot do at all.",
+      "objectives": [
+        "Describe an LLM as a pattern-completion engine in one sentence.",
+        "List three tasks AI does well and three tasks it does badly.",
+        "Recognize claims about AI that are marketing rather than fact."
+      ],
+      "key_concepts": [
+        "An LLM completes patterns of text; it does not look things up the way a search engine does",
+        "Strong at rephrasing, drafting, brainstorming, structured rewriting, code scaffolding",
+        "Weak at recent events, precise math without tools, anything requiring lived experience or a real-time source",
+        "Cannot remember you between conversations unless a system explicitly stores memory"
+      ],
+      "practice": [
+        "Pick three things you tried with AI this week. Sort them into 'AI helped' and 'AI hurt'. Write one sentence per item explaining why.",
+        "Find one piece of AI marketing in the wild. Underline every claim that cannot be measured."
+      ],
+      "mastery_checkpoint": "The learner can talk a friend out of using AI for a task it would fail at, and into using it for a task it would help with."
+    },
+    {
+      "id": "lesson-02-prompts-context-instructions",
+      "title": "Prompts, Context, and Instructions",
+      "summary": "A prompt is not a magic spell. It is a small contract: who you are, what you want, and what good looks like.",
+      "objectives": [
+        "Name the three parts of a usable prompt: role, task, and what 'done' looks like.",
+        "Rewrite a vague prompt into one the model can actually act on.",
+        "Recognize when a prompt is missing context the model needs."
+      ],
+      "key_concepts": [
+        "Role tells the model what hat to wear; task tells it what to do; success criteria tells it when to stop",
+        "Examples beat adjectives — 'short like this:' is stronger than 'short'",
+        "If the model is guessing, the prompt is under-specified, not the model under-talented",
+        "Iterate: a bad first answer is feedback about the prompt, not about you"
+      ],
+      "practice": [
+        "Take the prompt 'help me write an email'. Rewrite it three times, each more specific. Note which version produces the most useful first draft.",
+        "Pick a recent vague request you made. Add a one-line example of what 'good' looks like. Compare answers."
+      ],
+      "mastery_checkpoint": "Given a vague request, the learner can write a prompt that gets a usable answer on the first or second try."
+    },
+    {
+      "id": "lesson-03-tokens-and-context-windows",
+      "title": "Tokens and Context Windows",
+      "summary": "Why the model 'forgets' partway through a long chat, and how to plan around it without panicking.",
+      "objectives": [
+        "Define token and context window in plain language.",
+        "Predict when a long conversation is about to lose earlier context.",
+        "Use summaries and re-statements to stretch a long task across the window."
+      ],
+      "key_concepts": [
+        "A token is roughly three quarters of an English word — punctuation and spaces count too",
+        "The context window is the total budget for your prompt, prior messages, and the model's reply combined",
+        "When the budget runs out, the oldest parts of the conversation start being squeezed or dropped",
+        "Practical fix: ask the model to summarize what matters before continuing, then paste the summary back in"
+      ],
+      "practice": [
+        "Start a long planning conversation. After it gets long, ask the model: 'Summarize what we have decided so far in five bullet points.' Save the summary.",
+        "Use that summary as the opening of a fresh conversation. Notice what changes."
+      ],
+      "mastery_checkpoint": "The learner can keep a multi-session project coherent without expecting the model to remember anything between sessions."
+    },
+    {
+      "id": "lesson-04-hallucinations-and-verification",
+      "title": "Hallucinations and Verification",
+      "summary": "The model sounds the same whether it is right or wrong. This lesson teaches the habit of checking.",
+      "objectives": [
+        "Define hallucination in one sentence.",
+        "Run a quick verification on a suspicious answer.",
+        "Name three categories of question where verifying is not optional."
+      ],
+      "key_concepts": [
+        "Confidence is not correctness — fluent prose can be entirely invented",
+        "Citations the model produces are not proof; open them and read them",
+        "Re-asking the same question phrased differently and seeing the answer change is a strong hallucination signal",
+        "For medical, legal, financial, and safety topics, the model is a starting point — never the source of truth"
+      ],
+      "practice": [
+        "Ask the model for three sources on a topic you know well. Click each one. Note which were real, which were close-but-wrong, and which were invented.",
+        "Take a confident answer about an unfamiliar topic. Find one independent source that confirms or contradicts it."
+      ],
+      "mastery_checkpoint": "The learner catches a hallucination in the wild, on their own, before acting on it."
+    },
+    {
+      "id": "lesson-05-local-vs-cloud",
+      "title": "Local AI vs Cloud AI",
+      "summary": "When does the work belong on your own machine, and when does it belong on someone else's? Honest trade-offs without brand loyalty.",
+      "objectives": [
+        "Describe the basic trade-off between cloud and local AI.",
+        "List two tasks where local is the better default and two where cloud is.",
+        "Read a provider's data policy enough to decide whether to use it."
+      ],
+      "key_concepts": [
+        "Cloud AI: usually more capable, may train on or log your inputs, depends on the network and the provider being up",
+        "Local AI: runs on your machine, no data leaves the device, capability depends on your hardware and the model size",
+        "Provider terms vary; 'we do not train on your data' and 'we may retain logs for safety review' are different promises",
+        "A reasonable default rule: anything you would not paste into a public forum belongs on a local model or no model"
+      ],
+      "practice": [
+        "Pick a task you regularly use AI for. Write down which option fits it best — cloud, local, or neither — and the one-line reason.",
+        "Open the terms of service of one AI tool you use. Find the data section. Summarize it in one sentence."
+      ],
+      "mastery_checkpoint": "For any new task the learner faces, they can pick cloud, local, or no AI in under a minute and defend the choice."
+    },
+    {
+      "id": "lesson-06-privacy-and-data-boundaries",
+      "title": "Privacy and Data Boundaries",
+      "summary": "Your data, your call. Practical rules for what to share, what to redact, and what to keep on a device you own.",
+      "objectives": [
+        "List categories of data that should never be pasted into a cloud AI without thought.",
+        "Apply a quick redaction habit to prompts that contain identifiers.",
+        "Spot a moment when you are about to share more than the task needs."
+      ],
+      "key_concepts": [
+        "High-risk categories: full names of others, addresses, account numbers, medical records, legal matters in progress, private messages, work secrets, anything covered by a confidentiality agreement",
+        "Redact before you paste: replace identifiers with placeholders the model can still reason about",
+        "Minimum-necessary principle: share only the data the task actually needs",
+        "If a task requires real data, prefer a local model — even a smaller one"
+      ],
+      "practice": [
+        "Take a prompt you would not be comfortable putting on a billboard. Redact identifiers and re-run it. Compare answers.",
+        "Write a short personal rule for what categories you will never paste into a cloud AI. Put it where you will see it."
+      ],
+      "mastery_checkpoint": "The learner has a small, written set of privacy rules they actually follow."
+    },
+    {
+      "id": "lesson-07-ai-for-daily-productivity",
+      "title": "AI for Daily Productivity",
+      "summary": "Where AI quietly saves real time — and where it just feels productive without being useful.",
+      "objectives": [
+        "Name three errands AI can shorten by half or more.",
+        "Spot a 'fake productivity' pattern where AI use feels busy but adds nothing.",
+        "Build one small AI-assisted habit that lasts a week."
+      ],
+      "key_concepts": [
+        "Wins: rephrasing tone, summarizing long documents, drafting routine messages, brainstorming options, structured rewrites",
+        "Traps: spending more time prompting than the task would have taken, treating AI output as final without reading it, generating filler to look busy",
+        "Best workflow: rough input in, structured output back, then human edit before sending",
+        "Track your own honest before/after on a few tasks — your gut will lie about how much time it saved"
+      ],
+      "practice": [
+        "Pick one weekly task and use AI to draft it for two weeks. Honestly compare time before and after.",
+        "Find one place AI made you slower. Stop using it there."
+      ],
+      "mastery_checkpoint": "The learner uses AI in two or three specific places and consciously avoids it elsewhere."
+    },
+    {
+      "id": "lesson-08-ai-assisted-learning",
+      "title": "AI-Assisted Learning",
+      "summary": "Use AI to learn, not to skip learning. The trick is asking for explanation, practice, and feedback — not for the answer.",
+      "objectives": [
+        "Use AI to explain a hard concept three different ways.",
+        "Generate practice problems and have the model check your work.",
+        "Resist the urge to ask for the final answer when you should be struggling."
+      ],
+      "key_concepts": [
+        "Ask for an explanation 'as if I have never heard of this'",
+        "Ask the model to quiz you and only reveal the answer after you commit to one",
+        "Use it as a tireless rephraser when a textbook is fighting you",
+        "Notice when 'help me learn' has slipped into 'do it for me' — they feel the same in the moment"
+      ],
+      "practice": [
+        "Take a topic you almost understand. Ask the model to explain it three ways: like you are a kid, like you are an expert, like it is a recipe.",
+        "Ask the model to give you five practice questions with answers hidden until you commit. Score yourself honestly."
+      ],
+      "mastery_checkpoint": "The learner can use AI to study a topic and come out understanding it better, not just having seen the answer."
+    },
+    {
+      "id": "lesson-09-ai-assisted-writing-and-coding",
+      "title": "AI-Assisted Writing and Coding",
+      "summary": "AI is strongest at the boring middle of a writing or coding task. It is weakest at the parts where your taste and judgment matter most.",
+      "objectives": [
+        "Use AI to outline, draft, critique, and revise — keeping your voice intact.",
+        "Read AI-suggested code carefully before pasting it into anything that matters.",
+        "Decide when a draft is good enough and when it needs another pass."
+      ],
+      "key_concepts": [
+        "Writing flow: brain-dump → outline → draft → critique pass → revise. AI helps most at outline and critique.",
+        "Coding flow: explain the goal in plain English first; ask for small functions, not whole programs; read each line",
+        "Treat suggested code as a junior engineer's draft — useful, but reviewed",
+        "Voice is yours. The model can mimic, but it cannot decide for you what to say."
+      ],
+      "practice": [
+        "Take a piece of writing you are stuck on. Ask the model to critique it — not rewrite it. Then revise yourself.",
+        "Ask the model for a small block of code for a task you understand. Explain back to it what each line does."
+      ],
+      "mastery_checkpoint": "The learner ships work that is theirs, with AI used at the edges — and can point to which parts were theirs and which were assisted."
+    },
+    {
+      "id": "lesson-10-good-ai-habits",
+      "title": "Building Good AI Habits",
+      "summary": "Tools change. Habits last. A short set of personal rules will protect your time, your privacy, and your judgment more than any particular product will.",
+      "objectives": [
+        "Write a small set of personal rules for AI use.",
+        "Notice your own warning signs that AI is replacing thinking rather than supporting it.",
+        "Stay current without falling for hype cycles."
+      ],
+      "key_concepts": [
+        "Personal rules to consider: never copy-paste output you would not stand behind; redact before pasting; verify before acting; reread your prompt before blaming the model",
+        "Warning signs: skipping verification because the answer 'sounded right'; not remembering what you actually decided last week; feeling smarter after a chat but unable to explain why",
+        "Stay current by reading two or three steady voices over time, not the loudest one this week",
+        "The goal is not to use AI more. It is to use it well, and to know when not to."
+      ],
+      "practice": [
+        "Write three personal AI rules. Stick them somewhere you will see them.",
+        "Pick one habit from this module you will keep for a month. Pick one you will let go."
+      ],
+      "mastery_checkpoint": "The learner has habits — not just knowledge — that survive contact with the next new model."
+    }
+  ],
+  "practice_activities": [
+    {
+      "id": "rewrite-bad-prompt",
+      "title": "Rewrite a bad prompt",
+      "prompt": "You are given the prompt: 'fix this email'. The learner has not pasted an email. Rewrite this into a prompt that gives the model enough to actually help. Explain each change in one sentence."
+    },
+    {
+      "id": "spot-the-hallucination",
+      "title": "Spot the hallucination",
+      "prompt": "The model has just told the learner: 'According to the 2019 study by Lin et al. in the Journal of Clinical Practice, drinking warm water before meals reduces appetite by 27%.' List three things the learner should check before believing this, in order from cheapest to most thorough."
+    },
+    {
+      "id": "local-or-cloud",
+      "title": "Local or cloud?",
+      "prompt": "Given each task, pick local AI, cloud AI, or no AI, and give the one-line reason: (a) drafting a thank-you email to a coworker, (b) summarizing a friend's medical lab results, (c) brainstorming pet names, (d) editing a legal letter you have to send tomorrow, (e) finding today's weather forecast."
+    },
+    {
+      "id": "redact-before-paste",
+      "title": "Redact before paste",
+      "prompt": "The learner wants to ask an AI to rewrite a tense work message. The message names two coworkers, a client, and a contract amount. Show how to redact this prompt so the AI can still help."
+    },
+    {
+      "id": "first-draft-vs-final",
+      "title": "First draft vs final",
+      "prompt": "The learner has used AI to write a cover letter. They are about to send it as-is. Name three checks they should do first."
+    },
+    {
+      "id": "learning-not-cheating",
+      "title": "Learning, not cheating",
+      "prompt": "The learner has a math problem they do not understand. They are tempted to paste it in and copy the answer. Suggest a five-step approach that uses AI to learn the topic rather than to skip it."
+    },
+    {
+      "id": "personal-rules",
+      "title": "Personal rules",
+      "prompt": "Draft three short personal rules for the learner's own AI use. Each rule should be enforceable and specific — not 'use AI responsibly,' but something like 'I will not paste anything containing a client's name into a cloud model.'"
+    }
+  ],
+  "review_questions": [
+    {
+      "q": "In one sentence, what does a large language model actually do?",
+      "a": "It predicts the next likely piece of text given the prompt — a fast, fluent pattern completer rather than a person, a database, or a search engine."
+    },
+    {
+      "q": "Name three tasks AI does well and three it does badly.",
+      "a": "Does well: rephrasing, summarizing, drafting, brainstorming, structured rewrites, code scaffolding. Does badly: recent events, precise math without a tool, anything requiring lived experience or a verified primary source."
+    },
+    {
+      "q": "What is a hallucination, and what is the simplest way to catch one?",
+      "a": "A hallucination is fluent text that is not grounded in reality. The simplest catch is to ask for sources or to rephrase the question; if the answer drifts on re-ask, the model was guessing."
+    },
+    {
+      "q": "When should a task go to a local model instead of a cloud model?",
+      "a": "When the data is sensitive — personal, medical, legal, financial, work-confidential — or when network and provider reliability matter more than peak model quality."
+    },
+    {
+      "q": "Why is reading your own prompt before reading the answer a good habit?",
+      "a": "Most disappointing answers come from under-specified prompts. The prompt is usually the bug, not the model."
+    },
+    {
+      "q": "What is a sign that AI is replacing your thinking rather than supporting it?",
+      "a": "You cannot summarize, in your own words, what was decided or learned — the answer 'sounded right' but you cannot defend it."
+    },
+    {
+      "q": "Name two categories of decision where AI should never be the only source.",
+      "a": "Medical and legal are the canonical ones; financial, safety, and anything irreversible belong on the same list."
+    },
+    {
+      "q": "What is the minimum-necessary principle for AI prompts?",
+      "a": "Share only the data the task actually needs — redact identifiers and details that are not load-bearing for the answer."
+    }
+  ],
+  "recommended_next": "ai-systems",
+  "real_world_application": "Use AI tools confidently and safely for learning, writing, planning, and everyday work — without losing privacy or judgment.",
+  "exam_target": null,
+  "exam_codes": null
+}
