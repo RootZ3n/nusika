@@ -180,6 +180,8 @@ export interface MagisterModuleRecord {
   installed: number;
   config_path: string | null;
   mastery_spine: string | null;
+  tier: string | null;
+  lab_only: number;
   created_at: string;
 }
 
@@ -589,6 +591,8 @@ export class MagisterDB {
       "ALTER TABLE magister_sessions ADD COLUMN atom_recap_artifact TEXT",
       "ALTER TABLE magister_sessions ADD COLUMN adult_mode INTEGER NOT NULL DEFAULT 1",
       "ALTER TABLE magister_modules ADD COLUMN mastery_spine TEXT",
+      "ALTER TABLE magister_modules ADD COLUMN tier TEXT",
+      "ALTER TABLE magister_modules ADD COLUMN lab_only INTEGER NOT NULL DEFAULT 0",
     ]) {
       try { this.db.exec(stmt); } catch { /* column already exists */ }
     }
@@ -609,6 +613,25 @@ export class MagisterDB {
     })();
 
     if (needsMigration) {
+      // CRITICAL: this recreate must list every column that the additive
+      // ALTER TABLE block above can add to magister_modules. SQLite has no
+      // ALTER COLUMN, so we have to rebuild the table to widen the
+      // age_track CHECK constraint — and any column we forget here will
+      // be silently dropped, taking real data with it.
+      //
+      // To stay robust against future column additions, we introspect the
+      // old table's columns via pragma_table_info and copy whatever
+      // intersection it shares with the new schema. New columns added in
+      // the additive block above will appear in `oldColumns` because that
+      // block runs before this migration; columns missing from `_old`
+      // simply fall back to their DEFAULT (no data loss for new columns,
+      // and existing data for surviving columns is preserved verbatim).
+      const newColumns = [
+        "id", "name", "campaign_world", "subject", "description",
+        "age_track", "companions", "installed", "config_path",
+        "mastery_spine", "tier", "lab_only", "created_at",
+      ] as const;
+
       this.db.exec(`BEGIN TRANSACTION`);
       try {
         this.db.exec(`ALTER TABLE magister_modules RENAME TO magister_modules_old`);
@@ -624,10 +647,32 @@ export class MagisterDB {
             installed       INTEGER NOT NULL DEFAULT 0,
             config_path     TEXT,
             mastery_spine   TEXT,
+            tier            TEXT,
+            lab_only        INTEGER NOT NULL DEFAULT 0,
             created_at      TEXT NOT NULL DEFAULT (datetime('now'))
           )
         `);
-        this.db.exec(`INSERT INTO magister_modules SELECT id, name, campaign_world, subject, description, age_track, companions, installed, config_path, mastery_spine, COALESCE(created_at, '2000-01-01T00:00:00.000Z') FROM magister_modules_old`);
+
+        // Discover which of the new columns actually existed on _old so
+        // we never reference a missing column in the SELECT list.
+        const oldColumnRows = this.db
+          .prepare(`SELECT name FROM pragma_table_info('magister_modules_old')`)
+          .all() as Array<{ name: string }>;
+        const oldColumns = new Set(oldColumnRows.map(r => r.name));
+
+        const selectExprs = newColumns.map(col => {
+          if (col === "created_at") {
+            return oldColumns.has("created_at")
+              ? `COALESCE(created_at, '2000-01-01T00:00:00.000Z') AS created_at`
+              : `'2000-01-01T00:00:00.000Z' AS created_at`;
+          }
+          return oldColumns.has(col) ? col : `NULL AS ${col}`;
+        });
+
+        this.db.exec(
+          `INSERT INTO magister_modules (${newColumns.join(", ")}) ` +
+          `SELECT ${selectExprs.join(", ")} FROM magister_modules_old`,
+        );
         this.db.exec(`DROP TABLE magister_modules_old`);
         this.db.exec(`COMMIT`);
       } catch (e) {
@@ -793,6 +838,11 @@ export class MagisterDB {
     `).run(summary ?? null, now, now, id);
     const ended = this.getSession(id);
     return ended?.status === "complete";
+  }
+
+  deleteSession(id: string): boolean {
+    const result = this.db.prepare("DELETE FROM magister_sessions WHERE id = ?").run(id);
+    return result.changes > 0;
   }
 
   setRecapArtifact(sessionId: string, recapArtifact: string): boolean {
@@ -1163,6 +1213,8 @@ export class MagisterDB {
     companions?: string[];
     configPath?: string;
     masterySpine?: MasterySpine;
+    tier?: string;
+    labOnly?: boolean;
   }): MagisterModuleRecord {
     const now = new Date().toISOString();
     const spineJson = mod.masterySpine ? JSON.stringify(mod.masterySpine) : null;
@@ -1172,7 +1224,8 @@ export class MagisterDB {
       this.db.prepare(`
         UPDATE magister_modules
         SET name = ?, campaign_world = ?, subject = ?, description = ?,
-            age_track = ?, companions = ?, config_path = ?, mastery_spine = ?
+            age_track = ?, companions = ?, config_path = ?, mastery_spine = ?,
+            tier = ?, lab_only = ?
         WHERE id = ?
       `).run(
         mod.name,
@@ -1183,6 +1236,8 @@ export class MagisterDB {
         JSON.stringify(mod.companions ?? []),
         mod.configPath ?? null,
         spineJson,
+        mod.tier ?? null,
+        mod.labOnly ? 1 : 0,
         mod.id,
       );
       return this.getModule(mod.id)!;
@@ -1199,14 +1254,16 @@ export class MagisterDB {
       installed: 0,
       config_path: mod.configPath ?? null,
       mastery_spine: spineJson,
+      tier: mod.tier ?? null,
+      lab_only: mod.labOnly ? 1 : 0,
       created_at: now,
     };
 
     this.db.prepare(`
       INSERT INTO magister_modules
-        (id, name, campaign_world, subject, description, age_track, companions, installed, config_path, mastery_spine, created_at)
+        (id, name, campaign_world, subject, description, age_track, companions, installed, config_path, mastery_spine, tier, lab_only, created_at)
       VALUES
-        (@id, @name, @campaign_world, @subject, @description, @age_track, @companions, @installed, @config_path, @mastery_spine, @created_at)
+        (@id, @name, @campaign_world, @subject, @description, @age_track, @companions, @installed, @config_path, @mastery_spine, @tier, @lab_only, @created_at)
     `).run(record);
 
     return record;
