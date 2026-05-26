@@ -243,7 +243,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: MagisterDB):
   //
   // Where `voice`/`scope` may be:
   //   - a VoiceProfile id (e.g. "varros-default")
-  //   - a companion id    (e.g. "varros", "cronk", "maren")
+  //   - a companion id    (e.g. "varros", "cronk", "vermilion")
   //   - a Piper voice basename (legacy callers; e.g. "en_US-lessac-medium")
   //   - omitted          (uses ttsDefaultVoice() Piper voice)
   //

@@ -25,7 +25,7 @@ export const DM_VOICE_KEY = "magister.dm.voiceProfileId";
  * Build a short, picker-friendly label for a voice profile.
  *
  *   "Varros Default — am_michael"
- *   "Maren — bf_emma"
+ *   "Vermilion — bm_george"
  *
  * Strips the registry's `(default voice)` suffix because the picker
  * already implies "default" for any companion.

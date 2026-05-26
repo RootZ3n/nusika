@@ -150,7 +150,12 @@ interface CompanionConfigEntry {
     language?: string;
     style?: string;
   };
-  /** Legacy ElevenLabs id used by Maren today. */
+  /**
+   * Legacy top-level ElevenLabs id. The Inkwell companion (formerly Maren)
+   * used to ship one here; the curriculum no longer does, but the field is
+   * still honored so any older or third-party config file still loads
+   * through the deprecated ElevenLabs path instead of crashing.
+   */
   voice_id?: string;
   [key: string]: unknown;
 }
@@ -224,8 +229,10 @@ function profileFromCompanion(
   }
 
   if (legacyElevenLabs && !override) {
-    // Maren today carries a stale ElevenLabs voice_id. Surface it honestly:
-    // engine reported as elevenlabs, available reflects whether the key is set.
+    // Any companion shipped with a top-level ElevenLabs voice_id (the
+    // Inkwell companion used to, before the Maren → Varros rebind) is
+    // surfaced honestly: engine reported as elevenlabs, available reflects
+    // whether the key is set.
     const hasKey = !!process.env["ELEVENLABS_API_KEY"];
     return {
       id, display_name,

@@ -92,7 +92,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 | GET  | `/magister/inkwell/drafts/:id` | Single Inkwell draft |
 | POST | `/magister/inkwell/drafts` | Upsert an Inkwell draft — `{ id?, title?, content, feedback? }` |
 | DELETE | `/magister/inkwell/drafts/:id` | Hard-delete a draft. 404 if missing or if the row's `module_id` is not `inkwell` (cross-module-safe). |
-| POST | `/magister/inkwell/feedback` | Maren editorial feedback on a draft — `{ content, title?, context? }`. Returns 502 if no LLM backend is reachable. |
+| POST | `/magister/inkwell/feedback` | Varros editorial feedback on a draft — `{ content, title?, context? }`. Returns 502 if no LLM backend is reachable. |
 | GET  | `/magister/lessons` | List Teach Me Anything lessons (most recent first) |
 | POST | `/magister/lessons` | Create a new lesson — `{ title, topic?, depth? }` |
 | GET  | `/magister/lessons/:id` | Lesson detail + recent turns |
@@ -178,8 +178,9 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > `/magister/tts/elevenlabs` is still wired but **deprecated**: any
 > request whose resolved profile uses `engine: "elevenlabs"` returns
 > HTTP 409 from `/magister/tts` with a pointer to the dedicated route.
-> Maren has been migrated off the legacy ElevenLabs voice id to a
-> local Kokoro voice in Slice 6E.
+> The Inkwell companion (formerly Maren on an ElevenLabs voice) was
+> rebound to Varros on a local Kokoro voice in Slice 6E; the legacy
+> ElevenLabs path remains wired but no shipped companion uses it.
 >
 > Voice-related env vars:
 >
@@ -220,7 +221,7 @@ Magister is the extraction of `/mnt/ai/squidley-v2/modules/experiences/magister/
 - DB layer (sessions, modules, progress, memory, creative, lessons, DM campaigns/characters/events, curriculum scanner)
 - Module / session / progress / memory / creative / config / translate / chat routes
 - LLM client (OpenRouter + Ollama with fallback) plus a test seam for deterministic mocking
-- Inkwell drafts persistence + Maren editorial feedback (`/magister/inkwell/*`)
+- Inkwell drafts persistence + Varros editorial feedback (`/magister/inkwell/*`)
 - Session recap with companion memory writeback (`/magister/sessions/:id/recap`)
 - Teach Me Anything mode (`/magister/lessons/*`, `/teach` web UI)
 - Lookup placeholder that honestly returns `supported: false`

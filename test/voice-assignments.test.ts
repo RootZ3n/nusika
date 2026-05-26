@@ -151,8 +151,12 @@ test("buildVoiceRegistry surfaces 31 profiles (Varros + 30 companions) when prob
     assert.equal(reg.voices.length, 31, `expected 31 voices, got ${reg.voices.length}`);
     const ids = new Set(reg.voices.map(v => v.id));
     assert.ok(ids.has("varros-default"));
-    // Spot-check a few companions across different modules.
-    for (const cid of ["maren", "cronk", "marcus", "tessera", "sol", "iris", "atlas"]) {
+    // Spot-check a few companions across different modules. Maren used to
+    // sit on this list as the Inkwell companion; the Inkwell rebind to
+    // Varros (2026-05) removed her from the curriculum entirely. We add
+    // Vermilion (history) so coverage still spans an extra module —
+    // dropping Maren without a replacement would weaken the spread.
+    for (const cid of ["vermilion", "cronk", "marcus", "tessera", "sol", "iris", "atlas"]) {
       assert.ok(ids.has(`${cid}-default`), `expected ${cid}-default in registry`);
     }
   } finally {
