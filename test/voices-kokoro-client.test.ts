@@ -91,6 +91,65 @@ test("kokoroHealth returns reachable:false on ok:false body", async () => {
   }
 });
 
+test("kokoroHealth rejects an ok:true response that is not Kokoro (opencode-sidecar squatter)", async () => {
+  // opencode-sidecar shape — observed in the wild squatting :18794.
+  __setKokoroFetchForTesting(async () =>
+    jsonResponse(200, { ok: true, service: "opencode-sidecar", version: "1.0.0" }),
+  );
+  try {
+    const h = await kokoroHealth();
+    assert.equal(h.reachable, false, "must not accept a non-Kokoro service as Kokoro");
+    assert.match(h.detail ?? "", /not Kokoro/i);
+    assert.match(h.detail ?? "", /opencode-sidecar/);
+    assert.match(h.detail ?? "", /MAGISTER_KOKORO_URL/);
+  } finally {
+    __resetKokoroFetchForTesting();
+  }
+});
+
+test("kokoroHealth rejects a generic ok:true with no engine field", async () => {
+  __setKokoroFetchForTesting(async () => jsonResponse(200, { ok: true }));
+  try {
+    const h = await kokoroHealth();
+    assert.equal(h.reachable, false, "ok:true alone must not satisfy the Kokoro probe");
+    assert.match(h.detail ?? "", /not Kokoro/i);
+  } finally {
+    __resetKokoroFetchForTesting();
+  }
+});
+
+test("kokoroHealth accepts Kokoro in cold and error states (engine:'kokoro' is sufficient)", async () => {
+  // Cold start — pipeline not loaded yet.
+  __setKokoroFetchForTesting(async () =>
+    jsonResponse(200, { ok: true, engine: "kokoro", status: "cold", model_loaded: false }),
+  );
+  try {
+    const cold = await kokoroHealth();
+    assert.equal(cold.reachable, true);
+    assert.equal(cold.status, "cold");
+  } finally {
+    __resetKokoroFetchForTesting();
+  }
+
+  // Load failure — server is up but the model couldn't load; still
+  // identifiably Kokoro, so the probe reports reachable. The registry
+  // is responsible for surfacing the status to the operator.
+  __setKokoroFetchForTesting(async () =>
+    jsonResponse(200, {
+      ok: true, engine: "kokoro", status: "error", model_loaded: false,
+      detail: "espeak-ng missing",
+    }),
+  );
+  try {
+    const err = await kokoroHealth();
+    assert.equal(err.reachable, true);
+    assert.equal(err.status, "error");
+    assert.match(err.detail ?? "", /espeak-ng/);
+  } finally {
+    __resetKokoroFetchForTesting();
+  }
+});
+
 // ── generate ─────────────────────────────────────────────────────────────────
 
 test("kokoroGenerate returns the response body bytes on 200", async () => {

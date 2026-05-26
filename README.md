@@ -192,8 +192,13 @@ The built server (`start:dist`) and the dev server both resolve the project root
 >
 > The `/magister/voices` route probes Kokoro's `/health` (with a 750 ms
 > timeout) on every call so its `engines.kokoro.configured` reflects the
-> live service. The dispatch path skips that probe to keep `/magister/tts`
-> snappy — it just tries the engine and surfaces the failure honestly. Companion chat, lesson chat, lesson recap, Inkwell feedback,
+> live service. The probe requires the response to carry
+> `engine: "kokoro"` — without that identity check, any unrelated
+> uvicorn sidecar that happens to answer `{ok: true}` on `/health` (e.g.
+> `opencode-sidecar`, which has been observed squatting `:18794` on dev
+> machines) would be silently accepted as Kokoro. The dispatch path skips
+> the probe to keep `/magister/tts` snappy — it just tries the engine
+> and surfaces the failure honestly. Companion chat, lesson chat, lesson recap, Inkwell feedback,
 > session recap, DM narration, and translate all require either
 > `OPENROUTER_API_KEY` set or a running Ollama at `MAGISTER_LOCAL_OLLAMA_URL`.
 > Set `MAGISTER_LOCAL_ONLY=true` to skip cloud entirely. All LLM-backed

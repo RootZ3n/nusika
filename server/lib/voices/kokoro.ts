@@ -72,8 +72,21 @@ export interface KokoroHealthOptions {
 }
 
 /**
+/**
  * Probe the Kokoro service. Never throws on network failure — returns
  * `reachable: false` with a `detail` string the registry can surface.
+ *
+ * Identity guarantee: the probe requires the response body to carry
+ * `engine: "kokoro"`. Without this, ANY uvicorn-shaped sidecar that
+ * happens to answer `{ ok: true }` on /health (notably `opencode-sidecar`,
+ * which has historically squatted port 18794 on developer machines)
+ * would be accepted as a working Kokoro and the registry would falsely
+ * report Kokoro voices as available — until the first /generate call
+ * failed at runtime. The identity check fails closed instead.
+ *
+ * The Kokoro server.py at voices/kokoro/server.py always emits
+ * `engine: "kokoro"` from /health, including in cold/error states, so
+ * this check is safe across all Kokoro-internal status values.
  *
  * The 750ms default timeout means /magister/voices stays under a second
  * even when the service is missing entirely.
@@ -86,17 +99,35 @@ export async function kokoroHealth(opts: KokoroHealthOptions = {}): Promise<Koko
     if (!res.ok) {
       return { reachable: false, url, detail: `Kokoro returned HTTP ${res.status} at ${url}.` };
     }
-    const body = (await res.json().catch(() => ({}))) as { ok?: boolean; status?: string; model_loaded?: boolean; detail?: string };
-    if (body && body.ok === true) {
-      const out: KokoroHealth = { reachable: true, ok: true, url };
-      if (body.status === "cold" || body.status === "ready" || body.status === "error") {
-        out.status = body.status;
-      }
-      if (body.model_loaded !== undefined) out.model_loaded = !!body.model_loaded;
-      if (body.detail) out.detail = String(body.detail);
-      return out;
+    const body = (await res.json().catch(() => ({}))) as {
+      ok?: boolean; engine?: string; service?: string;
+      status?: string; model_loaded?: boolean; detail?: string;
+    };
+    if (!body || body.ok !== true) {
+      return { reachable: false, url, detail: `Kokoro reported unhealthy at ${url}.` };
     }
-    return { reachable: false, url, detail: `Kokoro reported unhealthy at ${url}.` };
+    if (body.engine !== "kokoro") {
+      // A different service is bound to the Kokoro port. Surface what
+      // we saw so the operator can debug instead of guessing.
+      const seen = typeof body.service === "string" && body.service.length > 0
+        ? body.service
+        : typeof body.engine === "string" && body.engine.length > 0
+          ? body.engine
+          : "unknown";
+      return {
+        reachable: false,
+        url,
+        detail: `Service at ${url} is not Kokoro (identified as "${seen}"). ` +
+          `Stop or move the other service, or override MAGISTER_KOKORO_URL.`,
+      };
+    }
+    const out: KokoroHealth = { reachable: true, ok: true, url };
+    if (body.status === "cold" || body.status === "ready" || body.status === "error") {
+      out.status = body.status;
+    }
+    if (body.model_loaded !== undefined) out.model_loaded = !!body.model_loaded;
+    if (body.detail) out.detail = String(body.detail);
+    return out;
   } catch (err) {
     const detail = err instanceof Error ? err.message : String(err);
     return { reachable: false, url, detail: `Kokoro service not reachable at ${url}: ${shortDetail(detail)}` };
