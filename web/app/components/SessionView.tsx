@@ -33,6 +33,7 @@ import {
   type MagisterSession,
   type PracticeMessage,
 } from "../types";
+import { labelVoiceProfile, type HallVoice } from "../hooks/useHallVoice";
 
 export interface SessionViewProps {
   // Module catalogue (needed for Practice mode + companion lookup).
@@ -110,6 +111,45 @@ export interface SessionViewProps {
   onResumeSession: () => void;
   onEndSession: () => Promise<void>;
   onOpenMap: (moduleId: string, companionId?: string) => void;
+
+  // Hall voice picker — wired only for in-session Preview; the existing
+  // 🔊 Repeat path keeps using `playTTS` with the active companion id.
+  hallVoice: HallVoice;
+}
+
+// Tiny status-pill colors for the engine state. Kept inline so we
+// don't add a new shared style module.
+function engineBadgeColor(state: HallVoice["engine"]["state"]): { bg: string; fg: string } {
+  switch (state) {
+    case "ready":         return { bg: "rgba(74,222,128,0.10)", fg: "#4ade80" };
+    case "cold":          return { bg: "rgba(251,191,36,0.10)", fg: "#fbbf24" };
+    case "wrong-service": return { bg: "rgba(248,113,113,0.10)", fg: "#fca5a5" };
+    case "error":         return { bg: "rgba(248,113,113,0.10)", fg: "#fca5a5" };
+    case "not-running":   return { bg: "rgba(107,114,128,0.12)", fg: "#9ca3af" };
+    case "unknown":
+    default:              return { bg: "rgba(107,114,128,0.12)", fg: "#9ca3af" };
+  }
+}
+
+function engineBadgeLabel(state: HallVoice["engine"]["state"]): string {
+  switch (state) {
+    case "ready":         return "Kokoro: ready";
+    case "cold":          return "Kokoro: cold";
+    case "error":         return "Kokoro: error";
+    case "wrong-service": return "Kokoro: wrong service on port";
+    case "not-running":   return "Kokoro: not running";
+    case "unknown":
+    default:              return "Kokoro: status unknown";
+  }
+}
+
+function previewBannerText(p: HallVoice["previewState"]): { text: string; isError: boolean } | null {
+  switch (p.kind) {
+    case "idle":    return null;
+    case "running": return { text: "Preview playing…", isError: false };
+    case "ok":      return { text: "Preview played. If you didn't hear it, check your output device.", isError: false };
+    case "error":   return { text: `Preview failed: ${p.reason}`, isError: true };
+  }
 }
 
 export function SessionView(props: SessionViewProps) {
@@ -402,8 +442,9 @@ export function SessionView(props: SessionViewProps) {
       <div style={{
         display: "flex", justifyContent: "space-between", alignItems: "center",
         padding: "8px 16px", borderBottom: "1px solid var(--border)",
+        gap: 12, flexWrap: "wrap",
       }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
           <span style={{
             fontFamily: "var(--font-mono)", fontSize: "11px",
             color: ACCENT, background: ACCENT_DIM,
@@ -417,6 +458,57 @@ export function SessionView(props: SessionViewProps) {
             </span>
           )}
         </div>
+        {/* Hall voice picker + Preview — compact, in-line with the header.
+            Renders only when the registry returned voices; on a broken
+            registry it stays hidden so the rest of the Hall is unaffected. */}
+        {props.hallVoice.voices.length > 0 && props.hallVoice.selectedVoice && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",
+            fontSize: 12, color: "var(--text-muted)",
+          }}>
+            <span style={{
+              fontFamily: "var(--font-mono)", fontSize: 11,
+              color: ACCENT, letterSpacing: "0.06em", textTransform: "uppercase",
+            }}>
+              Voice
+            </span>
+            <select
+              value={props.hallVoice.selectedVoiceId}
+              onChange={(e) => props.hallVoice.onSelectVoice(e.target.value)}
+              aria-label="Select voice for preview"
+              style={{
+                fontFamily: "var(--font-mono)", fontSize: 12,
+                color: ACCENT, background: ACCENT_DIM,
+                border: `1px solid ${ACCENT}33`, borderRadius: 10,
+                padding: "3px 8px", cursor: "pointer", maxWidth: 240,
+              }}
+            >
+              {props.hallVoice.voices.map((v) => (
+                <option key={v.id} value={v.id}>{labelVoiceProfile(v)}</option>
+              ))}
+            </select>
+            <button
+              style={{ ...btnGhost, fontSize: 12, padding: "3px 10px", minHeight: 0 }}
+              onClick={() => void props.hallVoice.previewVoice()}
+              disabled={props.hallVoice.previewState.kind === "running"}
+              aria-label="Preview selected voice"
+            >
+              {props.hallVoice.previewState.kind === "running" ? "Playing…" : "Preview"}
+            </button>
+            <span
+              title={props.hallVoice.engine.detail}
+              style={{
+                fontFamily: "var(--font-mono)", fontSize: 11,
+                padding: "2px 8px", borderRadius: 8,
+                ...engineBadgeColor(props.hallVoice.engine.state),
+                background: engineBadgeColor(props.hallVoice.engine.state).bg,
+                color: engineBadgeColor(props.hallVoice.engine.state).fg,
+              }}
+            >
+              {engineBadgeLabel(props.hallVoice.engine.state)}
+            </span>
+          </div>
+        )}
         <button
           style={{ ...btnGhost, fontSize: "12px", padding: "6px 12px" }}
           onClick={() => {
@@ -426,6 +518,25 @@ export function SessionView(props: SessionViewProps) {
           World Map
         </button>
       </div>
+      {/* Preview status banner — appears below the header row only when
+          there's something honest to say (running, ok, or error). Stays
+          out of the layout entirely in the idle state. */}
+      {(() => {
+        const banner = previewBannerText(props.hallVoice.previewState);
+        if (!banner) return null;
+        return (
+          <div style={{
+            padding: "6px 16px",
+            fontSize: 12,
+            fontFamily: "var(--font-body)",
+            color: banner.isError ? "#fca5a5" : "var(--text-muted)",
+            background: banner.isError ? "rgba(248,113,113,0.06)" : "rgba(167,139,250,0.04)",
+            borderBottom: "1px solid var(--border)",
+          }}>
+            {banner.text}
+          </div>
+        );
+      })()}
 
       {/* Main session layout */}
       <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>

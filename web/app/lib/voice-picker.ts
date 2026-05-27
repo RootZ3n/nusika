@@ -17,9 +17,65 @@ export interface VoiceOption {
   available?: boolean;
 }
 
-/** localStorage keys (one per page so the two pickers stay independent). */
+/** localStorage keys (one per page so each picker stays independent). */
 export const TEACH_VOICE_KEY = "magister.teach.voiceProfileId";
 export const DM_VOICE_KEY = "magister.dm.voiceProfileId";
+export const HALL_VOICE_KEY = "magister.hall.voiceProfileId";
+
+/**
+ * Discrete Kokoro engine state, derived from /magister/voices's
+ * `engines.kokoro` shape (configured + detail). The registry side
+ * lives in server/lib/voice-registry.ts; the detail-string parser
+ * here is intentionally a string match so a future status field on
+ * the registry can replace this without UI churn.
+ *
+ * Order roughly tracks severity for status banners:
+ *   - unknown:        we haven't fetched yet, don't claim anything.
+ *   - not-running:    network failure / nothing listening.
+ *   - wrong-service:  identity check rejected a squatter.
+ *   - error:          Kokoro loaded with errors; /generate will 503.
+ *   - cold:           reachable, model not yet loaded (first /generate
+ *                     will pay the cold cost).
+ *   - ready:          reachable, model loaded — generation should work.
+ *
+ * See docs/MAGISTER_KOKORO_RUNTIME.md for the full state semantics.
+ */
+export type KokoroEngineState =
+  | "unknown"
+  | "not-running"
+  | "wrong-service"
+  | "error"
+  | "cold"
+  | "ready";
+
+export interface KokoroEngineInfo {
+  state: KokoroEngineState;
+  /** Human-readable detail straight from the server, for the banner. */
+  detail: string;
+}
+
+export function parseKokoroEngine(
+  raw: { configured?: unknown; detail?: unknown } | null | undefined,
+): KokoroEngineInfo {
+  const detail = typeof raw?.detail === "string" ? raw.detail : "";
+  if (!raw || typeof raw.configured !== "boolean") {
+    return { state: "unknown", detail: detail || "Kokoro status unknown." };
+  }
+  // The order of these checks matters: "loaded with errors" is the
+  // status:"error" string from kokoroEngineStatus(); "not Kokoro" is
+  // the identity-check string from kokoroHealth(); the remaining
+  // configured:false cases collapse into not-running.
+  if (raw.configured === false) {
+    if (/not Kokoro/i.test(detail)) return { state: "wrong-service", detail };
+    if (/loaded with errors/i.test(detail)) return { state: "error", detail };
+    return { state: "not-running", detail: detail || "Kokoro not running." };
+  }
+  if (/status: ready/i.test(detail)) return { state: "ready", detail };
+  if (/status: cold/i.test(detail)) return { state: "cold", detail };
+  // Reachable + ok but the detail didn't include either status word.
+  // Treat as ready since the registry already gated on engine:"kokoro".
+  return { state: "ready", detail: detail || "Kokoro reachable." };
+}
 
 /**
  * Build a short, picker-friendly label for a voice profile.

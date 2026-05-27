@@ -26,6 +26,7 @@ import { InkwellView } from "./components/InkwellView";
 import { useMagisterApi } from "./hooks/useMagisterApi";
 import { useSessionTimer } from "./hooks/useSessionTimer";
 import { useVoicePlayback } from "./hooks/useVoicePlayback";
+import { useHallVoice } from "./hooks/useHallVoice";
 import {
   API_BASE,
   DEFAULT_LEARNER_PROFILE,
@@ -44,7 +45,7 @@ export default function MagisterPage() {
   const api = useMagisterApi();
   const {
     modules, setModules, sessions, streak, loading, error, setError, refreshSessions,
-    moduleProgress, companionMemories, fetchProgress, fetchMemories, fetchSessionDetail,
+    moduleProgress, companionMemories, fetchProgress, fetchMemories, fetchSessionDetail, deleteSession,
     narrator, sessionSettings, setSessionSettings,
     useDyslexicFont, setUseDyslexicFont, wideLetterSpacing, setWideLetterSpacing,
     ambientVolume, setAmbientVolume, comfortMode, setComfortMode,
@@ -99,6 +100,9 @@ export default function MagisterPage() {
   // ── Map screen ──────────────────────────────────────────────────────────
   const [mapModuleId, setMapModuleId] = useState<string | null>(null);
   const [mapCompanionId, setMapCompanionId] = useState<string | null>(null);
+
+  // ── Hall voice picker + Preview (Phase 2, in-session) ──────────────────
+  const hallVoice = useHallVoice();
 
   // ── Voice (TTS/STT) ─────────────────────────────────────────────────────
   const voice = useVoicePlayback({
@@ -357,6 +361,7 @@ export default function MagisterPage() {
                 setScreen("session");
                 setPracticeHistory([]);
               }}
+              onStopSession={(sid) => void deleteSession(sid)}
               showNewCampaign={showNewCampaign}
               setShowNewCampaign={setShowNewCampaign}
               selectedModuleId={selectedModuleId}
@@ -414,6 +419,7 @@ export default function MagisterPage() {
               startRecording={voice.startRecording}
               stopRecording={voice.stopRecording}
               playTTS={voice.playTTS}
+              hallVoice={hallVoice}
               telexEnabled={telexEnabled}
               setTelexEnabled={setTelexEnabled}
               useDyslexicFont={useDyslexicFont}

@@ -272,6 +272,51 @@ test("Kokoro detail flips configured:false when status:'error' (model load faile
   }
 });
 
+test("engine.detail contract: substrings the Hall picker parser depends on stay stable", async () => {
+  // Pins the exact tokens parseKokoroEngine() in
+  // web/app/lib/voice-picker.ts pattern-matches on. If a future
+  // change to kokoroEngineStatus() renames any of these substrings,
+  // the Hall picker will silently misclassify the Kokoro state —
+  // this test fails first so the regression is caught at PR time.
+  const cases = [
+    {
+      name: "ready",
+      health: { ok: true, engine: "kokoro", status: "ready", model_loaded: true },
+      expectConfigured: true,
+      expectTokens: [/status: ready/i, /model loaded/i],
+    },
+    {
+      name: "cold",
+      health: { ok: true, engine: "kokoro", status: "cold", model_loaded: false },
+      expectConfigured: true,
+      expectTokens: [/status: cold/i],
+    },
+    {
+      name: "error",
+      health: { ok: true, engine: "kokoro", status: "error", model_loaded: false, detail: "boom" },
+      expectConfigured: false,
+      expectTokens: [/loaded with errors/i],
+    },
+  ];
+  for (const c of cases) {
+    __setKokoroFetchForTesting(async () => new Response(
+      JSON.stringify(c.health),
+      { status: 200, headers: { "Content-Type": "application/json" } },
+    ));
+    const { db, cleanup } = await bootRegistryHarness();
+    try {
+      const reg = await buildVoiceRegistry(db, { probeKokoro: true });
+      assert.equal(reg.engines.kokoro.configured, c.expectConfigured, `${c.name}: configured`);
+      for (const re of c.expectTokens) {
+        assert.match(reg.engines.kokoro.detail ?? "", re, `${c.name}: ${re} must be present in detail`);
+      }
+    } finally {
+      __resetKokoroFetchForTesting();
+      await cleanup();
+    }
+  }
+});
+
 test("no profile in the live registry uses engine:'elevenlabs' (Maren migrated)", async () => {
   __setKokoroFetchForTesting(async () => { throw new Error("stub"); });
   const { db, cleanup } = await bootRegistryHarness();
