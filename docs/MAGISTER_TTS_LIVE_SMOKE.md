@@ -265,6 +265,12 @@ the bytes level.** What is *not* verified here:
   1. Move opencode-sidecar off 18794, or
   2. Set `MAGISTER_KOKORO_URL=http://127.0.0.1:<alt>` in `.env` and
      restart the Magister API + run Kokoro on `<alt>`.
+
+  Step-by-step for path 2 lives in
+  `docs/MAGISTER_KOKORO_RUNTIME.md` under "When `:18794` is occupied
+  (alternate-port workflow)" — it walks through port selection,
+  `start.sh` invocation, `.env` edit, API restart, and the
+  `/magister/voices` verification curl.
 - **espeak-ng is not installed at the OS level.** The bundled
   `espeakng-loader` wheel covered for it on this smoke, but
   `voices/kokoro/start.sh` still emits the warning every boot. If

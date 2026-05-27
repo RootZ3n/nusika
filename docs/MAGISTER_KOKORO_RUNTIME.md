@@ -83,6 +83,65 @@ The Magister API side reads `MAGISTER_KOKORO_URL`
 If you change the host/port, set `MAGISTER_KOKORO_URL` in your `.env`
 to match — otherwise the API will keep probing the old address.
 
+### When `:18794` is occupied (alternate-port workflow)
+
+Some development environments have another local service squatting
+`:18794` — `opencode-sidecar` is the documented case
+(`docs/MAGISTER_OPENCODE_SIDECAR_PARKING.md`). The
+Phase 1 identity check correctly rejects it, so Kokoro never gets
+mis-routed through the wrong process, but it does mean Kokoro itself
+can't bind that port. **Do not stop the squatter from the repo.** Run
+Kokoro on a different loopback port instead, and keep the two env
+vars (the Python server's `MAGISTER_KOKORO_PORT` and the Node API's
+`MAGISTER_KOKORO_URL`) in agreement.
+
+The port number is your choice — anything free above 1024 will work.
+The live TTS smoke (`docs/MAGISTER_TTS_LIVE_SMOKE.md`) used `18894`
+because it is one off from the default and easy to remember; the
+project does **not** treat `18894` as a blessed default. Pick whatever
+suits your local layout.
+
+```bash
+# 1. Confirm what (if anything) is holding the default port.
+ss -tlnp | grep 18794
+curl -s http://127.0.0.1:18794/health     # is it Kokoro, or something else?
+
+# 2. Pick a free loopback port. 18894 is the convention used in the
+#    live smoke; 18800, 28794, etc. are all fine.
+export KOKORO_ALT_PORT=18894
+
+# 3. Start Kokoro on that port. start.sh honours MAGISTER_KOKORO_PORT.
+cd voices/kokoro
+MAGISTER_KOKORO_PORT="${KOKORO_ALT_PORT}" ./start.sh
+# leave this running in its own terminal (or under systemd — see below)
+
+# 4. In your project root .env, point the Magister API at the same port.
+#    .env.example carries a commented line you can uncomment:
+#      MAGISTER_KOKORO_URL=http://127.0.0.1:18894
+#    Replace 18894 with whatever port you actually chose.
+
+# 5. Restart the Magister API so it picks up the new env. The env var
+#    is read at boot from process.env, so a running API will not pick
+#    up an edited .env until it restarts.
+#    - dev:      stop the `npm run dev` (or `tsx watch`) process; start it again
+#    - systemd:  systemctl --user restart magister-api.service
+#    - manual:   kill the `node dist/server/index.js` process; relaunch it
+
+# 6. Verify the API now sees Kokoro.
+curl -s http://127.0.0.1:18793/magister/voices | jq '.engines.kokoro'
+# Expect:
+# { "configured": true,
+#   "detail": "Kokoro service at http://127.0.0.1:18894 — status: <cold|ready>, ..." }
+```
+
+If `engines.kokoro.configured` still reads `false` after the restart,
+check three things in order: (a) the `.env` `MAGISTER_KOKORO_URL` line
+is not still commented out; (b) the API process actually restarted
+(its PID should change); (c) `curl http://127.0.0.1:<alt>/health`
+directly identifies as Kokoro. The `detail` field on
+`engines.kokoro` will name the failure mode honestly — squatter,
+unreachable, or upstream load error.
+
 ## Optional: systemd unit (Option B)
 
 Use this if you want Kokoro to come up under user-session
