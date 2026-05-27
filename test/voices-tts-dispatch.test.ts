@@ -268,6 +268,99 @@ test("Legacy { text, voice: '<piper-basename>' } still hits the Piper path", asy
   }
 });
 
+// ── Hall payload contract: scope === voice ────────────────────────────────
+//
+// The Hall's useVoicePlayback hook dispatches by companion id and passes
+// it as `scope`. The /teach and /dm pickers pass a profile id as `voice`.
+// The route contract says these two fields are equivalent — both run
+// through resolveVoiceProfile. The pre-fix Hall path used a different
+// field name (`role`) which the route silently dropped, so every
+// companion played the default voice. These tests pin the
+// scope-and-voice-equivalence behavior so that regression can't sneak
+// back in.
+
+test("scope: <companion_id> routes to the same Kokoro profile as voice: <companion_id>", async () => {
+  let kokoroCalls = 0;
+  __setKokoroFetchForTesting(async () => {
+    kokoroCalls += 1;
+    return bytesRes(200, FAKE_WAV);
+  });
+  const h = await bootApp({
+    companions: {
+      latin: [
+        { id: "marcus", name: "Marcus", voice: { engine: "kokoro", voice_ref: "bm_lewis" } },
+      ],
+    },
+  });
+  try {
+    const viaScope = await h.app.inject({
+      method: "POST", url: "/magister/tts",
+      payload: { text: "Salve.", scope: "marcus" },
+    });
+    assert.equal(viaScope.statusCode, 200);
+    assert.equal(viaScope.headers["x-tts-provider"], "kokoro");
+    assert.equal(viaScope.headers["x-voice-engine"], "kokoro");
+    assert.equal(viaScope.headers["x-tts-voice"], "bm_lewis",
+      "scope must resolve through the companion's configured voice_ref");
+
+    // Different text so we don't hit the audio cache; we want to prove
+    // both fields actually dispatch through the real Kokoro client.
+    const viaVoice = await h.app.inject({
+      method: "POST", url: "/magister/tts",
+      payload: { text: "Salve mundi.", voice: "marcus" },
+    });
+    assert.equal(viaVoice.statusCode, 200);
+    assert.equal(viaVoice.headers["x-tts-voice"], "bm_lewis",
+      "voice must resolve through the same companion profile");
+
+    assert.equal(kokoroCalls, 2, "both requests should reach Kokoro");
+  } finally {
+    __resetKokoroFetchForTesting();
+    await h.cleanup();
+  }
+});
+
+test("scope: '' (empty) is treated like no scope and falls through to the default voice path", async () => {
+  // The Hall hook omits the field entirely when the companion id is
+  // empty, but the route must also tolerate an explicit empty string
+  // (e.g. an early-render where companion_id was a blank string).
+  const h = await bootApp();
+  try {
+    const res = await h.app.inject({
+      method: "POST", url: "/magister/tts",
+      payload: { text: "Hello.", scope: "" },
+    });
+    // No registry profile, no Piper installed → preflight 503 with the
+    // Piper-shaped detail. Proves we did NOT 200 with a silently wrong
+    // voice, and did NOT 4xx with a malformed-payload error.
+    assert.equal(res.statusCode, 503);
+    assert.match(res.json().detail, /PIPER_BIN/,
+      "empty scope must fall through to the default-voice path, not error out");
+  } finally {
+    await h.cleanup();
+  }
+});
+
+test("unknown scope falls through to the legacy Piper path (no companion match → treat as voice basename)", async () => {
+  // If the companion id doesn't resolve to a profile (e.g. a typo, or a
+  // companion that was removed), the route's documented behavior is to
+  // treat the string as a Piper voice basename. That keeps the contract
+  // honest — no silent default-voice substitution.
+  const h = await bootApp();
+  try {
+    const res = await h.app.inject({
+      method: "POST", url: "/magister/tts",
+      payload: { text: "Hello.", scope: "no-such-companion" },
+    });
+    assert.equal(res.statusCode, 503);
+    const body = res.json();
+    assert.match(body.detail, /PIPER_BIN|Voice model not found/i,
+      "unknown scope must reach the Piper preflight, not silently swap voices");
+  } finally {
+    await h.cleanup();
+  }
+});
+
 test("POST /magister/tts rejects missing text with 400", async () => {
   const h = await bootApp();
   try {

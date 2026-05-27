@@ -2,12 +2,24 @@
 
 /**
  * useVoicePlayback — owns TTS (companion voice) playback and STT (mic
- * capture -> /magister/stt) for the Session screen.
+ * capture -> /magister/stt) for the Hall's Session screen.
  *
- * Pulled out of page.tsx during the 2026-05-22 refactor. No behavior
- * changes: the original TTS path still routes through the local Piper
- * (or Kokoro server-side fall-through), and the STT path still POSTs the
- * recorded webm blob to `/magister/stt` with the module-derived language.
+ * Pulled out of page.tsx during the 2026-05-22 refactor.
+ *
+ * Voice contract: the server route `POST /magister/tts` accepts
+ *   { text, voice?, scope? }
+ * where `voice` / `scope` may be a voice-profile id (e.g.
+ * "varros-default"), a companion id (e.g. "marcus", "cronk"), a legacy
+ * Piper voice basename, or omitted (default voice). The Hall path
+ * doesn't have a voice picker yet — it dispatches by companion id, so
+ * it sends `scope: <companion_id>` and lets the server resolve the
+ * matching profile through the voice registry.
+ *
+ * Historical bug: this hook used to send `{ role: companionId }`, which
+ * the route silently ignored (no such field in the schema), and every
+ * companion played the default Piper voice. The Phase 2 voice contract
+ * fix (2026-05-27) renamed the parameter + the payload field to the
+ * names the route actually reads.
  */
 
 import { useCallback, useRef, useState } from "react";
@@ -20,8 +32,13 @@ export interface VoicePlayback {
   voiceLoading: boolean;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
-  /** Plays a stripped-markdown TTS clip via the API. No-op if narration is off. */
-  playTTS: (text: string, companionRole?: string) => Promise<void>;
+  /**
+   * Play a stripped-markdown TTS clip via the API. No-op when narration
+   * is disabled or the input is empty. `companionId` is the value the
+   * route resolves through the voice registry; omit it (or pass null /
+   * undefined) to let the server fall back to its default voice.
+   */
+  playTTS: (text: string, companionId?: string | null) => Promise<void>;
 }
 
 export interface VoicePlaybackOptions {
@@ -43,16 +60,24 @@ export function useVoicePlayback(opts: VoicePlaybackOptions): VoicePlayback {
   const chunksRef = useRef<Blob[]>([]);
 
   const playTTS = useCallback(
-    async (text: string, companionRole?: string) => {
+    async (text: string, companionId?: string | null) => {
       const clean = stripForTTS(text);
       if (!clean || !narrationEnabled) return;
-      // Always route through local Piper. ElevenLabs path exists server-side
-      // but there is no product-level toggle to switch on yet.
+      // Route through the standard /magister/tts dispatch. When a
+      // companion id is in hand we pass it as `scope` — the contract
+      // resolves it through the voice registry (kokoro/piper/elevenlabs
+      // per profile). Omitting the field means "use the server default
+      // voice", which is what we want when we don't know who is
+      // speaking.
+      const trimmedId = typeof companionId === "string" ? companionId.trim() : "";
       try {
         const ttsRes = await fetch(`${API_BASE}/magister/tts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: clean, ...(companionRole ? { role: companionRole } : {}) }),
+          body: JSON.stringify({
+            text: clean,
+            ...(trimmedId ? { scope: trimmedId } : {}),
+          }),
         });
         if (ttsRes.ok) {
           const blob = await ttsRes.blob();

@@ -84,7 +84,7 @@ export interface SessionViewProps {
   voiceLoading: boolean;
   startRecording: () => Promise<void>;
   stopRecording: () => void;
-  playTTS: (text: string, companionRole?: string) => Promise<void>;
+  playTTS: (text: string, companionId?: string | null) => Promise<void>;
   telexEnabled: boolean;
   setTelexEnabled: React.Dispatch<React.SetStateAction<boolean>>;
   useDyslexicFont: boolean;
