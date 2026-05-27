@@ -288,6 +288,14 @@ the bytes level.** What is *not* verified here:
 
 ## Recommended next step
 
+A complete operator runbook for converting this PARTIAL into a
+human-verified PASS lives in
+[`docs/MAGISTER_TTS_HUMAN_VERIFICATION.md`](MAGISTER_TTS_HUMAN_VERIFICATION.md).
+Short summary of the cheapest path: start Kokoro per
+`docs/MAGISTER_KOKORO_RUNTIME.md`, open `/teach` in a desktop
+browser, click **Preview** next to the voice picker, and listen.
+A single audible click upgrades the Varros leg from PARTIAL to PASS.
+
 1. **Decide the opencode-sidecar port question.** Either move it,
    or change `.env`'s `MAGISTER_KOKORO_URL` to a non-conflicting
    port that Kokoro will use. Once that's done, the current
