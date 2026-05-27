@@ -371,9 +371,10 @@ export async function buildVoiceRegistry(
           companionEntries.push(c);
         }
       }
-    } else if (Array.isArray((mod as unknown as { companions: unknown }).companions)) {
-      // db.listModules() parses the JSON string into an array of strings.
-      for (const id of (mod as unknown as { companions: string[] }).companions) {
+    } else {
+      // db.listModules() already parses the stored JSON into a string[]
+      // of companion ids, so we can iterate it directly.
+      for (const id of mod.companions) {
         if (typeof id === "string") companionEntries.push({ id });
       }
     }

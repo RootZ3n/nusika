@@ -169,6 +169,14 @@ export interface MagisterCreative {
   updated_at: string;
 }
 
+/**
+ * Public, post-parse module record. Callers consume this — `companions`
+ * is the JSON-decoded list of companion ids, not the raw SQL string.
+ *
+ * The DB layer keeps the JSON string form as a private `MagisterModuleRow`
+ * type used only between the SQL prepare/run boundary and `parseModuleRow`;
+ * external code should never see the string shape.
+ */
 export interface MagisterModuleRecord {
   id: string;
   name: string;
@@ -176,13 +184,22 @@ export interface MagisterModuleRecord {
   subject: string | null;
   description: string | null;
   age_track: AgeTrack;
-  companions: string;
+  companions: string[];
   installed: number;
   config_path: string | null;
   mastery_spine: string | null;
   tier: string | null;
   lab_only: number;
   created_at: string;
+}
+
+/**
+ * SQL row shape for magister_modules — companions stored as a JSON string.
+ * Internal to the DB layer. Every read path runs rows through
+ * `parseModuleRow` before returning a `MagisterModuleRecord` to callers.
+ */
+interface MagisterModuleRow extends Omit<MagisterModuleRecord, "companions"> {
+  companions: string;
 }
 
 export interface MagisterLesson {
@@ -1243,14 +1260,17 @@ export class MagisterDB {
       return this.getModule(mod.id)!;
     }
 
-    const record: MagisterModuleRecord = {
+    const companionIds = (mod.companions ?? []).filter(
+      (x): x is string => typeof x === "string",
+    );
+    const row: MagisterModuleRow = {
       id: mod.id,
       name: mod.name,
       campaign_world: mod.campaignWorld ?? null,
       subject: mod.subject ?? null,
       description: mod.description ?? null,
       age_track: mod.ageTrack ?? "adult",
-      companions: JSON.stringify(mod.companions ?? []),
+      companions: JSON.stringify(companionIds),
       installed: 0,
       config_path: mod.configPath ?? null,
       mastery_spine: spineJson,
@@ -1264,26 +1284,33 @@ export class MagisterDB {
         (id, name, campaign_world, subject, description, age_track, companions, installed, config_path, mastery_spine, tier, lab_only, created_at)
       VALUES
         (@id, @name, @campaign_world, @subject, @description, @age_track, @companions, @installed, @config_path, @mastery_spine, @tier, @lab_only, @created_at)
-    `).run(record);
+    `).run(row);
 
-    return record;
+    return this.parseModuleRow(row);
   }
 
-  private parseModuleRow(row: MagisterModuleRecord): MagisterModuleRecord {
-    if (typeof row.companions === "string") {
-      try { (row as any).companions = JSON.parse(row.companions); } catch { (row as any).companions = []; }
+  private parseModuleRow(row: MagisterModuleRow): MagisterModuleRecord {
+    let companions: string[] = [];
+    try {
+      const parsed = JSON.parse(row.companions) as unknown;
+      if (Array.isArray(parsed)) {
+        companions = parsed.filter((x): x is string => typeof x === "string");
+      }
+    } catch {
+      // Malformed JSON in storage → empty companion list. Matches legacy
+      // behavior so a corrupt row doesn't crash the whole read.
     }
-    return row;
+    return { ...row, companions };
   }
 
   listModules(installedOnly: boolean = false): MagisterModuleRecord[] {
     const where = installedOnly ? "WHERE installed = 1" : "";
-    const rows = this.db.prepare(`SELECT * FROM magister_modules ${where} ORDER BY name`).all() as MagisterModuleRecord[];
+    const rows = this.db.prepare(`SELECT * FROM magister_modules ${where} ORDER BY name`).all() as MagisterModuleRow[];
     return rows.map(r => this.parseModuleRow(r));
   }
 
   getModule(id: string): MagisterModuleRecord | null {
-    const row = (this.db.prepare("SELECT * FROM magister_modules WHERE id = ?").get(id) as MagisterModuleRecord | undefined) ?? null;
+    const row = (this.db.prepare("SELECT * FROM magister_modules WHERE id = ?").get(id) as MagisterModuleRow | undefined) ?? null;
     return row ? this.parseModuleRow(row) : null;
   }
 
