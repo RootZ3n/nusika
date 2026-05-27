@@ -10,6 +10,67 @@
 
 ---
 
+## Phase 1 status (added 2026-05-27)
+
+The audit's Phase 1 (mechanical truth + baseline stability) is **complete**.
+The hard blockers listed in §10 below have been closed:
+
+- **#1 db migration drop of `tier` / `lab_only` — CLOSED**
+  (`docs/MAGISTER_PHASE1_DB_FIX.md`, commit `c964233`).
+- **#2 TS2352 production-build error — CLOSED**
+  (`docs/MAGISTER_PHASE1_BUILD_FIX.md`, commit `d06ceda`).
+- **#5 untracked systemd unit files in `contrib/systemd/`** — still
+  uncommitted in the working tree at audit time; status unchanged by
+  this verification pass.
+
+Two related truth fixes landed in the same Phase 1 window:
+
+- **Maren → Varros identity cleanup**
+  (`docs/MAGISTER_PHASE2_VOICE_IDENTITY_CLEANUP.md`, commit `ef84fa3`)
+  — closes the last stale assertion from the db-fix run and removes
+  the stale Maren prompt + flavor-text mismatches the audit flagged in
+  §3 and §6. (The "Phase 2" in that filename refers to its position
+  inside the Phase 1 baseline batch, **not** the audit's Phase 2 voice-
+  truth slice — see `docs/MAGISTER_PHASE1_VERIFICATION.md` for the
+  mapping.)
+- **opencode-sidecar parked + Kokoro health probe identity-checked**
+  (`docs/MAGISTER_OPENCODE_SIDECAR_PARKING.md`, commit `b6bb029`) —
+  closes the §4 "Kokoro misreported" finding and lands the first item
+  of the audit's Phase 2 (voice truth) plan.
+
+Validation snapshot at the close of Phase 1:
+
+```
+$ npm run typecheck   # clean
+$ npm run build       # clean
+$ npm test            # 252 / 252 passing
+```
+
+What is **still not done** at the close of Phase 1 (carried into Phase 2
+and beyond, no claims being made here that they work):
+
+- Voice TTS has **not been runtime-verified** end to end. The Kokoro
+  health probe now rejects squatters honestly, but actual synthesis +
+  playback against a running Kokoro process was not exercised. The
+  audit's §4 findings about the Hall path sending `role` (server reads
+  `voice`/`scope`) and about Piper having only one voice file remain
+  open.
+- **No real story / RPG campaigns exist.** The `/dm` surface is still
+  a generic SRD combat engine with no curriculum tie-in; no campaign
+  generator, no chapter system, no cross-session world state writer.
+- **Curriculum depth is still skeletal** outside `ai-literacy` and
+  `ai-systems`. The other 17 modules still ship companion personality
+  + a domain concept list, not the full lesson structure those two
+  modules carry.
+- Auth, rate-limit, CORS hardening, README pluralization fixes, and
+  the rest of the §10 "soft blockers" are open.
+
+The Phase 1 work landed mechanical baseline only: green tests, green
+build, honest voice detection, no identity drift. The product-quality
+work begins in Phase 2.
+
+---
+
 ## 1. Executive summary
 
 Magister is a real, runnable Fastify + SQLite + Next.js system with a clear

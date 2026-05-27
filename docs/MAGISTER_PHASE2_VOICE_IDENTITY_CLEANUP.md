@@ -3,7 +3,15 @@
 > **Date:** 2026-05-26
 > **Scope:** narrow Maren → Varros rename across stale references.
 > **Companion documents:** `docs/MAGISTER_TRUTH_AUDIT.md`,
-> `docs/MAGISTER_PHASE1_DB_FIX.md`.
+> `docs/MAGISTER_PHASE1_DB_FIX.md`,
+> `docs/MAGISTER_PHASE1_VERIFICATION.md`.
+>
+> **Naming note:** the "Phase 2" in this filename refers to the
+> *second baseline-cleanup task landed after the db migration fix*,
+> not to the truth audit's Phase 2 (voice truth) slice. Both this doc
+> and the db-fix doc belong to the audit's **Phase 1**
+> (mechanical truth + baseline stability) batch — see
+> `docs/MAGISTER_PHASE1_VERIFICATION.md` for the mapping.
 
 ## Symptom
 
