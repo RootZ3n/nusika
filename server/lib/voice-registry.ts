@@ -94,15 +94,41 @@ async function kokoroEngineStatus(probe: boolean): Promise<EngineStatus> {
     };
   }
   const health = await kokoroHealth();
-  if (health.reachable && health.ok === true) {
+  if (!(health.reachable && health.ok === true)) {
+    // Not reachable, or the response wasn't Kokoro (identity check
+    // failure from the opencode-sidecar parking work). kokoroHealth
+    // already returns an actionable detail in both shapes.
     return {
-      configured: true,
-      detail: `Kokoro service ready at ${url}.`,
+      configured: false,
+      detail: health.detail ?? `Kokoro service not reachable at ${url}.`,
     };
   }
+  // The service is up and identifies as Kokoro. Distinguish the three
+  // sub-states the Python server can report (see voices/kokoro/server.py):
+  //   - "ready" → pipeline loaded, generation should work.
+  //   - "cold"  → reachable but model not yet loaded; first /generate
+  //               will load it (lazy). Voices are usable from the
+  //               dispatch layer's POV — we report configured:true.
+  //   - "error" → load attempt failed. /generate will 503 until the
+  //               service is restarted. We report configured:false so
+  //               per-voice availability stops claiming usability;
+  //               the detail surfaces the upstream error verbatim.
+  if (health.status === "error") {
+    return {
+      configured: false,
+      detail: health.detail
+        ? `Kokoro service at ${url} loaded with errors: ${health.detail}`
+        : `Kokoro service at ${url} reported status:"error"; restart the service.`,
+    };
+  }
+  const stateNote = health.status === "ready"
+    ? "status: ready, model loaded"
+    : health.status === "cold"
+      ? "status: cold, model loads on first /generate call (lazy)"
+      : `status: ${health.status ?? "unknown"}`;
   return {
-    configured: false,
-    detail: health.detail ?? `Kokoro service not reachable at ${url}.`,
+    configured: true,
+    detail: `Kokoro service at ${url} — ${stateNote}.`,
   };
 }
 

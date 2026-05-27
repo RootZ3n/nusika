@@ -141,7 +141,10 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > [`voices/kokoro/`](voices/kokoro/README.md). It runs as a separate
 > Python process on `127.0.0.1:18794`. Magister dispatches `POST
 > /magister/tts` to Kokoro when a resolved voice profile has
-> `engine: "kokoro"`. **Slice 6E assigned Kokoro voices to Varros and
+> `engine: "kokoro"`. The near-term runtime posture (manual start
+> via `voices/kokoro/start.sh`, honest degradation when down,
+> optional systemd unit) is documented in
+> [`docs/MAGISTER_KOKORO_RUNTIME.md`](docs/MAGISTER_KOKORO_RUNTIME.md). **Slice 6E assigned Kokoro voices to Varros and
 > all 26 curriculum companions**, so any companion-targeted call now
 > reaches Kokoro by default (when the service is running). Piper is
 > retained as a fallback engine and as the default for legacy

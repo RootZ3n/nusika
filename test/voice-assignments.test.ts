@@ -202,6 +202,76 @@ test("with Kokoro stubbed unreachable, Kokoro-bound voices are unavailable with 
   }
 });
 
+// ── Kokoro sub-state surfacing on engines.kokoro.detail ─────────────────────
+//
+// The runtime-posture doc (docs/MAGISTER_KOKORO_RUNTIME.md) names five
+// observable states; these three are the ones the registry can report
+// directly via /magister/voices. "Wrong service on port" is covered by
+// the opencode-sidecar test in voices-kokoro-client.test.ts.
+
+test("Kokoro detail surfaces status:'ready' when the service is fully loaded", async () => {
+  __setKokoroFetchForTesting(async () => new Response(
+    JSON.stringify({ ok: true, engine: "kokoro", status: "ready", model_loaded: true }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  ));
+  const { db, cleanup } = await bootRegistryHarness();
+  try {
+    const reg = await buildVoiceRegistry(db, { probeKokoro: true });
+    assert.equal(reg.engines.kokoro.configured, true);
+    assert.match(reg.engines.kokoro.detail ?? "", /status: ready/i);
+    assert.match(reg.engines.kokoro.detail ?? "", /model loaded/i);
+  } finally {
+    __resetKokoroFetchForTesting();
+    await cleanup();
+  }
+});
+
+test("Kokoro detail surfaces status:'cold' (reachable, model not yet loaded)", async () => {
+  __setKokoroFetchForTesting(async () => new Response(
+    JSON.stringify({ ok: true, engine: "kokoro", status: "cold", model_loaded: false }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  ));
+  const { db, cleanup } = await bootRegistryHarness();
+  try {
+    const reg = await buildVoiceRegistry(db, { probeKokoro: true });
+    assert.equal(reg.engines.kokoro.configured, true,
+      "cold service is still configured — model loads lazily on first /generate");
+    assert.match(reg.engines.kokoro.detail ?? "", /status: cold/i);
+    assert.match(reg.engines.kokoro.detail ?? "", /lazy/i);
+  } finally {
+    __resetKokoroFetchForTesting();
+    await cleanup();
+  }
+});
+
+test("Kokoro detail flips configured:false when status:'error' (model load failed)", async () => {
+  __setKokoroFetchForTesting(async () => new Response(
+    JSON.stringify({
+      ok: true, engine: "kokoro", status: "error", model_loaded: false,
+      detail: "espeak-ng missing on host",
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  ));
+  const { db, cleanup } = await bootRegistryHarness();
+  try {
+    const reg = await buildVoiceRegistry(db, { probeKokoro: true });
+    assert.equal(reg.engines.kokoro.configured, false,
+      "error-state Kokoro must NOT report configured:true — /generate will 503");
+    assert.match(reg.engines.kokoro.detail ?? "", /loaded with errors/i);
+    assert.match(reg.engines.kokoro.detail ?? "", /espeak-ng/);
+    // Per-voice availability follows the engine status: every Kokoro
+    // voice must be marked unavailable so the UI doesn't promise audio
+    // it can't deliver.
+    const kokoroVoices = reg.voices.filter(v => v.engine === "kokoro");
+    for (const v of kokoroVoices) {
+      assert.equal(v.available, false, `${v.id} must be unavailable when Kokoro is in error state`);
+    }
+  } finally {
+    __resetKokoroFetchForTesting();
+    await cleanup();
+  }
+});
+
 test("no profile in the live registry uses engine:'elevenlabs' (Maren migrated)", async () => {
   __setKokoroFetchForTesting(async () => { throw new Error("stub"); });
   const { db, cleanup } = await bootRegistryHarness();
