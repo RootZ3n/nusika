@@ -266,6 +266,12 @@ try {
     "campaign",                     // empty state mentions campaigns
   ]);
 
+  // Chahta Anumpa (/chahta-anumpa) — standalone page.
+  await checkPage("Chahta Anumpa", "/chahta-anumpa", [
+    "Chahta Anumpa",
+    "Choctaw",                      // description mentions Choctaw
+  ]);
+
   await checkProxy();
   await checkVoicesRegistry();
 } catch (err) {

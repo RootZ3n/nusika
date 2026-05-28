@@ -16,6 +16,7 @@ import { registerLessonRoutes } from "./lessons.js";
 import { registerDmRoutes } from "./dm.js";
 import { registerDmNarrationRoutes } from "./dm-narration.js";
 import { registerVoicesRoute } from "./voices.js";
+import { registerChahtaAnumpaRoutes } from "./chahta-anumpa.js";
 
 /**
  * Single source of truth for HTTP route registration.
@@ -38,4 +39,5 @@ export async function registerAllRoutes(app: FastifyInstance, db: NusikaDB): Pro
   await registerDmRoutes(app, db);
   await registerDmNarrationRoutes(app, db);
   await registerVoicesRoute(app, db);
+  await registerChahtaAnumpaRoutes(app);
 }

@@ -1,0 +1,56 @@
+{
+  "words": [
+    {
+      "id": "halito",
+      "choctaw": "halito",
+      "english": "hello",
+      "partOfSpeech": "interjection",
+      "source": {
+        "name": "Choctaw Nation of Oklahoma — Official Chahta Anumpa Language Resources",
+        "url": null,
+        "type": "tribe_resource"
+      },
+      "verificationStatus": "verified",
+      "notes": "Common greeting. Widely attested in Choctaw language teaching materials.",
+      "culturalNote": "Used as a general greeting."
+    },
+    {
+      "id": "yakoke",
+      "choctaw": "yakoke",
+      "english": "thank you",
+      "partOfSpeech": "interjection",
+      "source": {
+        "name": "Choctaw Nation of Oklahoma — Official Chahta Anumpa Language Resources",
+        "url": null,
+        "type": "tribe_resource"
+      },
+      "verificationStatus": "verified",
+      "notes": "Common expression of gratitude. Widely attested in Choctaw language teaching materials.",
+      "culturalNote": null
+    }
+  ],
+  "phrases": [
+    {
+      "id": "halito-greeting",
+      "choctaw": "Halito!",
+      "english": "Hello!",
+      "source": {
+        "name": "Choctaw Nation of Oklahoma — Official Chahta Anumpa Language Resources",
+        "url": null,
+        "type": "tribe_resource"
+      },
+      "verificationStatus": "verified",
+      "notes": "Standard greeting phrase."
+    }
+  ],
+  "lessons": [
+    {
+      "id": "halito-lesson",
+      "title": "Halito",
+      "description": "Your first Choctaw words: greetings and gratitude.",
+      "wordIds": ["halito", "yakoke"],
+      "phraseIds": ["halito-greeting"],
+      "pehIntro": "Halito. I'm Peh. I can help you practice Chahta Anumpa, but we keep our paws honest: verified sources come first. Let's start with two words that open every conversation."
+    }
+  ]
+}

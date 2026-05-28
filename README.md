@@ -94,6 +94,9 @@ The built server (`start:dist`) and the dev server both resolve the project root
 | DELETE | `/nusika/shukha-anumpa/drafts/:id` | Hard-delete a draft. 404 if missing or if the row's `module_id` is not `inkwell` (cross-module-safe). |
 | POST | `/nusika/shukha-anumpa/feedback` | Peh editorial feedback on a tale — `{ content, title?, context? }`. Returns 502 if no LLM backend is reachable. |
 | *    | `/nusika/inkwell/*` | **Backward-compat aliases** — all Shukha Anumpa routes also respond under the old `/nusika/inkwell/` prefix. |
+| GET  | `/nusika/chahta-anumpa/lessons` | Chahta Anumpa lessons with expanded word/phrase data and source attribution |
+| GET  | `/nusika/chahta-anumpa/words` | Chahta Anumpa words with verification status + source metadata |
+| GET  | `/nusika/chahta-anumpa/phrases` | Chahta Anumpa phrases with verification status + source metadata |
 | GET  | `/nusika/lessons` | List Teach Me Anything lessons (most recent first) |
 | POST | `/nusika/lessons` | Create a new lesson — `{ title, topic?, depth? }` |
 | GET  | `/nusika/lessons/:id` | Lesson detail + recent turns |
@@ -263,6 +266,7 @@ npm run start      # serve the production build
 
 Routes:
 - `/` — Ittunaha (campaigns, sessions, modules, Shukha Anumpa)
+- `/chahta-anumpa` — Chahta Anumpa (Choctaw language practice)
 - `/teach` — Teach Me Anything (open-ended Peh lessons)
 - `/dm` — Dungeon Master mode (campaigns, character, dice, turn intents, narration)
 

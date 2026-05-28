@@ -108,6 +108,9 @@ export function IttunahaView(props: IttunahaViewProps) {
                 <Link href="/dm" style={{ color: ACCENT, textDecoration: "underline", textDecorationColor: "rgba(167,139,250,0.5)" }}>
                   Play a campaign with {narrator.name} as DM
                 </Link>
+                <Link href="/chahta-anumpa" style={{ color: "#f59e0b", textDecoration: "underline", textDecorationColor: "rgba(245,158,11,0.5)" }}>
+                  Practice Chahta Anumpa (Choctaw)
+                </Link>
               </div>
             </div>
           </div>
