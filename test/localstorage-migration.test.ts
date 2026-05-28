@@ -1,6 +1,6 @@
 /**
- * localStorage migration tests — proves that old magister.* keys are read
- * as fallback, and new nusika.* keys are written on migration.
+ * localStorage migration tests — proves that old magister.* and nusika.hall.*
+ * keys are read as fallback, and new nusika.ittunaha.* keys are written on migration.
  *
  * Since these are browser APIs, we mock localStorage with a simple Map.
  */
@@ -21,17 +21,15 @@ class MockStorage {
   keys(): string[] { return [...this.store.keys()]; }
 }
 
-// Install the mock before importing the module under test.
 const mockStorage = new MockStorage();
 (globalThis as unknown as { window: { localStorage: MockStorage } }).window = {
   localStorage: mockStorage,
 };
 
-// Now import — the module checks `typeof window` so the mock must exist first.
-// We use dynamic import to ensure the mock is in place.
 const {
   TEACH_VOICE_KEY,
   DM_VOICE_KEY,
+  ITTUNAHA_VOICE_KEY,
   HALL_VOICE_KEY,
   readStoredVoiceId,
   writeStoredVoiceId,
@@ -42,7 +40,11 @@ const {
 test("new nusika.* keys are the canonical keys", () => {
   assert.equal(TEACH_VOICE_KEY, "nusika.teach.voiceProfileId");
   assert.equal(DM_VOICE_KEY, "nusika.dm.voiceProfileId");
-  assert.equal(HALL_VOICE_KEY, "nusika.hall.voiceProfileId");
+  assert.equal(ITTUNAHA_VOICE_KEY, "nusika.ittunaha.voiceProfileId");
+});
+
+test("HALL_VOICE_KEY is a backward-compat alias for ITTUNAHA_VOICE_KEY", () => {
+  assert.equal(HALL_VOICE_KEY, ITTUNAHA_VOICE_KEY);
 });
 
 test("readStoredVoiceId reads from new nusika.* key when set", () => {
@@ -62,26 +64,40 @@ test("readStoredVoiceId falls back to legacy magister.* key", () => {
 test("readStoredVoiceId migrates legacy key to new key on read", () => {
   mockStorage.clear();
   mockStorage.setItem("magister.dm.voiceProfileId", "bm_george");
-  // Read triggers migration
   const val = readStoredVoiceId(DM_VOICE_KEY);
   assert.equal(val, "bm_george");
-  // Now the new key should be set
   assert.equal(mockStorage.getItem("nusika.dm.voiceProfileId"), "bm_george");
 });
 
-test("new key takes precedence over legacy key", () => {
+test("new key takes precedence over legacy key (ittunaha)", () => {
   mockStorage.clear();
-  mockStorage.setItem("magister.hall.voiceProfileId", "old_voice");
-  mockStorage.setItem("nusika.hall.voiceProfileId", "new_voice");
-  const val = readStoredVoiceId(HALL_VOICE_KEY);
+  mockStorage.setItem("nusika.hall.voiceProfileId", "old_voice");
+  mockStorage.setItem("nusika.ittunaha.voiceProfileId", "new_voice");
+  const val = readStoredVoiceId(ITTUNAHA_VOICE_KEY);
   assert.equal(val, "new_voice");
+});
+
+test("nusika.hall.voiceProfileId migrates to nusika.ittunaha.voiceProfileId", () => {
+  mockStorage.clear();
+  mockStorage.setItem("nusika.hall.voiceProfileId", "hall_voice");
+  const val = readStoredVoiceId(ITTUNAHA_VOICE_KEY);
+  assert.equal(val, "hall_voice");
+  // Should have been migrated
+  assert.equal(mockStorage.getItem("nusika.ittunaha.voiceProfileId"), "hall_voice");
+});
+
+test("magister.hall.voiceProfileId deep legacy migrates to nusika.ittunaha.voiceProfileId", () => {
+  mockStorage.clear();
+  mockStorage.setItem("magister.hall.voiceProfileId", "deep_legacy_voice");
+  const val = readStoredVoiceId(ITTUNAHA_VOICE_KEY);
+  assert.equal(val, "deep_legacy_voice");
+  assert.equal(mockStorage.getItem("nusika.ittunaha.voiceProfileId"), "deep_legacy_voice");
 });
 
 test("writeStoredVoiceId writes to new nusika.* key", () => {
   mockStorage.clear();
   writeStoredVoiceId(TEACH_VOICE_KEY, "af_nova");
   assert.equal(mockStorage.getItem("nusika.teach.voiceProfileId"), "af_nova");
-  // Should NOT write to the legacy key
   assert.equal(mockStorage.getItem("magister.teach.voiceProfileId"), null);
 });
 

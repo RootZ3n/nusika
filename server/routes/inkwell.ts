@@ -1,5 +1,9 @@
 /**
- * Inkwell — drafts persistence + writing-guide feedback.
+ * Shukha Anumpa — story/tale drafts persistence + writing-guide feedback.
+ *
+ * Formerly "Inkwell". Renamed to Shukha Anumpa (a fable, story, tale) as
+ * part of the Nusika mythology rename. The DB module_id stays "inkwell"
+ * for backward compatibility with existing saved data.
  *
  * Drafts piggyback on the existing magister_creative table, keyed by
  * module_id="inkwell". This avoids a new table and inherits the
@@ -17,10 +21,10 @@
  * editor prompt. If no LLM backend is configured/reachable, the route
  * returns 502 with a clear error — never a fake "feedback received".
  *
- * Identity note: the Inkwell companion used to be Maren, with an
- * ElevenLabs voice. The 2026-05 rebind switched the Inkwell config to
- * Peh (the same persona that narrates the Hall, /teach, and /dm) on
- * a local Kokoro voice. The system prompt below was rewritten to match.
+ * Identity note: the Shukha Anumpa companion used to be Maren, with an
+ * ElevenLabs voice. The 2026-05 rebind switched the config to Peh (the
+ * same persona that narrates Ittunaha, /teach, and /dm) on a local
+ * Kokoro voice. The system prompt below was rewritten to match.
  * Old companion-memory rows keyed by "maren" are left in place — the
  * registry no longer surfaces Maren as a companion so they are simply
  * unreferenced, not migrated.
@@ -31,10 +35,11 @@ import type { NusikaDB, NusikaCreative } from "../db.js";
 import { complete } from "../lib/llm.js";
 import { writeReceipt } from "../lib/receipts.js";
 
+/** DB module_id — kept as "inkwell" for backward compat with saved data. */
 const INKWELL_MODULE = "inkwell";
 
 const EDITOR_SYSTEM_PROMPT =
-  "You are Peh, the Nusika narrator acting as senior editor and writing guide. " +
+  "You are Peh, the Nusika narrator acting as story guide and writing companion. " +
   "Read carefully and respond as a thoughtful editor: what works, what doesn't, what " +
   "you want to know more about. Celebrate strong sentences specifically. Ask one " +
   "focused question. Direct, honest, no false encouragement. One piece of feedback at " +
@@ -74,26 +79,25 @@ interface FeedbackBody {
   model?: string;
 }
 
-export async function registerInkwellRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
-  // GET /nusika/inkwell/drafts — list all drafts for the default user
-  app.get("/nusika/inkwell/drafts", async (_req, reply) => {
+export async function registerShukhaAnumpaRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
+  // ── Handlers ────────────────────────────────────────────────────────────
+  // Defined once, registered under both /nusika/shukha-anumpa/* (canonical)
+  // and /nusika/inkwell/* (backward compat alias).
+
+  const listDrafts = async (_req: unknown, reply: import("fastify").FastifyReply) => {
     const works = db.getCreativeWorks(INKWELL_MODULE);
     return reply.send({ ok: true, drafts: works.map(toDraftDTO) });
-  });
+  };
 
-  // GET /nusika/inkwell/drafts/:id — single draft (404 if missing or wrong module)
-  app.get<{ Params: { id: string } }>("/nusika/inkwell/drafts/:id", async (req, reply) => {
+  const getDraft = async (req: import("fastify").FastifyRequest<{ Params: { id: string } }>, reply: import("fastify").FastifyReply) => {
     const work = db.getCreativeWork(req.params.id);
     if (!work || work.module_id !== INKWELL_MODULE) {
       return reply.status(404).send({ ok: false, error: "Draft not found" });
     }
     return reply.send({ ok: true, draft: toDraftDTO(work) });
-  });
+  };
 
-  // DELETE /nusika/inkwell/drafts/:id — hard delete a draft.
-  // Verifies the row belongs to module_id="inkwell" so this route cannot
-  // be used to delete creative work owned by another module.
-  app.delete<{ Params: { id: string } }>("/nusika/inkwell/drafts/:id", async (req, reply) => {
+  const deleteDraft = async (req: import("fastify").FastifyRequest<{ Params: { id: string } }>, reply: import("fastify").FastifyReply) => {
     const work = db.getCreativeWork(req.params.id);
     if (!work || work.module_id !== INKWELL_MODULE) {
       return reply.status(404).send({ ok: false, error: "Draft not found" });
@@ -101,11 +105,9 @@ export async function registerInkwellRoutes(app: FastifyInstance, db: NusikaDB):
     const removed = db.deleteCreativeWork(req.params.id);
     if (!removed) return reply.status(404).send({ ok: false, error: "Draft not found" });
     return reply.send({ ok: true, deleted: true, id: req.params.id });
-  });
+  };
 
-  // POST /nusika/inkwell/drafts — create or upsert a draft.
-  // Provide `id` to update an existing draft; omit it to create a new one.
-  app.post<{ Body: UpsertBody }>("/nusika/inkwell/drafts", async (req, reply) => {
+  const upsertDraft = async (req: import("fastify").FastifyRequest<{ Body: UpsertBody }>, reply: import("fastify").FastifyReply) => {
     const body = req.body ?? ({} as UpsertBody);
     if (typeof body.content !== "string" || body.content.trim() === "") {
       return reply.status(400).send({ ok: false, error: "content required" });
@@ -135,11 +137,9 @@ export async function registerInkwellRoutes(app: FastifyInstance, db: NusikaDB):
       ...(body.feedback !== undefined ? { companionFeedback: body.feedback } : {}),
     });
     return reply.status(201).send({ ok: true, draft: toDraftDTO(created) });
-  });
+  };
 
-  // POST /nusika/inkwell/feedback — Peh editorial feedback on a piece of writing.
-  // Calls the configured LLM. If no backend is configured/reachable, returns 502.
-  app.post<{ Body: FeedbackBody }>("/nusika/inkwell/feedback", async (req, reply) => {
+  const postFeedback = async (req: import("fastify").FastifyRequest<{ Body: FeedbackBody }>, reply: import("fastify").FastifyReply) => {
     const body = req.body ?? ({} as FeedbackBody);
     if (typeof body.content !== "string" || body.content.trim() === "") {
       return reply.status(400).send({ ok: false, error: "content required" });
@@ -149,7 +149,7 @@ export async function registerInkwellRoutes(app: FastifyInstance, db: NusikaDB):
       body.title ? `Title: ${body.title}` : null,
       body.context ? `Context: ${body.context}` : null,
       "Draft:",
-      body.content.slice(0, 8000), // cap input length for safety
+      body.content.slice(0, 8000),
     ].filter(Boolean).join("\n\n");
 
     try {
@@ -161,13 +161,13 @@ export async function registerInkwellRoutes(app: FastifyInstance, db: NusikaDB):
         ...(body.model ? { model: body.model } : {}),
         maxTokens: 600,
         temperature: 0.6,
-        reason: "magister:inkwell:feedback",
+        reason: "nusika:shukha-anumpa:feedback",
       });
 
       void writeReceipt({
         componentType: "model-call",
-        componentName: "magister-inkwell-feedback",
-        reason: "magister:inkwell:feedback",
+        componentName: "nusika-shukha-anumpa-feedback",
+        reason: "nusika:shukha-anumpa:feedback",
         status: "success",
         model: result.model,
         tokensIn: result.tokensIn,
@@ -190,17 +190,31 @@ export async function registerInkwellRoutes(app: FastifyInstance, db: NusikaDB):
       const detail = (err instanceof Error ? err.message : String(err)).slice(0, 300);
       void writeReceipt({
         componentType: "model-call",
-        componentName: "magister-inkwell-feedback",
-        reason: "magister:inkwell:feedback",
+        componentName: "nusika-shukha-anumpa-feedback",
+        reason: "nusika:shukha-anumpa:feedback",
         status: "failure",
         meta: { error: detail, inputLength: body.content.length },
       });
-      // 502: the route reached us, but the upstream LLM provider failed.
       return reply.status(502).send({
         ok: false,
-        error: "Inkwell feedback is unavailable: no LLM backend reachable.",
+        error: "Shukha Anumpa feedback is unavailable: no LLM backend reachable.",
         detail,
       });
     }
-  });
+  };
+
+  // ── Route registration ──────────────────────────────────────────────────
+  // Canonical paths: /nusika/shukha-anumpa/*
+  app.get("/nusika/shukha-anumpa/drafts", listDrafts);
+  app.get<{ Params: { id: string } }>("/nusika/shukha-anumpa/drafts/:id", getDraft);
+  app.delete<{ Params: { id: string } }>("/nusika/shukha-anumpa/drafts/:id", deleteDraft);
+  app.post<{ Body: UpsertBody }>("/nusika/shukha-anumpa/drafts", upsertDraft);
+  app.post<{ Body: FeedbackBody }>("/nusika/shukha-anumpa/feedback", postFeedback);
+
+  // Backward-compat aliases: /nusika/inkwell/* (old clients, old bookmarks)
+  app.get("/nusika/inkwell/drafts", listDrafts);
+  app.get<{ Params: { id: string } }>("/nusika/inkwell/drafts/:id", getDraft);
+  app.delete<{ Params: { id: string } }>("/nusika/inkwell/drafts/:id", deleteDraft);
+  app.post<{ Body: UpsertBody }>("/nusika/inkwell/drafts", upsertDraft);
+  app.post<{ Body: FeedbackBody }>("/nusika/inkwell/feedback", postFeedback);
 }

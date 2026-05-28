@@ -2,7 +2,7 @@
 
 /**
  * useVoicePlayback — owns TTS (companion voice) playback and STT (mic
- * capture -> /nusika/stt) for the Hall's Session screen.
+ * capture -> /nusika/stt) for Ittunaha's Session screen.
  *
  * Pulled out of page.tsx during the 2026-05-22 refactor.
  *
@@ -10,7 +10,7 @@
  *   { text, voice?, scope? }
  * where `voice` / `scope` may be a voice-profile id (e.g.
  * "peh-default"), a companion id (e.g. "marcus", "cronk"), a legacy
- * Piper voice basename, or omitted (default voice). The Hall path
+ * Piper voice basename, or omitted (default voice). The Ittunaha path
  * doesn't have a voice picker yet — it dispatches by companion id, so
  * it sends `scope: <companion_id>` and lets the server resolve the
  * matching profile through the voice registry.

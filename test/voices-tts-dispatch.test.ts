@@ -268,16 +268,15 @@ test("Legacy { text, voice: '<piper-basename>' } still hits the Piper path", asy
   }
 });
 
-// ── Hall payload contract: scope === voice ────────────────────────────────
+// ── Ittunaha payload contract: scope === voice ────────────────────────────
 //
-// The Hall's useVoicePlayback hook dispatches by companion id and passes
+// Ittunaha's useVoicePlayback hook dispatches by companion id and passes
 // it as `scope`. The /teach and /dm pickers pass a profile id as `voice`.
 // The route contract says these two fields are equivalent — both run
-// through resolveVoiceProfile. The pre-fix Hall path used a different
-// field name (`role`) which the route silently dropped, so every
-// companion played the default voice. These tests pin the
-// scope-and-voice-equivalence behavior so that regression can't sneak
-// back in.
+// through resolveVoiceProfile. The pre-fix path used a different field
+// name (`role`) which the route silently dropped, so every companion
+// played the default voice. These tests pin the scope-and-voice-
+// equivalence behavior so that regression can't sneak back in.
 
 test("scope: <companion_id> routes to the same Kokoro profile as voice: <companion_id>", async () => {
   let kokoroCalls = 0;
@@ -321,7 +320,7 @@ test("scope: <companion_id> routes to the same Kokoro profile as voice: <compani
 });
 
 test("scope: '' (empty) is treated like no scope and falls through to the default voice path", async () => {
-  // The Hall hook omits the field entirely when the companion id is
+  // The Ittunaha hook omits the field entirely when the companion id is
   // empty, but the route must also tolerate an explicit empty string
   // (e.g. an early-render where companion_id was a blank string).
   const h = await bootApp();

@@ -44,7 +44,7 @@ async function bootApp() {
   // Register a representative slice of modules with companions.
   db.registerModule({ id: "linux", name: "Linux Fundamentals", companions: ["cronk", "wrrrakk"] });
   db.registerModule({ id: "latin", name: "Latin", companions: ["marcus"] });
-  db.registerModule({ id: "inkwell", name: "The Inkwell", companions: ["maren"] });
+  db.registerModule({ id: "inkwell", name: "Shukha Anumpa", companions: ["maren"] });
 
   const app = Fastify({ logger: false });
   await registerAllRoutes(app, db);
@@ -131,7 +131,7 @@ test("buildVoiceRegistry honors per-companion legacy ElevenLabs voice_id", async
     });
     // Force the loader to fire by giving inkwell a config_path. Re-register
     // inkwell with that path so listModules() surfaces it.
-    db.registerModule({ id: "inkwell", name: "The Inkwell", companions: ["maren"], configPath: "inkwell-config" });
+    db.registerModule({ id: "inkwell", name: "Shukha Anumpa", companions: ["maren"], configPath: "inkwell-config" });
     const reg2 = await buildVoiceRegistry(db, {
       loader: async (configPath) => {
         if (configPath === "inkwell-config") {

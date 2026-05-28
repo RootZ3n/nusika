@@ -33,7 +33,7 @@ import {
   type NusikaSession,
   type PracticeMessage,
 } from "../types";
-import { labelVoiceProfile, type HallVoice } from "../hooks/useHallVoice";
+import { labelVoiceProfile, type IttunahaVoice } from "../hooks/useIttunahaVoice";
 
 export interface SessionViewProps {
   // Module catalogue (needed for Practice mode + companion lookup).
@@ -112,14 +112,14 @@ export interface SessionViewProps {
   onEndSession: () => Promise<void>;
   onOpenMap: (moduleId: string, companionId?: string) => void;
 
-  // Hall voice picker — wired only for in-session Preview; the existing
-  // 🔊 Repeat path keeps using `playTTS` with the active companion id.
-  hallVoice: HallVoice;
+  // Ittunaha voice picker — wired only for in-session Preview; the existing
+  // Repeat path keeps using `playTTS` with the active companion id.
+  hallVoice: IttunahaVoice;
 }
 
 // Tiny status-pill colors for the engine state. Kept inline so we
 // don't add a new shared style module.
-function engineBadgeColor(state: HallVoice["engine"]["state"]): { bg: string; fg: string } {
+function engineBadgeColor(state: IttunahaVoice["engine"]["state"]): { bg: string; fg: string } {
   switch (state) {
     case "ready":         return { bg: "rgba(74,222,128,0.10)", fg: "#4ade80" };
     case "cold":          return { bg: "rgba(251,191,36,0.10)", fg: "#fbbf24" };
@@ -131,7 +131,7 @@ function engineBadgeColor(state: HallVoice["engine"]["state"]): { bg: string; fg
   }
 }
 
-function engineBadgeLabel(state: HallVoice["engine"]["state"]): string {
+function engineBadgeLabel(state: IttunahaVoice["engine"]["state"]): string {
   switch (state) {
     case "ready":         return "Kokoro: ready";
     case "cold":          return "Kokoro: cold";
@@ -143,7 +143,7 @@ function engineBadgeLabel(state: HallVoice["engine"]["state"]): string {
   }
 }
 
-function previewBannerText(p: HallVoice["previewState"]): { text: string; isError: boolean } | null {
+function previewBannerText(p: IttunahaVoice["previewState"]): { text: string; isError: boolean } | null {
   switch (p.kind) {
     case "idle":    return null;
     case "running": return { text: "Preview playing…", isError: false };
@@ -458,9 +458,9 @@ export function SessionView(props: SessionViewProps) {
             </span>
           )}
         </div>
-        {/* Hall voice picker + Preview — compact, in-line with the header.
+        {/* Ittunaha voice picker + Preview — compact, in-line with the header.
             Renders only when the registry returned voices; on a broken
-            registry it stays hidden so the rest of the Hall is unaffected. */}
+            registry it stays hidden so the rest of Ittunaha is unaffected. */}
         {props.hallVoice.voices.length > 0 && props.hallVoice.selectedVoice && (
           <div style={{
             display: "flex", alignItems: "center", gap: 6, flexWrap: "wrap",

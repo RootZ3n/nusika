@@ -240,17 +240,17 @@ try {
   }
   console.log("[web-smoke] OK web ready");
 
-  // Hall (/) — the Hall renders a "Loading Nusika…" shell during SSR
+  // Ittunaha (/) — renders a "Loading Nusika…" shell during SSR
   // and only surfaces the narrator greeting + /teach + /dm links after
   // client-side hydration. We therefore assert what SSR actually emits:
   // the tab labels (which are static) and the loading shell.
   // To verify the targets of the post-hydration links exist, the /teach
   // and /dm checks below hit them directly — if either responds 200,
-  // navigation from the Hall is reachable.
-  await checkPage("Hall", "/", [
-    "The Hall",                     // active tab label
+  // navigation from Ittunaha is reachable.
+  await checkPage("Ittunaha", "/", [
+    "Ittunaha",                     // active tab label
     "The Session",                  // sibling tab label, always SSR'd
-    "The Inkwell",                  // sibling tab label, always SSR'd
+    "Shukha Anumpa",                // sibling tab label, always SSR'd
     "Loading Nusika",               // loading shell — proves SSR completed
   ]);
 

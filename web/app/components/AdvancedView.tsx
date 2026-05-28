@@ -6,7 +6,7 @@
  *
  * Extracted verbatim from page.tsx during the 2026-05-22 refactor. The
  * "Start Campaign" action pre-fills the new-campaign modal owned by the
- * page and bounces the user to the Hall screen, matching the original
+ * page and bounces the user to the Ittunaha screen, matching the original
  * inline behavior.
  */
 

@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * useHallVoice — voice picker + Preview button state for the Hall's
+ * useIttunahaVoice — voice picker + Preview button state for Ittunaha's
  * Session view. Modeled on web/app/dm/hooks/useDmVoice.ts so the UX
  * matches /teach and /dm; intentionally narrower (no autoplay toggle,
- * no audio cache UI) because the Hall path's runtime narration is
+ * no audio cache UI) because Ittunaha's runtime narration is
  * already owned by useVoicePlayback and the Comfort drawer.
  *
  * Wire contract: this hook's Preview calls POST /nusika/tts with
@@ -12,7 +12,7 @@
  * which is the same shape /teach uses for its reply autoplay. The
  * server resolves the profile id through the voice registry — so an
  * audible Preview here is the human confirmation that the same path
- * the Hall's 🔊 Repeat button (which sends `scope: companionId`) is
+ * Ittunaha's Repeat button (which sends `scope: companionId`) is
  * also resolving correctly. Both routes through resolveVoiceProfile;
  * see server/routes/voice.ts for the equivalence proof.
  *
@@ -25,7 +25,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { API_BASE } from "../types";
 import {
-  HALL_VOICE_KEY,
+  ITTUNAHA_VOICE_KEY,
   labelVoiceProfile,
   parseKokoroEngine,
   pickInitialVoice,
@@ -45,7 +45,7 @@ export type PreviewState =
   | { kind: "ok" }
   | { kind: "error"; reason: string };
 
-export interface HallVoice {
+export interface IttunahaVoice {
   voices: VoiceOption[];
   selectedVoiceId: string;
   selectedVoice: VoiceOption | null;
@@ -59,7 +59,7 @@ const PREVIEW_TEXT_FALLBACK = "Hello. I'm a Nusika voice.";
 const VOICE_UNAVAILABLE_MSG =
   "Voice playback unavailable. Start Kokoro or pick a different voice.";
 
-export function useHallVoice(): HallVoice {
+export function useIttunahaVoice(): IttunahaVoice {
   const [voices, setVoices] = useState<VoiceOption[]>([]);
   const [selectedVoiceId, setSelectedVoiceId] = useState<string>("peh-default");
   const [engine, setEngine] = useState<KokoroEngineInfo>({
@@ -80,7 +80,7 @@ export function useHallVoice(): HallVoice {
       };
       const list = sortVoiceOptions(data.voices ?? []);
       setVoices(list);
-      const stored = readStoredVoiceId(HALL_VOICE_KEY);
+      const stored = readStoredVoiceId(ITTUNAHA_VOICE_KEY);
       const initial = pickInitialVoice(list, stored, "peh-default");
       if (initial) setSelectedVoiceId(initial.id);
       setEngine(parseKokoroEngine(data.engines?.kokoro ?? null));
@@ -96,7 +96,7 @@ export function useHallVoice(): HallVoice {
 
   const onSelectVoice = useCallback((id: string) => {
     setSelectedVoiceId(id);
-    writeStoredVoiceId(HALL_VOICE_KEY, id);
+    writeStoredVoiceId(ITTUNAHA_VOICE_KEY, id);
     setPreviewState({ kind: "idle" });
   }, []);
 
@@ -123,8 +123,6 @@ export function useHallVoice(): HallVoice {
         const body = (await res.json().catch(() => ({}))) as { error?: string; detail?: string };
         const reason = body.error ?? body.detail ?? `Preview failed (HTTP ${res.status}).`;
         setPreviewState({ kind: "error", reason });
-        // Refresh the engine banner so the operator sees the live
-        // reason (e.g. squatter on port) without re-mounting.
         void fetchVoices();
         return;
       }
@@ -139,8 +137,6 @@ export function useHallVoice(): HallVoice {
         await audio.play();
         setPreviewState({ kind: "ok" });
       } catch {
-        // Autoplay policy or other playback rejection — surface
-        // honestly rather than pretend it worked.
         try { URL.revokeObjectURL(url); } catch { /* ignore */ }
         setPreviewState({ kind: "error", reason: VOICE_UNAVAILABLE_MSG });
       }

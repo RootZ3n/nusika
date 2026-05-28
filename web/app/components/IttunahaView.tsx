@@ -1,14 +1,12 @@
 "use client";
 
 /**
- * HallView — landing screen: narrator greeting, streak chip, Active
+ * IttunahaView — the gathering place: narrator greeting, streak chip, Active
  * Adventures list, "Start Adventure" CTA + new-campaign modal, and the
  * Module Library preview row.
  *
- * Extracted verbatim from page.tsx during the 2026-05-22 refactor — every
- * piece of markup, every inline style, every onClick is the same. New-
- * campaign modal state is lifted into the page so AdvancedView can pre-fill
- * + open it from the Library shelf.
+ * Ittunaha is Nusika's meeting place — the common fire where learners
+ * gather before venturing into sessions, tales, and adventures.
  */
 
 import Link from "next/link";
@@ -31,7 +29,7 @@ import {
   type Screen,
 } from "../types";
 
-export interface HallViewProps {
+export interface IttunahaViewProps {
   recapStatus: string | null;
   narrator: NarratorIdentity;
   useDyslexicFont: boolean;
@@ -46,7 +44,6 @@ export interface HallViewProps {
   onStartPractice: (moduleId: string) => void;
   onStopSession: (sessionId: string) => void;
 
-  // New-campaign modal state (lifted so AdvancedView can pre-fill+open it).
   showNewCampaign: boolean;
   setShowNewCampaign: (v: boolean) => void;
   selectedModuleId: string | null;
@@ -60,7 +57,7 @@ export interface HallViewProps {
   onCreateCampaign: () => void;
 }
 
-export function HallView(props: HallViewProps) {
+export function IttunahaView(props: IttunahaViewProps) {
   const {
     recapStatus, narrator, useDyslexicFont, wideLetterSpacing, streak,
     activeSessions, campaignModules, modules, loading,
@@ -87,7 +84,7 @@ export function HallView(props: HallViewProps) {
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 12 }}>
         <div>
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: "24px", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
-            The Hall
+            Ittunaha
           </h1>
           {/* Product narrator greeting (Peh by default) */}
           <div style={{
@@ -106,10 +103,10 @@ export function HallView(props: HallViewProps) {
               {activeSessions.length > 0 ? narrator.greeting_active : narrator.greeting_idle}
               <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 4 }}>
                 <Link href="/teach" style={{ color: ACCENT, textDecoration: "underline", textDecorationColor: "rgba(167,139,250,0.5)" }}>
-                  Ask {narrator.name} to teach you anything →
+                  Ask {narrator.name} to teach you anything
                 </Link>
                 <Link href="/dm" style={{ color: ACCENT, textDecoration: "underline", textDecorationColor: "rgba(167,139,250,0.5)" }}>
-                  Play a campaign with {narrator.name} as DM →
+                  Play a campaign with {narrator.name} as DM
                 </Link>
               </div>
             </div>
@@ -401,7 +398,6 @@ export function HallView(props: HallViewProps) {
                     {c.name}
                   </span>
                 ))}
-                {/* Practice button for language modules */}
                 {LANGUAGE_MODULE_IDS.includes(m.id as typeof LANGUAGE_MODULE_IDS[number]) && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onStartPractice(m.id); }}

@@ -32,7 +32,7 @@ export interface NarratorIdentity {
   personality: string;
   /** Speech-pattern guidance for product-narrator system prompts. */
   speech_pattern: string;
-  /** Greeting shown when the learner opens the Hall with no active sessions. */
+  /** Greeting shown when the learner opens Ittunaha with no active sessions. */
   greeting_idle: string;
   /** Greeting shown when there is at least one active session. */
   greeting_active: string;

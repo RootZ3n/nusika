@@ -5,28 +5,26 @@
  *
  * Holds the cross-screen state (active session, practice mode, modal state,
  * map selection) and delegates rendering to the per-screen components:
- *   - HallView         landing + new-campaign modal
- *   - SessionView      lesson + practice + Comfort drawer
- *   - MapView          mastery + journal
- *   - AdvancedView     Advanced Studies shelf
- *   - InkwellView      writing workshop
+ *   - IttunahaView       gathering place / landing
+ *   - SessionView        lesson + practice + Comfort drawer
+ *   - MapView            mastery + journal
+ *   - AdvancedView       Advanced Studies shelf
+ *   - ShukhaAnumpaView   story workshop
  *
  * Data access goes through useNusikaApi; timer + audio through
- * useSessionTimer; voice through useVoicePlayback. The 2,537-line
- * monolith that used to live here was decomposed on 2026-05-22 — see
- * the per-file headers for what moved where.
+ * useSessionTimer; voice through useVoicePlayback.
  */
 
 import { useCallback, useState } from "react";
-import { HallView } from "./components/HallView";
+import { IttunahaView } from "./components/IttunahaView";
 import { SessionView } from "./components/SessionView";
 import { MapView } from "./components/MapView";
 import { AdvancedView } from "./components/AdvancedView";
-import { InkwellView } from "./components/InkwellView";
+import { ShukhaAnumpaView } from "./components/ShukhaAnumpaView";
 import { useNusikaApi } from "./hooks/useNusikaApi";
 import { useSessionTimer } from "./hooks/useSessionTimer";
 import { useVoicePlayback } from "./hooks/useVoicePlayback";
-import { useHallVoice } from "./hooks/useHallVoice";
+import { useIttunahaVoice } from "./hooks/useIttunahaVoice";
 import {
   API_BASE,
   DEFAULT_LEARNER_PROFILE,
@@ -49,11 +47,11 @@ export default function NusikaPage() {
     narrator, sessionSettings, setSessionSettings,
     useDyslexicFont, setUseDyslexicFont, wideLetterSpacing, setWideLetterSpacing,
     ambientVolume, setAmbientVolume, comfortMode, setComfortMode,
-    inkwellDrafts, fetchInkwellDrafts, saveInkwellDraft, deleteInkwellDraft, inkwellFeedback,
+    shukhaAnumpaDrafts, fetchShukhaAnumpaDrafts, saveShukhaAnumpaDraft, deleteShukhaAnumpaDraft, shukhaAnumpaFeedback,
   } = api;
 
   // ── Screen routing ───────────────────────────────────────────────────────
-  const [screen, setScreen] = useState<Screen>("hall");
+  const [screen, setScreen] = useState<Screen>("ittunaha");
 
   // ── Active campaign session state (persists across tabs) ─────────────────
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
@@ -101,8 +99,8 @@ export default function NusikaPage() {
   const [mapModuleId, setMapModuleId] = useState<string | null>(null);
   const [mapCompanionId, setMapCompanionId] = useState<string | null>(null);
 
-  // ── Hall voice picker + Preview (Phase 2, in-session) ──────────────────
-  const hallVoice = useHallVoice();
+  // ── Ittunaha voice picker + Preview (in-session) ───────────────────────
+  const ittunahaVoice = useIttunahaVoice();
 
   // ── Voice (TTS/STT) ─────────────────────────────────────────────────────
   const voice = useVoicePlayback({
@@ -233,7 +231,7 @@ export default function NusikaPage() {
 
     setActiveSessionId(null);
     setActiveSession(null);
-    setScreen("hall");
+    setScreen("ittunaha");
     void refreshSessions();
   }, [activeSessionId, refreshSessions]);
 
@@ -279,9 +277,8 @@ export default function NusikaPage() {
   }, [fetchProgress, fetchMemories]);
 
   // ── Derived collections ─────────────────────────────────────────────────
-  // Same filtering rules as the original inline code.
   const campaignModules: NusikaModule[] = (modules ?? []).filter((m) => m.id !== "inkwell");
-  const hallModules = campaignModules.filter((m) => {
+  const ittunahaModules = campaignModules.filter((m) => {
     const tier = (m as unknown as Record<string, unknown>).tier as string | undefined;
     const labOnly = (m as unknown as Record<string, unknown>).lab_only as boolean | undefined;
     return !labOnly && tier !== "advanced";
@@ -343,15 +340,15 @@ export default function NusikaPage() {
 
       {!loading && (
         <div style={{ flex: 1, overflowY: "auto" }}>
-          {screen === "hall" && (
-            <HallView
+          {screen === "ittunaha" && (
+            <IttunahaView
               recapStatus={recapStatus}
               narrator={narrator}
               useDyslexicFont={useDyslexicFont}
               wideLetterSpacing={wideLetterSpacing}
               streak={streak}
               activeSessions={activeSessions}
-              campaignModules={hallModules}
+              campaignModules={ittunahaModules}
               modules={modules}
               loading={loading}
               onStartSession={(sid) => void startSession(sid)}
@@ -419,7 +416,7 @@ export default function NusikaPage() {
               startRecording={voice.startRecording}
               stopRecording={voice.stopRecording}
               playTTS={voice.playTTS}
-              hallVoice={hallVoice}
+              hallVoice={ittunahaVoice}
               telexEnabled={telexEnabled}
               setTelexEnabled={setTelexEnabled}
               useDyslexicFont={useDyslexicFont}
@@ -470,18 +467,18 @@ export default function NusikaPage() {
                 setSelectedModuleId(moduleId);
                 setSelectedCompanionId(companionId);
                 setShowNewCampaign(true);
-                setScreen("hall");
+                setScreen("ittunaha");
               }}
               onSetScreen={setScreen}
             />
           )}
-          {screen === "inkwell" && (
-            <InkwellView
-              drafts={inkwellDrafts}
-              fetchDrafts={fetchInkwellDrafts}
-              saveDraft={saveInkwellDraft}
-              deleteDraft={deleteInkwellDraft}
-              requestFeedback={inkwellFeedback}
+          {screen === "shukha-anumpa" && (
+            <ShukhaAnumpaView
+              drafts={shukhaAnumpaDrafts}
+              fetchDrafts={fetchShukhaAnumpaDrafts}
+              saveDraft={saveShukhaAnumpaDraft}
+              deleteDraft={deleteShukhaAnumpaDraft}
+              requestFeedback={shukhaAnumpaFeedback}
             />
           )}
         </div>

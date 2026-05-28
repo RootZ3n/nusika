@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * LessonSidebar — left rail: heading, "← Hall" link, blurb, new-lesson
+ * LessonSidebar — left rail: heading, "← Ittunaha" link, blurb, new-lesson
  * form, and the lessons list with per-row delete. Extracted from
  * teach/page.tsx on 2026-05-22.
  */
@@ -35,7 +35,7 @@ export function LessonSidebar(props: LessonSidebarProps) {
     <aside style={sidebar}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Teach Me Anything</h1>
-        <Link href="/" style={{ fontSize: 12, color: ACCENT, marginLeft: "auto", textDecoration: "none" }}>← Hall</Link>
+        <Link href="/" style={{ fontSize: 12, color: ACCENT, marginLeft: "auto", textDecoration: "none" }}>← Ittunaha</Link>
       </div>
       <p style={{ fontSize: 12, color: "var(--text-muted, #888)", margin: 0, lineHeight: 1.5 }}>
         Open-ended lessons with Peh. Pick a topic and start.

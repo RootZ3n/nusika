@@ -1,6 +1,6 @@
 /**
  * Shared types, constants, helpers, and inline-style factories used across
- * the root Nusika screens (Hall, Session, Map, Advanced, Inkwell).
+ * the root Nusika screens (Ittunaha, Session, Map, Advanced, Shukha Anumpa).
  *
  * Lifted out of the original 2,537-line `page.tsx` during the structural
  * refactor on 2026-05-22. Nothing here is new — every export was already
@@ -118,14 +118,14 @@ export const DEFAULT_NARRATOR: NarratorIdentity = {
   greeting_active: "You're back. Where would you like to pick up?",
 };
 
-export type Screen = "hall" | "session" | "map" | "advanced" | "inkwell";
+export type Screen = "ittunaha" | "session" | "map" | "advanced" | "shukha-anumpa";
 
 export const TABS: { key: Screen; label: string }[] = [
-  { key: "hall", label: "The Hall" },
+  { key: "ittunaha", label: "Ittunaha" },
   { key: "session", label: "The Session" },
   { key: "map", label: "The Map" },
   { key: "advanced", label: "Advanced Studies" },
-  { key: "inkwell", label: "The Inkwell" },
+  { key: "shukha-anumpa", label: "Shukha Anumpa" },
 ];
 
 // Learner profile for adaptive pacing.
@@ -170,8 +170,8 @@ export interface PracticeMessage {
   durationMs?: number;
 }
 
-// Inkwell draft (client-side shape; createdAt is millis since epoch).
-export interface InkwellDraft {
+// Shukha Anumpa draft (client-side shape; createdAt is millis since epoch).
+export interface ShukhaAnumpaDraft {
   id: string;
   title: string;
   content: string;

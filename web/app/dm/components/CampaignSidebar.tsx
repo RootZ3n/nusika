@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * CampaignSidebar — left rail: heading, "← Hall" link, blurb, new-campaign
+ * CampaignSidebar — left rail: heading, "← Ittunaha" link, blurb, new-campaign
  * form, and the campaigns list with active highlighting. Extracted from
  * page.tsx on 2026-05-22.
  */
@@ -38,7 +38,7 @@ export function CampaignSidebar(props: CampaignSidebarProps) {
     <aside style={sidebar}>
       <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
         <h1 style={{ fontSize: 18, fontWeight: 700, margin: 0 }}>Dungeon Master</h1>
-        <Link href="/" style={{ fontSize: 12, color: ACCENT, marginLeft: "auto", textDecoration: "none" }}>← Hall</Link>
+        <Link href="/" style={{ fontSize: 12, color: ACCENT, marginLeft: "auto", textDecoration: "none" }}>← Ittunaha</Link>
       </div>
       <p style={{ fontSize: 12, color: "var(--text-muted, #888)", margin: 0, lineHeight: 1.5 }}>
         A solo fantasy campaign with Peh as DM. The engine owns the rules; Peh narrates.

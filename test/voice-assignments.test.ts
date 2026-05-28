@@ -152,8 +152,8 @@ test("buildVoiceRegistry surfaces 31 profiles (Peh + 30 companions) when probing
     const ids = new Set(reg.voices.map(v => v.id));
     assert.ok(ids.has("peh-default"));
     // Spot-check a few companions across different modules. Maren used to
-    // sit on this list as the Inkwell companion; the Inkwell rebind to
-    // Peh (2026-05) removed her from the curriculum entirely. We add
+    // sit on this list as the Shukha Anumpa (Inkwell) companion; the rebind
+    // to Peh (2026-05) removed her from the curriculum entirely. We add
     // Vermilion (history) so coverage still spans an extra module —
     // dropping Maren without a replacement would weaken the spread.
     for (const cid of ["vermilion", "cronk", "marcus", "tessera", "sol", "iris", "atlas"]) {
@@ -272,11 +272,11 @@ test("Kokoro detail flips configured:false when status:'error' (model load faile
   }
 });
 
-test("engine.detail contract: substrings the Hall picker parser depends on stay stable", async () => {
+test("engine.detail contract: substrings the Ittunaha picker parser depends on stay stable", async () => {
   // Pins the exact tokens parseKokoroEngine() in
   // web/app/lib/voice-picker.ts pattern-matches on. If a future
   // change to kokoroEngineStatus() renames any of these substrings,
-  // the Hall picker will silently misclassify the Kokoro state —
+  // the Ittunaha picker will silently misclassify the Kokoro state —
   // this test fails first so the regression is caught at PR time.
   const cases = [
     {

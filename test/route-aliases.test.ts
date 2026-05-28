@@ -138,3 +138,41 @@ test("GET /magister/voices (legacy alias) returns voices", async () => {
     await cleanup();
   }
 });
+
+// ── Shukha Anumpa / Inkwell route aliases ───────────────────────────────────
+
+test("GET /nusika/shukha-anumpa/drafts (new canonical path) returns 200", async () => {
+  const { app, db, cleanup } = await bootApp();
+  try {
+    db.registerModule({ id: "inkwell", name: "Shukha Anumpa" });
+    const res = await app.inject({ method: "GET", url: "/nusika/shukha-anumpa/drafts" });
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().ok, true);
+  } finally {
+    await cleanup();
+  }
+});
+
+test("GET /nusika/inkwell/drafts (backward-compat alias) returns 200", async () => {
+  const { app, db, cleanup } = await bootApp();
+  try {
+    db.registerModule({ id: "inkwell", name: "Shukha Anumpa" });
+    const res = await app.inject({ method: "GET", url: "/nusika/inkwell/drafts" });
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().ok, true);
+  } finally {
+    await cleanup();
+  }
+});
+
+test("GET /magister/shukha-anumpa/drafts (magister prefix + new path) returns 200", async () => {
+  const { app, db, cleanup } = await bootApp();
+  try {
+    db.registerModule({ id: "inkwell", name: "Shukha Anumpa" });
+    const res = await app.inject({ method: "GET", url: "/magister/shukha-anumpa/drafts" });
+    assert.equal(res.statusCode, 200);
+    assert.equal(res.json().ok, true);
+  } finally {
+    await cleanup();
+  }
+});

@@ -59,8 +59,8 @@ export function MapView(props: MapViewProps) {
             </p>
           )}
         </div>
-        <button style={btnGhost} onClick={() => onSetScreen("hall")}>
-          Back to Hall
+        <button style={btnGhost} onClick={() => onSetScreen("ittunaha")}>
+          Back to Ittunaha
         </button>
       </div>
 

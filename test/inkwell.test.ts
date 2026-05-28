@@ -8,9 +8,9 @@ import { NusikaDB } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 
 async function bootApp() {
-  const dir = mkdtempSync(join(tmpdir(), "magister-inkwell-"));
+  const dir = mkdtempSync(join(tmpdir(), "nusika-shukha-anumpa-"));
   const db = new NusikaDB(join(dir, "test.db"));
-  db.registerModule({ id: "inkwell", name: "The Inkwell" });
+  db.registerModule({ id: "inkwell", name: "Shukha Anumpa" });
 
   const app = Fastify({ logger: false });
   await registerAllRoutes(app, db);
@@ -24,10 +24,12 @@ async function bootApp() {
   };
 }
 
-test("GET /nusika/inkwell/drafts returns empty list when none saved", async () => {
+// ── New canonical routes: /nusika/shukha-anumpa/* ───────────────────────────
+
+test("GET /nusika/shukha-anumpa/drafts returns empty list when none saved", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const res = await app.inject({ method: "GET", url: "/nusika/inkwell/drafts" });
+    const res = await app.inject({ method: "GET", url: "/nusika/shukha-anumpa/drafts" });
     assert.equal(res.statusCode, 200);
     const body = res.json();
     assert.equal(body.ok, true);
@@ -37,11 +39,11 @@ test("GET /nusika/inkwell/drafts returns empty list when none saved", async () =
   }
 });
 
-test("POST /nusika/inkwell/drafts creates a draft and lists it", async () => {
+test("POST /nusika/shukha-anumpa/drafts creates a draft and lists it", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const create = await app.inject({
-      method: "POST", url: "/nusika/inkwell/drafts",
+      method: "POST", url: "/nusika/shukha-anumpa/drafts",
       payload: { title: "Morning Pages", content: "The window was open." },
     });
     assert.equal(create.statusCode, 201);
@@ -51,7 +53,7 @@ test("POST /nusika/inkwell/drafts creates a draft and lists it", async () => {
     assert.equal(created.draft.content, "The window was open.");
     assert.equal(typeof created.draft.id, "string");
 
-    const list = await app.inject({ method: "GET", url: "/nusika/inkwell/drafts" });
+    const list = await app.inject({ method: "GET", url: "/nusika/shukha-anumpa/drafts" });
     assert.equal(list.statusCode, 200);
     const drafts = list.json().drafts;
     assert.equal(drafts.length, 1);
@@ -62,11 +64,11 @@ test("POST /nusika/inkwell/drafts creates a draft and lists it", async () => {
   }
 });
 
-test("POST /nusika/inkwell/drafts auto-titles from first line when missing", async () => {
+test("POST /nusika/shukha-anumpa/drafts auto-titles from first line when missing", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/nusika/inkwell/drafts",
+      method: "POST", url: "/nusika/shukha-anumpa/drafts",
       payload: { content: "First line of the draft.\nMore lines below." },
     });
     assert.equal(res.statusCode, 201);
@@ -76,11 +78,11 @@ test("POST /nusika/inkwell/drafts auto-titles from first line when missing", asy
   }
 });
 
-test("POST /nusika/inkwell/drafts rejects empty content", async () => {
+test("POST /nusika/shukha-anumpa/drafts rejects empty content", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/nusika/inkwell/drafts",
+      method: "POST", url: "/nusika/shukha-anumpa/drafts",
       payload: { title: "Blank", content: "   " },
     });
     assert.equal(res.statusCode, 400);
@@ -90,17 +92,17 @@ test("POST /nusika/inkwell/drafts rejects empty content", async () => {
   }
 });
 
-test("POST /nusika/inkwell/drafts updates an existing draft when id is provided", async () => {
+test("POST /nusika/shukha-anumpa/drafts updates an existing draft when id is provided", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const create = await app.inject({
-      method: "POST", url: "/nusika/inkwell/drafts",
+      method: "POST", url: "/nusika/shukha-anumpa/drafts",
       payload: { title: "v1", content: "draft v1" },
     });
     const id = create.json().draft.id as string;
 
     const update = await app.inject({
-      method: "POST", url: "/nusika/inkwell/drafts",
+      method: "POST", url: "/nusika/shukha-anumpa/drafts",
       payload: { id, title: "v2", content: "draft v2", feedback: "stronger now" },
     });
     assert.equal(update.statusCode, 200);
@@ -109,17 +111,17 @@ test("POST /nusika/inkwell/drafts updates an existing draft when id is provided"
     assert.equal(updated.title, "v2");
     assert.equal(updated.feedback, "stronger now");
 
-    const list = await app.inject({ method: "GET", url: "/nusika/inkwell/drafts" });
+    const list = await app.inject({ method: "GET", url: "/nusika/shukha-anumpa/drafts" });
     assert.equal(list.json().drafts.length, 1, "update must not create a new row");
   } finally {
     await cleanup();
   }
 });
 
-test("GET /nusika/inkwell/drafts/:id returns 404 for unknown id", async () => {
+test("GET /nusika/shukha-anumpa/drafts/:id returns 404 for unknown id", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const res = await app.inject({ method: "GET", url: "/nusika/inkwell/drafts/does-not-exist" });
+    const res = await app.inject({ method: "GET", url: "/nusika/shukha-anumpa/drafts/does-not-exist" });
     assert.equal(res.statusCode, 404);
     assert.equal(res.json().ok, false);
   } finally {
@@ -127,13 +129,13 @@ test("GET /nusika/inkwell/drafts/:id returns 404 for unknown id", async () => {
   }
 });
 
-test("POST /nusika/inkwell/drafts with id from another module returns 404", async () => {
+test("POST /nusika/shukha-anumpa/drafts with id from another module returns 404", async () => {
   const { app, db, cleanup } = await bootApp();
   try {
     db.registerModule({ id: "linux", name: "Linux Fundamentals" });
     const otherWork = db.saveCreativeWork("linux", { title: "shell notes", content: "ls -la" });
     const res = await app.inject({
-      method: "POST", url: "/nusika/inkwell/drafts",
+      method: "POST", url: "/nusika/shukha-anumpa/drafts",
       payload: { id: otherWork.id, title: "hijack", content: "should fail" },
     });
     assert.equal(res.statusCode, 404);
@@ -142,11 +144,11 @@ test("POST /nusika/inkwell/drafts with id from another module returns 404", asyn
   }
 });
 
-test("POST /nusika/inkwell/feedback rejects empty content with 400", async () => {
+test("POST /nusika/shukha-anumpa/feedback rejects empty content with 400", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/nusika/inkwell/feedback",
+      method: "POST", url: "/nusika/shukha-anumpa/feedback",
       payload: { content: "" },
     });
     assert.equal(res.statusCode, 400);
@@ -156,11 +158,7 @@ test("POST /nusika/inkwell/feedback rejects empty content with 400", async () =>
   }
 });
 
-test("POST /nusika/inkwell/feedback returns 502 with clear error when LLM unavailable", async () => {
-  // Force a configuration where every backend will fail:
-  //   - no OpenRouter key
-  //   - Ollama URL pointed at a closed port (127.0.0.1:1)
-  //   - LOCAL_ONLY off so the route falls through to Ollama and fails
+test("POST /nusika/shukha-anumpa/feedback returns 502 with clear error when LLM unavailable", async () => {
   const prevKey = process.env["OPENROUTER_API_KEY"];
   const prevOllama = process.env["NUSIKA_LOCAL_OLLAMA_URL"];
   const prevLocalOnly = process.env["NUSIKA_LOCAL_ONLY"];
@@ -171,15 +169,13 @@ test("POST /nusika/inkwell/feedback returns 502 with clear error when LLM unavai
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/nusika/inkwell/feedback",
+      method: "POST", url: "/nusika/shukha-anumpa/feedback",
       payload: { content: "A short paragraph for feedback." },
     });
     assert.equal(res.statusCode, 502);
     const body = res.json();
     assert.equal(body.ok, false);
     assert.match(body.error, /unavailable/i);
-    // Detail must be a string, not undefined — proves the route surfaced the
-    // upstream failure rather than pretending feedback happened.
     assert.equal(typeof body.detail, "string");
   } finally {
     await cleanup();
@@ -189,5 +185,46 @@ test("POST /nusika/inkwell/feedback returns 502 with clear error when LLM unavai
     else process.env["NUSIKA_LOCAL_OLLAMA_URL"] = prevOllama;
     if (prevLocalOnly === undefined) delete process.env["NUSIKA_LOCAL_ONLY"];
     else process.env["NUSIKA_LOCAL_ONLY"] = prevLocalOnly;
+  }
+});
+
+// ── Backward-compat: old /nusika/inkwell/* routes still work ────────────────
+
+test("old /nusika/inkwell/drafts alias still works", async () => {
+  const { app, cleanup } = await bootApp();
+  try {
+    // Create via new path
+    const create = await app.inject({
+      method: "POST", url: "/nusika/shukha-anumpa/drafts",
+      payload: { title: "Via new path", content: "Test content." },
+    });
+    assert.equal(create.statusCode, 201);
+
+    // List via old alias
+    const list = await app.inject({ method: "GET", url: "/nusika/inkwell/drafts" });
+    assert.equal(list.statusCode, 200);
+    assert.equal(list.json().drafts.length, 1);
+    assert.equal(list.json().drafts[0].title, "Via new path");
+  } finally {
+    await cleanup();
+  }
+});
+
+test("old /nusika/inkwell/drafts POST alias still creates drafts", async () => {
+  const { app, cleanup } = await bootApp();
+  try {
+    const create = await app.inject({
+      method: "POST", url: "/nusika/inkwell/drafts",
+      payload: { title: "Via old path", content: "Old client content." },
+    });
+    assert.equal(create.statusCode, 201);
+
+    // Visible via new path
+    const list = await app.inject({ method: "GET", url: "/nusika/shukha-anumpa/drafts" });
+    assert.equal(list.statusCode, 200);
+    assert.equal(list.json().drafts.length, 1);
+    assert.equal(list.json().drafts[0].title, "Via old path");
+  } finally {
+    await cleanup();
   }
 });

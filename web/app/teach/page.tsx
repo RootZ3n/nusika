@@ -3,7 +3,7 @@
 /**
  * Teach Me Anything (Peh) — orchestration shell.
  *
- * Lives outside the main Hall/Session monolith. The original 764-line
+ * Lives outside the main Ittunaha/Session monolith. The original 764-line
  * file lives across:
  *   - teach/types.ts                       types + constants + styles
  *   - teach/hooks/useTeachApi.ts           lessons + chat + recap

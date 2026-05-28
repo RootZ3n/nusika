@@ -10,7 +10,7 @@ import { registerCreativeRoutes } from "./creative.js";
 import { registerConfigRoutes } from "./config.js";
 import { registerChatRoutes } from "./chat.js";
 import { registerVoiceRoutes } from "./voice.js";
-import { registerInkwellRoutes } from "./inkwell.js";
+import { registerShukhaAnumpaRoutes } from "./inkwell.js";
 import { registerRecapRoutes } from "./recap.js";
 import { registerLessonRoutes } from "./lessons.js";
 import { registerDmRoutes } from "./dm.js";
@@ -32,7 +32,7 @@ export async function registerAllRoutes(app: FastifyInstance, db: NusikaDB): Pro
   await registerConfigRoutes(app);
   await registerChatRoutes(app, db);
   await registerVoiceRoutes(app, db);
-  await registerInkwellRoutes(app, db);
+  await registerShukhaAnumpaRoutes(app, db);
   await registerRecapRoutes(app, db);
   await registerLessonRoutes(app, db);
   await registerDmRoutes(app, db);

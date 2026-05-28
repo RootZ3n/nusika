@@ -7,7 +7,7 @@
  *   - Module + session lists (and the derived streak).
  *   - Module progress + companion memories (lazy, by id).
  *   - Product config: accessibility settings + narrator identity.
- *   - Inkwell drafts list + write/delete helpers.
+ *   - Shukha Anumpa drafts list + write/delete helpers.
  *
  * All fetches go through /api/proxy/* (web -> Nusika API). The hook
  * exposes fetchers as stable `useCallback`s and state via plain returns —
@@ -25,7 +25,7 @@ import {
   DEFAULT_NARRATOR,
   type AccessibilitySettings,
   type CompanionMemory,
-  type InkwellDraft,
+  type ShukhaAnumpaDraft,
   type NusikaModule,
   type NusikaSession,
   type ModuleProgress,
@@ -68,12 +68,12 @@ export interface NusikaApi {
   ambientVolume: number;
   setAmbientVolume: React.Dispatch<React.SetStateAction<number>>;
 
-  // Inkwell drafts.
-  inkwellDrafts: InkwellDraft[];
-  fetchInkwellDrafts: () => Promise<void>;
-  saveInkwellDraft: (input: { title: string; content: string; feedback?: string }) => Promise<boolean>;
-  deleteInkwellDraft: (draftId: string) => Promise<boolean>;
-  inkwellFeedback: (input: { content: string; title?: string }) => Promise<{ ok: boolean; feedback?: string; error?: string }>;
+  // Shukha Anumpa drafts.
+  shukhaAnumpaDrafts: ShukhaAnumpaDraft[];
+  fetchShukhaAnumpaDrafts: () => Promise<void>;
+  saveShukhaAnumpaDraft: (input: { title: string; content: string; feedback?: string }) => Promise<boolean>;
+  deleteShukhaAnumpaDraft: (draftId: string) => Promise<boolean>;
+  shukhaAnumpaFeedback: (input: { content: string; title?: string }) => Promise<{ ok: boolean; feedback?: string; error?: string }>;
 }
 
 export function useNusikaApi(): NusikaApi {
@@ -93,7 +93,7 @@ export function useNusikaApi(): NusikaApi {
   const [comfortMode, setComfortMode] = useState(false);
   const [ambientVolume, setAmbientVolume] = useState(0.15);
 
-  const [inkwellDrafts, setInkwellDrafts] = useState<InkwellDraft[]>([]);
+  const [shukhaAnumpaDrafts, setShukhaAnumpaDrafts] = useState<ShukhaAnumpaDraft[]>([]);
 
   // ── Fetchers ─────────────────────────────────────────────────────────────
 
@@ -197,11 +197,11 @@ export function useNusikaApi(): NusikaApi {
     return false;
   }, [fetchSessions]);
 
-  // ── Inkwell ──────────────────────────────────────────────────────────────
+  // ── Shukha Anumpa ────────────────────────────────────────────────────────
 
-  const fetchInkwellDrafts = useCallback(async () => {
+  const fetchShukhaAnumpaDrafts = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/nusika/inkwell/drafts`);
+      const res = await fetch(`${API_BASE}/nusika/shukha-anumpa/drafts`);
       if (!res.ok) return;
       const data = (await res.json()) as {
         ok?: boolean;
@@ -214,14 +214,14 @@ export function useNusikaApi(): NusikaApi {
         feedback: d.feedback ?? undefined,
         createdAt: new Date(d.createdAt).getTime(),
       }));
-      setInkwellDrafts(drafts);
+      setShukhaAnumpaDrafts(drafts);
     } catch { /* silent */ }
   }, []);
 
-  const saveInkwellDraft = useCallback(
+  const saveShukhaAnumpaDraft = useCallback(
     async (input: { title: string; content: string; feedback?: string }): Promise<boolean> => {
       try {
-        const res = await fetch(`${API_BASE}/nusika/inkwell/drafts`, {
+        const res = await fetch(`${API_BASE}/nusika/shukha-anumpa/drafts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -231,7 +231,7 @@ export function useNusikaApi(): NusikaApi {
           }),
         });
         if (res.ok) {
-          await fetchInkwellDrafts();
+          await fetchShukhaAnumpaDrafts();
           return true;
         }
         return false;
@@ -239,15 +239,15 @@ export function useNusikaApi(): NusikaApi {
         return false;
       }
     },
-    [fetchInkwellDrafts],
+    [fetchShukhaAnumpaDrafts],
   );
 
-  const deleteInkwellDraft = useCallback(
+  const deleteShukhaAnumpaDraft = useCallback(
     async (draftId: string): Promise<boolean> => {
       try {
-        const res = await fetch(`${API_BASE}/nusika/inkwell/drafts/${draftId}`, { method: "DELETE" });
+        const res = await fetch(`${API_BASE}/nusika/shukha-anumpa/drafts/${draftId}`, { method: "DELETE" });
         if (res.ok) {
-          await fetchInkwellDrafts();
+          await fetchShukhaAnumpaDrafts();
           return true;
         }
         return false;
@@ -255,13 +255,13 @@ export function useNusikaApi(): NusikaApi {
         return false;
       }
     },
-    [fetchInkwellDrafts],
+    [fetchShukhaAnumpaDrafts],
   );
 
-  const inkwellFeedback = useCallback(
+  const shukhaAnumpaFeedback = useCallback(
     async (input: { content: string; title?: string }): Promise<{ ok: boolean; feedback?: string; error?: string }> => {
       try {
-        const res = await fetch(`${API_BASE}/nusika/inkwell/feedback`, {
+        const res = await fetch(`${API_BASE}/nusika/shukha-anumpa/feedback`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -362,10 +362,10 @@ export function useNusikaApi(): NusikaApi {
     ambientVolume,
     setAmbientVolume,
 
-    inkwellDrafts,
-    fetchInkwellDrafts,
-    saveInkwellDraft,
-    deleteInkwellDraft,
-    inkwellFeedback,
+    shukhaAnumpaDrafts,
+    fetchShukhaAnumpaDrafts,
+    saveShukhaAnumpaDraft,
+    deleteShukhaAnumpaDraft,
+    shukhaAnumpaFeedback,
   };
 }

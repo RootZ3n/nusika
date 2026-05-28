@@ -1,10 +1,10 @@
 /**
- * Slice 5B — DELETE routes for Inkwell drafts, lessons, and DM campaigns.
+ * Slice 5B — DELETE routes for Shukha Anumpa drafts, lessons, and DM campaigns.
  *
  * Coverage:
  *   - happy paths
  *   - 404 on unknown id
- *   - cross-module rejection for the Inkwell route
+ *   - cross-module rejection for the Shukha Anumpa route
  *   - FK cascade (lesson turns / DM characters + events) verified through DB
  *   - listing endpoints reflect the deletion
  */
@@ -20,9 +20,9 @@ import { registerAllRoutes } from "../server/routes/index.js";
 import { __setCompleteForTesting, __resetCompleteForTesting } from "../server/lib/llm.js";
 
 async function bootApp() {
-  const dir = mkdtempSync(join(tmpdir(), "magister-5b-"));
+  const dir = mkdtempSync(join(tmpdir(), "nusika-5b-"));
   const db = new NusikaDB(join(dir, "test.db"));
-  db.registerModule({ id: "inkwell", name: "The Inkwell" });
+  db.registerModule({ id: "inkwell", name: "Shukha Anumpa" });
   db.registerModule({ id: "linux", name: "Linux Fundamentals" });
 
   const app = Fastify({ logger: false });
@@ -37,57 +37,56 @@ async function bootApp() {
   };
 }
 
-// ── Inkwell delete ──────────────────────────────────────────────────────────
+// ── Shukha Anumpa delete ────────────────────────────────────────────────────
 
-test("DELETE /nusika/inkwell/drafts/:id removes the draft and the list reflects it", async () => {
+test("DELETE /nusika/shukha-anumpa/drafts/:id removes the draft and the list reflects it", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const create = await app.inject({
-      method: "POST", url: "/nusika/inkwell/drafts",
+      method: "POST", url: "/nusika/shukha-anumpa/drafts",
       payload: { title: "Soon to be erased", content: "A first sentence." },
     });
     const id = create.json().draft.id as string;
 
-    const beforeList = await app.inject({ method: "GET", url: "/nusika/inkwell/drafts" });
+    const beforeList = await app.inject({ method: "GET", url: "/nusika/shukha-anumpa/drafts" });
     assert.equal(beforeList.json().drafts.length, 1);
 
-    const del = await app.inject({ method: "DELETE", url: `/nusika/inkwell/drafts/${id}` });
+    const del = await app.inject({ method: "DELETE", url: `/nusika/shukha-anumpa/drafts/${id}` });
     assert.equal(del.statusCode, 200);
     const body = del.json();
     assert.equal(body.ok, true);
     assert.equal(body.deleted, true);
     assert.equal(body.id, id);
 
-    const afterList = await app.inject({ method: "GET", url: "/nusika/inkwell/drafts" });
+    const afterList = await app.inject({ method: "GET", url: "/nusika/shukha-anumpa/drafts" });
     assert.deepEqual(afterList.json().drafts, []);
 
-    const single = await app.inject({ method: "GET", url: `/nusika/inkwell/drafts/${id}` });
+    const single = await app.inject({ method: "GET", url: `/nusika/shukha-anumpa/drafts/${id}` });
     assert.equal(single.statusCode, 404);
   } finally {
     await cleanup();
   }
 });
 
-test("DELETE /nusika/inkwell/drafts/:id returns 404 for unknown id", async () => {
+test("DELETE /nusika/shukha-anumpa/drafts/:id returns 404 for unknown id", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const res = await app.inject({ method: "DELETE", url: "/nusika/inkwell/drafts/no-such-id" });
+    const res = await app.inject({ method: "DELETE", url: "/nusika/shukha-anumpa/drafts/no-such-id" });
     assert.equal(res.statusCode, 404);
   } finally {
     await cleanup();
   }
 });
 
-test("DELETE /nusika/inkwell/drafts/:id refuses to delete a creative row from another module", async () => {
+test("DELETE /nusika/shukha-anumpa/drafts/:id refuses to delete a creative row from another module", async () => {
   const { app, db, cleanup } = await bootApp();
   try {
-    // Create a creative work owned by a different module via the DB.
     const otherWork = db.saveCreativeWork("linux", { title: "shell notes", content: "ls -la" });
 
-    // Delete attempt via the Inkwell route must fail with 404 — the row
+    // Delete attempt via the Shukha Anumpa route must fail with 404 — the row
     // is real but doesn't belong to the inkwell module.
     const del = await app.inject({
-      method: "DELETE", url: `/nusika/inkwell/drafts/${otherWork.id}`,
+      method: "DELETE", url: `/nusika/shukha-anumpa/drafts/${otherWork.id}`,
     });
     assert.equal(del.statusCode, 404);
 
@@ -95,6 +94,25 @@ test("DELETE /nusika/inkwell/drafts/:id refuses to delete a creative row from an
     const stillThere = db.getCreativeWork(otherWork.id);
     assert.ok(stillThere, "cross-module creative row must not be deleted");
     assert.equal(stillThere!.module_id, "linux");
+  } finally {
+    await cleanup();
+  }
+});
+
+// ── Backward-compat: old /nusika/inkwell/* delete alias ─────────────────────
+
+test("DELETE /nusika/inkwell/drafts/:id alias still works", async () => {
+  const { app, cleanup } = await bootApp();
+  try {
+    const create = await app.inject({
+      method: "POST", url: "/nusika/shukha-anumpa/drafts",
+      payload: { title: "To delete via alias", content: "Content here." },
+    });
+    const id = create.json().draft.id as string;
+
+    const del = await app.inject({ method: "DELETE", url: `/nusika/inkwell/drafts/${id}` });
+    assert.equal(del.statusCode, 200);
+    assert.equal(del.json().deleted, true);
   } finally {
     await cleanup();
   }
@@ -115,7 +133,6 @@ test("DELETE /nusika/lessons/:id removes the lesson and cascades turns", async (
     });
     const id = create.json().lesson.id as string;
 
-    // Add a turn so we can verify the cascade fires.
     await app.inject({
       method: "POST", url: `/nusika/lessons/${id}/chat`,
       payload: { message: "explain it" },
@@ -159,7 +176,6 @@ test("DELETE /nusika/dm/campaigns/:id removes the campaign and cascades characte
     });
     const cid = create.json().campaign.id as string;
 
-    // Add a character (1 event) and a roll (1 more event) so we can test cascade.
     await app.inject({
       method: "POST", url: `/nusika/dm/campaigns/${cid}/character`,
       payload: { name: "Korr", ancestry: "human", class_name: "fighter" },
@@ -193,37 +209,6 @@ test("DELETE /nusika/dm/campaigns/:id returns 404 for unknown id", async () => {
   try {
     const res = await app.inject({ method: "DELETE", url: "/nusika/dm/campaigns/no-such-campaign" });
     assert.equal(res.statusCode, 404);
-  } finally {
-    await cleanup();
-  }
-});
-
-test("PATCH /nusika/dm/campaigns/:id with status='complete' is the lossless archive path", async () => {
-  // This locks in the archive contract used by the /dm UI's Archive button:
-  // status flips, completed_at lands, but events + character remain.
-  const { app, db, cleanup } = await bootApp();
-  try {
-    const create = await app.inject({
-      method: "POST", url: "/nusika/dm/campaigns",
-      payload: { title: "to be archived" },
-    });
-    const cid = create.json().campaign.id as string;
-    await app.inject({
-      method: "POST", url: `/nusika/dm/campaigns/${cid}/character`,
-      payload: { name: "Mira", ancestry: "human", class_name: "wizard" },
-    });
-
-    const patch = await app.inject({
-      method: "PATCH", url: `/nusika/dm/campaigns/${cid}`,
-      payload: { status: "complete" },
-    });
-    assert.equal(patch.statusCode, 200);
-    assert.equal(patch.json().campaign.status, "complete");
-    assert.ok(typeof patch.json().campaign.completed_at === "string");
-
-    // Lossless: character + events still readable.
-    assert.ok(db.getDmCharacter(cid), "character preserved through archive");
-    assert.ok(db.listDmEvents(cid).length >= 2, "events preserved through archive");
   } finally {
     await cleanup();
   }

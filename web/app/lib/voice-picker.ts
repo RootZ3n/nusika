@@ -20,13 +20,23 @@ export interface VoiceOption {
 /** localStorage keys (one per page so each picker stays independent). */
 export const TEACH_VOICE_KEY = "nusika.teach.voiceProfileId";
 export const DM_VOICE_KEY = "nusika.dm.voiceProfileId";
-export const HALL_VOICE_KEY = "nusika.hall.voiceProfileId";
+export const ITTUNAHA_VOICE_KEY = "nusika.ittunaha.voiceProfileId";
+/** @deprecated Use ITTUNAHA_VOICE_KEY. Kept for backward compat. */
+export const HALL_VOICE_KEY = ITTUNAHA_VOICE_KEY;
 
 /** Legacy localStorage keys — read-fallback for backward compatibility. */
 const LEGACY_KEYS: Record<string, string> = {
   [TEACH_VOICE_KEY]: "magister.teach.voiceProfileId",
   [DM_VOICE_KEY]: "magister.dm.voiceProfileId",
-  [HALL_VOICE_KEY]: "magister.hall.voiceProfileId",
+  [ITTUNAHA_VOICE_KEY]: "nusika.hall.voiceProfileId",
+};
+
+/**
+ * Additional legacy keys for deeper backward compat.
+ * If the first legacy lookup misses, try these too.
+ */
+const DEEP_LEGACY_KEYS: Record<string, string[]> = {
+  [ITTUNAHA_VOICE_KEY]: ["magister.hall.voiceProfileId"],
 };
 
 /**
@@ -126,6 +136,16 @@ export function readStoredVoiceId(key: string): string | null {
       if (legacy !== null) {
         window.localStorage.setItem(key, legacy);
         return legacy;
+      }
+    }
+    const deepKeys = DEEP_LEGACY_KEYS[key];
+    if (deepKeys) {
+      for (const dk of deepKeys) {
+        const deep = window.localStorage.getItem(dk);
+        if (deep !== null) {
+          window.localStorage.setItem(key, deep);
+          return deep;
+        }
       }
     }
     return null;

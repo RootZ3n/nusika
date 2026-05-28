@@ -8,9 +8,9 @@ Adaptive learning engine — companion-driven teaching, spaced repetition, maste
 
 Nusika teaches one concept per session through a chosen companion (a character with a defined personality, speech pattern, and teaching style) inside a campaign world. Sessions are atomic — one `concept_id`, one `objective`, one `mastery_signal`. Mastery accrues across `introduced -> practiced -> mastered -> reaffirmed` with spaced-repetition reaffirmation due-dates per concept. Hints are tiered (L1 nudge, L2 guided, L3 direct) and tracked. Companion memory is schema-enforced: only `mastered_concepts`, `struggled_concepts`, `hint_patterns`, `preferences`, `relationship_beat` are accepted, validated on every write.
 
-Above the subject companions sits **Peh**, the product narrator — the voice the learner hears at the Hall, between sessions, and in any future product-level mode that does not bind to a subject companion. Peh is defined in `server/lib/narrator.ts` and surfaced via `GET /nusika/config`. Subject companions (Marcus for Latin, Wei for Mandarin, etc.) are unchanged.
+Above the subject companions sits **Peh**, the product narrator — the voice the learner hears at Ittunaha (the gathering place), between sessions, and in any future product-level mode that does not bind to a subject companion. Peh is defined in `server/lib/narrator.ts` and surfaced via `GET /nusika/config`. Subject companions (Marcus for Latin, Wei for Mandarin, etc.) are unchanged.
 
-Curriculum lives in `./curriculum/<subject>/config.json` — each one declares the world, companions, domains, concepts, and (optionally) a mastery spine. 19 subjects ship today: latin, mandarin, vietnamese, spanish, french, history, history-through-story, science, mathematics, social-emotional, financial-basics, inkwell, linux, a-plus, network-plus, security-plus, prompt-engineering, **ai-literacy**, **ai-systems**.
+Curriculum lives in `./curriculum/<subject>/config.json` — each one declares the world, companions, domains, concepts, and (optionally) a mastery spine. 19 subjects ship today: latin, mandarin, vietnamese, spanish, french, history, history-through-story, science, mathematics, social-emotional, financial-basics, shukha-anumpa (inkwell), linux, a-plus, network-plus, security-plus, prompt-engineering, **ai-literacy**, **ai-systems**.
 
 ### AI Literacy and AI Systems
 
@@ -88,11 +88,12 @@ The built server (`start:dist`) and the dev server both resolve the project root
 | POST | `/nusika/memory/:companionId` | Schema-validated companion memory writeback |
 | GET  | `/nusika/creative/:moduleId` | Saved creative works for a module |
 | POST | `/nusika/creative/:moduleId` | Save creative work — `{ title, content }` |
-| GET  | `/nusika/inkwell/drafts` | List Inkwell drafts (stored in `magister_creative` under `module_id="inkwell"`) |
-| GET  | `/nusika/inkwell/drafts/:id` | Single Inkwell draft |
-| POST | `/nusika/inkwell/drafts` | Upsert an Inkwell draft — `{ id?, title?, content, feedback? }` |
-| DELETE | `/nusika/inkwell/drafts/:id` | Hard-delete a draft. 404 if missing or if the row's `module_id` is not `inkwell` (cross-module-safe). |
-| POST | `/nusika/inkwell/feedback` | Peh editorial feedback on a draft — `{ content, title?, context? }`. Returns 502 if no LLM backend is reachable. |
+| GET  | `/nusika/shukha-anumpa/drafts` | List Shukha Anumpa drafts (stored in `magister_creative` under `module_id="inkwell"`) |
+| GET  | `/nusika/shukha-anumpa/drafts/:id` | Single Shukha Anumpa draft |
+| POST | `/nusika/shukha-anumpa/drafts` | Upsert a Shukha Anumpa draft — `{ id?, title?, content, feedback? }` |
+| DELETE | `/nusika/shukha-anumpa/drafts/:id` | Hard-delete a draft. 404 if missing or if the row's `module_id` is not `inkwell` (cross-module-safe). |
+| POST | `/nusika/shukha-anumpa/feedback` | Peh editorial feedback on a tale — `{ content, title?, context? }`. Returns 502 if no LLM backend is reachable. |
+| *    | `/nusika/inkwell/*` | **Backward-compat aliases** — all Shukha Anumpa routes also respond under the old `/nusika/inkwell/` prefix. |
 | GET  | `/nusika/lessons` | List Teach Me Anything lessons (most recent first) |
 | POST | `/nusika/lessons` | Create a new lesson — `{ title, topic?, depth? }` |
 | GET  | `/nusika/lessons/:id` | Lesson detail + recent turns |
@@ -181,7 +182,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > `/nusika/tts/elevenlabs` is still wired but **deprecated**: any
 > request whose resolved profile uses `engine: "elevenlabs"` returns
 > HTTP 409 from `/nusika/tts` with a pointer to the dedicated route.
-> The Inkwell companion (formerly Maren on an ElevenLabs voice) was
+> The Shukha Anumpa companion (formerly Maren/Inkwell on an ElevenLabs voice) was
 > rebound to Peh on a local Kokoro voice in Slice 6E; the legacy
 > ElevenLabs path remains wired but no shipped companion uses it.
 >
@@ -201,7 +202,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > `opencode-sidecar`, which has been observed squatting `:18794` on dev
 > machines) would be silently accepted as Kokoro. The dispatch path skips
 > the probe to keep `/nusika/tts` snappy — it just tries the engine
-> and surfaces the failure honestly. Companion chat, lesson chat, lesson recap, Inkwell feedback,
+> and surfaces the failure honestly. Companion chat, lesson chat, lesson recap, Shukha Anumpa feedback,
 > session recap, DM narration, and translate all require either
 > `OPENROUTER_API_KEY` set or a running Ollama at `NUSIKA_LOCAL_OLLAMA_URL`.
 > Set `NUSIKA_LOCAL_ONLY=true` to skip cloud entirely. All LLM-backed
@@ -229,7 +230,7 @@ Magister is the extraction of `/mnt/ai/squidley-v2/modules/experiences/magister/
 - DB layer (sessions, modules, progress, memory, creative, lessons, DM campaigns/characters/events, curriculum scanner)
 - Module / session / progress / memory / creative / config / translate / chat routes
 - LLM client (OpenRouter + Ollama with fallback) plus a test seam for deterministic mocking
-- Inkwell drafts persistence + Peh editorial feedback (`/nusika/inkwell/*`)
+- Shukha Anumpa drafts persistence + Peh editorial feedback (`/nusika/shukha-anumpa/*`)
 - Session recap with companion memory writeback (`/nusika/sessions/:id/recap`)
 - Teach Me Anything mode (`/nusika/lessons/*`, `/teach` web UI)
 - Lookup placeholder that honestly returns `supported: false`
@@ -261,7 +262,7 @@ npm run start      # serve the production build
 ```
 
 Routes:
-- `/` — The Hall (campaigns, sessions, modules, Inkwell)
+- `/` — Ittunaha (campaigns, sessions, modules, Shukha Anumpa)
 - `/teach` — Teach Me Anything (open-ended Peh lessons)
 - `/dm` — Dungeon Master mode (campaigns, character, dice, turn intents, narration)
 
