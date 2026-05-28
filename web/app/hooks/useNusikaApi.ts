@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * useMagisterApi — central data hook for the root Magister UI.
+ * useNusikaApi — central data hook for the root Nusika UI.
  *
  * Owns:
  *   - Module + session lists (and the derived streak).
@@ -9,9 +9,9 @@
  *   - Product config: accessibility settings + narrator identity.
  *   - Inkwell drafts list + write/delete helpers.
  *
- * All fetches go through /api/proxy/* (web -> Magister API). The hook
+ * All fetches go through /api/proxy/* (web -> Nusika API). The hook
  * exposes fetchers as stable `useCallback`s and state via plain returns —
- * components and other hooks `const { modules } = useMagisterApi()` and
+ * components and other hooks `const { modules } = useNusikaApi()` and
  * compose freely.
  *
  * Lifted from the original page.tsx without behavior changes. Anywhere the
@@ -26,17 +26,17 @@ import {
   type AccessibilitySettings,
   type CompanionMemory,
   type InkwellDraft,
-  type MagisterModule,
-  type MagisterSession,
+  type NusikaModule,
+  type NusikaSession,
   type ModuleProgress,
   type NarratorIdentity,
 } from "../types";
 
-export interface MagisterApi {
+export interface NusikaApi {
   // Module/session listings.
-  modules: MagisterModule[];
-  setModules: React.Dispatch<React.SetStateAction<MagisterModule[]>>;
-  sessions: MagisterSession[];
+  modules: NusikaModule[];
+  setModules: React.Dispatch<React.SetStateAction<NusikaModule[]>>;
+  sessions: NusikaSession[];
   streak: number;
   loading: boolean;
   error: string | null;
@@ -52,7 +52,8 @@ export interface MagisterApi {
   fetchMemories: (companionId: string) => Promise<void>;
 
   // Session detail (raw fetch — the caller orchestrates UI state).
-  fetchSessionDetail: (sessionId: string) => Promise<MagisterSession | null>;
+  fetchSessionDetail: (sessionId: string) => Promise<NusikaSession | null>;
+  deleteSession: (sessionId: string) => Promise<boolean>;
 
   // Product config: a11y + narrator.
   narrator: NarratorIdentity;
@@ -75,9 +76,9 @@ export interface MagisterApi {
   inkwellFeedback: (input: { content: string; title?: string }) => Promise<{ ok: boolean; feedback?: string; error?: string }>;
 }
 
-export function useMagisterApi(): MagisterApi {
-  const [modules, setModules] = useState<MagisterModule[]>([]);
-  const [sessions, setSessions] = useState<MagisterSession[]>([]);
+export function useNusikaApi(): NusikaApi {
+  const [modules, setModules] = useState<NusikaModule[]>([]);
+  const [sessions, setSessions] = useState<NusikaSession[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [streak, setStreak] = useState(0);
@@ -98,7 +99,7 @@ export function useMagisterApi(): MagisterApi {
 
   const fetchModules = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/magister/modules`);
+      const res = await fetch(`${API_BASE}/nusika/modules`);
       if (res.ok) {
         const data = await res.json();
         setModules(Array.isArray(data) ? data : data.modules ?? []);
@@ -108,14 +109,14 @@ export function useMagisterApi(): MagisterApi {
 
   const fetchSessions = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/magister/sessions`);
+      const res = await fetch(`${API_BASE}/nusika/sessions`);
       if (res.ok) {
         const data = await res.json();
         const list = Array.isArray(data) ? data : data.sessions ?? [];
         setSessions(list);
         // Derive streak from session updated_at timestamps — same algorithm
         // as the original inline code.
-        const dates = new Set((list ?? []).map((s: MagisterSession) => new Date(s.updated_at).toDateString()));
+        const dates = new Set((list ?? []).map((s: NusikaSession) => new Date(s.updated_at).toDateString()));
         let streakCount = 0;
         const today = new Date();
         for (let i = 0; i < 365; i++) {
@@ -134,7 +135,7 @@ export function useMagisterApi(): MagisterApi {
 
   const fetchProductConfig = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/magister/config`);
+      const res = await fetch(`${API_BASE}/nusika/config`);
       if (!res.ok) return;
       const data = (await res.json()) as { config?: AccessibilitySettings; narrator?: NarratorIdentity };
       const settings = data.config ?? null;
@@ -151,7 +152,7 @@ export function useMagisterApi(): MagisterApi {
 
   const fetchProgress = useCallback(async (moduleId: string) => {
     try {
-      const res = await fetch(`${API_BASE}/magister/progress/${moduleId}`);
+      const res = await fetch(`${API_BASE}/nusika/progress/${moduleId}`);
       if (res.ok) {
         const data = await res.json();
         // API returns { ok, progress: [], readiness: { readinessPercent } }
@@ -166,7 +167,7 @@ export function useMagisterApi(): MagisterApi {
 
   const fetchMemories = useCallback(async (companionId: string) => {
     try {
-      const res = await fetch(`${API_BASE}/magister/memory/${companionId}`);
+      const res = await fetch(`${API_BASE}/nusika/memory/${companionId}`);
       if (res.ok) {
         const data = await res.json();
         setCompanionMemories(Array.isArray(data) ? data : data.memories ?? []);
@@ -174,22 +175,33 @@ export function useMagisterApi(): MagisterApi {
     } catch { /* silent */ }
   }, []);
 
-  const fetchSessionDetail = useCallback(async (sessionId: string): Promise<MagisterSession | null> => {
+  const fetchSessionDetail = useCallback(async (sessionId: string): Promise<NusikaSession | null> => {
     try {
-      const res = await fetch(`${API_BASE}/magister/sessions/${sessionId}`);
+      const res = await fetch(`${API_BASE}/nusika/sessions/${sessionId}`);
       if (res.ok) {
         const data = await res.json();
-        return (data.session ?? data) as MagisterSession;
+        return (data.session ?? data) as NusikaSession;
       }
     } catch { /* silent */ }
     return null;
   }, []);
 
+  const deleteSession = useCallback(async (sessionId: string): Promise<boolean> => {
+    try {
+      const res = await fetch(`${API_BASE}/nusika/sessions/${sessionId}`, { method: "DELETE" });
+      if (res.ok) {
+        await fetchSessions();
+        return true;
+      }
+    } catch { /* silent */ }
+    return false;
+  }, [fetchSessions]);
+
   // ── Inkwell ──────────────────────────────────────────────────────────────
 
   const fetchInkwellDrafts = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/magister/inkwell/drafts`);
+      const res = await fetch(`${API_BASE}/nusika/inkwell/drafts`);
       if (!res.ok) return;
       const data = (await res.json()) as {
         ok?: boolean;
@@ -209,7 +221,7 @@ export function useMagisterApi(): MagisterApi {
   const saveInkwellDraft = useCallback(
     async (input: { title: string; content: string; feedback?: string }): Promise<boolean> => {
       try {
-        const res = await fetch(`${API_BASE}/magister/inkwell/drafts`, {
+        const res = await fetch(`${API_BASE}/nusika/inkwell/drafts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -233,7 +245,7 @@ export function useMagisterApi(): MagisterApi {
   const deleteInkwellDraft = useCallback(
     async (draftId: string): Promise<boolean> => {
       try {
-        const res = await fetch(`${API_BASE}/magister/inkwell/drafts/${draftId}`, { method: "DELETE" });
+        const res = await fetch(`${API_BASE}/nusika/inkwell/drafts/${draftId}`, { method: "DELETE" });
         if (res.ok) {
           await fetchInkwellDrafts();
           return true;
@@ -249,7 +261,7 @@ export function useMagisterApi(): MagisterApi {
   const inkwellFeedback = useCallback(
     async (input: { content: string; title?: string }): Promise<{ ok: boolean; feedback?: string; error?: string }> => {
       try {
-        const res = await fetch(`${API_BASE}/magister/inkwell/feedback`, {
+        const res = await fetch(`${API_BASE}/nusika/inkwell/feedback`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -290,7 +302,7 @@ export function useMagisterApi(): MagisterApi {
     };
     const timeout = setTimeout(() => {
       setSessionSettings(next);
-      fetch(`${API_BASE}/magister/settings/accessibility`, {
+      fetch(`${API_BASE}/nusika/settings/accessibility`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(next),
@@ -326,6 +338,8 @@ export function useMagisterApi(): MagisterApi {
     error,
     setError,
     refreshSessions: fetchSessions,
+
+    deleteSession,
 
     moduleProgress,
     setModuleProgress,

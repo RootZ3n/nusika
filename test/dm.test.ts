@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import Fastify from "fastify";
-import { MagisterDB } from "../server/db.js";
+import { NusikaDB } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 import { __setDmRngForTesting, __resetDmRngForTesting } from "../server/routes/dm.js";
 
@@ -19,7 +19,7 @@ function makeRng(values: number[]): () => number {
 
 async function bootApp() {
   const dir = mkdtempSync(join(tmpdir(), "magister-dm-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   const app = Fastify({ logger: false });
   await registerAllRoutes(app, db);
   return {
@@ -34,7 +34,7 @@ async function bootApp() {
 
 async function makeCampaign(app: Awaited<ReturnType<typeof bootApp>>["app"], title = "Test Campaign") {
   const res = await app.inject({
-    method: "POST", url: "/magister/dm/campaigns",
+    method: "POST", url: "/nusika/dm/campaigns",
     payload: { title },
   });
   return res.json().campaign as { id: string; title: string };
@@ -42,7 +42,7 @@ async function makeCampaign(app: Awaited<ReturnType<typeof bootApp>>["app"], tit
 
 async function makeFighter(app: Awaited<ReturnType<typeof bootApp>>["app"], campaignId: string) {
   return await app.inject({
-    method: "POST", url: `/magister/dm/campaigns/${campaignId}/character`,
+    method: "POST", url: `/nusika/dm/campaigns/${campaignId}/character`,
     payload: { name: "Korr", ancestry: "human", class_name: "fighter" },
   });
 }
@@ -53,7 +53,7 @@ test("POST /dm/campaigns creates a campaign and appends a campaign_created event
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/magister/dm/campaigns",
+      method: "POST", url: "/nusika/dm/campaigns",
       payload: { title: "Foothills of Marric" },
     });
     assert.equal(res.statusCode, 201);
@@ -62,7 +62,7 @@ test("POST /dm/campaigns creates a campaign and appends a campaign_created event
     assert.equal(c.status, "active");
     assert.equal(typeof c.id, "string");
 
-    const log = await app.inject({ method: "GET", url: `/magister/dm/campaigns/${c.id}/log` });
+    const log = await app.inject({ method: "GET", url: `/nusika/dm/campaigns/${c.id}/log` });
     const events = log.json().events as Array<{ kind: string }>;
     assert.equal(events.length, 1);
     assert.equal(events[0]!.kind, "campaign_created");
@@ -75,7 +75,7 @@ test("POST /dm/campaigns rejects empty title", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/magister/dm/campaigns",
+      method: "POST", url: "/nusika/dm/campaigns",
       payload: { title: "  " },
     });
     assert.equal(res.statusCode, 400);
@@ -87,10 +87,10 @@ test("POST /dm/campaigns rejects empty title", async () => {
 test("GET /dm/campaigns lists newest first", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    await app.inject({ method: "POST", url: "/magister/dm/campaigns", payload: { title: "first" } });
+    await app.inject({ method: "POST", url: "/nusika/dm/campaigns", payload: { title: "first" } });
     await delay(5);
-    await app.inject({ method: "POST", url: "/magister/dm/campaigns", payload: { title: "second" } });
-    const res = await app.inject({ method: "GET", url: "/magister/dm/campaigns" });
+    await app.inject({ method: "POST", url: "/nusika/dm/campaigns", payload: { title: "second" } });
+    const res = await app.inject({ method: "GET", url: "/nusika/dm/campaigns" });
     const list = res.json().campaigns as Array<{ title: string }>;
     assert.equal(list[0]!.title, "second");
   } finally {
@@ -103,14 +103,14 @@ test("GET /dm/campaigns/:id includes character and events; 404 unknown id", asyn
   try {
     const c = await makeCampaign(app);
     await makeFighter(app, c.id);
-    const got = await app.inject({ method: "GET", url: `/magister/dm/campaigns/${c.id}` });
+    const got = await app.inject({ method: "GET", url: `/nusika/dm/campaigns/${c.id}` });
     assert.equal(got.statusCode, 200);
     const body = got.json();
     assert.equal(body.campaign.id, c.id);
     assert.equal(body.character.name, "Korr");
     assert.ok(body.events.length >= 2, "campaign_created + character_created");
 
-    const missing = await app.inject({ method: "GET", url: "/magister/dm/campaigns/no-such-id" });
+    const missing = await app.inject({ method: "GET", url: "/nusika/dm/campaigns/no-such-id" });
     assert.equal(missing.statusCode, 404);
   } finally {
     await cleanup();
@@ -122,7 +122,7 @@ test("PATCH /dm/campaigns/:id status=complete sets completed_at and emits campai
   try {
     const c = await makeCampaign(app);
     const patch = await app.inject({
-      method: "PATCH", url: `/magister/dm/campaigns/${c.id}`,
+      method: "PATCH", url: `/nusika/dm/campaigns/${c.id}`,
       payload: { status: "complete", current_scene: "Final stand on the bridge" },
     });
     assert.equal(patch.statusCode, 200);
@@ -131,7 +131,7 @@ test("PATCH /dm/campaigns/:id status=complete sets completed_at and emits campai
     assert.ok(typeof updated.completed_at === "string");
     assert.equal(updated.current_scene, "Final stand on the bridge");
 
-    const log = await app.inject({ method: "GET", url: `/magister/dm/campaigns/${c.id}/log` });
+    const log = await app.inject({ method: "GET", url: `/nusika/dm/campaigns/${c.id}/log` });
     const kinds = (log.json().events as Array<{ kind: string }>).map(e => e.kind);
     assert.ok(kinds.includes("campaign_updated"));
   } finally {
@@ -144,7 +144,7 @@ test("PATCH /dm/campaigns/:id rejects invalid status", async () => {
   try {
     const c = await makeCampaign(app);
     const res = await app.inject({
-      method: "PATCH", url: `/magister/dm/campaigns/${c.id}`,
+      method: "PATCH", url: `/nusika/dm/campaigns/${c.id}`,
       payload: { status: "abandoned" },
     });
     assert.equal(res.statusCode, 400);
@@ -186,7 +186,7 @@ test("POST .../character rejects non-SRD class", async () => {
   try {
     const c = await makeCampaign(app);
     const res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/character`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/character`,
       payload: { name: "X", ancestry: "human", class_name: "artificer" },
     });
     assert.equal(res.statusCode, 400);
@@ -202,7 +202,7 @@ test("POST .../character rejects second character with 409", async () => {
     const c = await makeCampaign(app);
     await makeFighter(app, c.id);
     const second = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/character`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/character`,
       payload: { name: "Mira", ancestry: "human", class_name: "wizard" },
     });
     assert.equal(second.statusCode, 409);
@@ -215,10 +215,10 @@ test("GET .../character returns 404 when none, 200 when present", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const c = await makeCampaign(app);
-    const noChar = await app.inject({ method: "GET", url: `/magister/dm/campaigns/${c.id}/character` });
+    const noChar = await app.inject({ method: "GET", url: `/nusika/dm/campaigns/${c.id}/character` });
     assert.equal(noChar.statusCode, 404);
     await makeFighter(app, c.id);
-    const got = await app.inject({ method: "GET", url: `/magister/dm/campaigns/${c.id}/character` });
+    const got = await app.inject({ method: "GET", url: `/nusika/dm/campaigns/${c.id}/character` });
     assert.equal(got.statusCode, 200);
   } finally {
     await cleanup();
@@ -233,7 +233,7 @@ test("POST .../roll appends roll event with deterministic RNG", async () => {
   try {
     const c = await makeCampaign(app);
     const res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/roll`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/roll`,
       payload: { formula: "1d20+3", label: "perception" },
     });
     assert.equal(res.statusCode, 200);
@@ -252,7 +252,7 @@ test("POST .../roll rejects invalid formula with 400", async () => {
   try {
     const c = await makeCampaign(app);
     const res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/roll`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/roll`,
       payload: { formula: "DROP TABLE" },
     });
     assert.equal(res.statusCode, 400);
@@ -275,7 +275,7 @@ test("encounter create + get + end_turn advances and wraps the round", async () 
   try {
     const c = await makeCampaign(app);
     const start = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/encounter`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/encounter`,
       payload: {
         combatants: [
           { id: "g1", name: "Goblin", initiative_bonus: 2, hp_max: 7, hp_current: 7, ac: 13 },
@@ -290,23 +290,23 @@ test("encounter create + get + end_turn advances and wraps the round", async () 
     assert.equal(enc.round, 1);
     assert.equal(enc.turn_index, 0);
 
-    const got = await app.inject({ method: "GET", url: `/magister/dm/campaigns/${c.id}/encounter` });
+    const got = await app.inject({ method: "GET", url: `/nusika/dm/campaigns/${c.id}/encounter` });
     assert.equal(got.json().encounter.order[0].id, "g1");
 
     // end_turn three times → round should bump to 2 on the third call.
     let res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "end_turn", args: {} },
     });
     assert.equal(res.json().encounter.turn_index, 1);
     assert.equal(res.json().encounter.round, 1);
     res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "end_turn", args: {} },
     });
     assert.equal(res.json().encounter.turn_index, 2);
     res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "end_turn", args: {} },
     });
     assert.equal(res.json().encounter.turn_index, 0);
@@ -322,7 +322,7 @@ test("encounter requires at least one combatant", async () => {
   try {
     const c = await makeCampaign(app);
     const res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/encounter`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/encounter`,
       payload: { combatants: [] },
     });
     assert.equal(res.statusCode, 400);
@@ -343,7 +343,7 @@ test("turn intent=check uses character ability + DC, deterministic RNG", async (
     await makeFighter(app, c.id);
 
     const ok = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "check", args: { ability: "str", dc: 12 } },
     });
     assert.equal(ok.statusCode, 200);
@@ -351,7 +351,7 @@ test("turn intent=check uses character ability + DC, deterministic RNG", async (
     assert.equal(ok.json().result.total, 13);
 
     const fail = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "check", args: { ability: "str", dc: 14 } },
     });
     assert.equal(fail.json().result.success, false);
@@ -368,14 +368,14 @@ test("turn intent=save with character save proficiency adds prof bonus", async (
   try {
     const c = await makeCampaign(app);
     await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/character`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/character`,
       payload: {
         name: "Korr", ancestry: "human", class_name: "fighter",
         proficiencies: { saves: ["str", "con"] },
       },
     });
     const res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "save", args: { ability: "str", dc: 15 } },
     });
     assert.equal(res.statusCode, 200);
@@ -394,14 +394,14 @@ test("turn intent=damage drops character hp_current; healing tops back up but no
     await makeFighter(app, c.id); // hp_max 11
 
     const dmg = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "damage", args: { amount: 4 } },
     });
     assert.equal(dmg.statusCode, 200);
     assert.equal(dmg.json().character.hp_current, 7);
 
     const heal = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "heal", args: { amount: 999 } },
     });
     assert.equal(heal.json().character.hp_current, 11, "healing capped at hp_max");
@@ -416,12 +416,12 @@ test("turn intent=condition_add and condition_remove update character", async ()
     const c = await makeCampaign(app);
     await makeFighter(app, c.id);
     const add = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "condition_add", args: { condition: "Prone" } },
     });
     assert.deepEqual(add.json().character.conditions, ["prone"]);
     const remove = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "condition_remove", args: { condition: "PRONE" } },
     });
     assert.deepEqual(remove.json().character.conditions, []);
@@ -435,7 +435,7 @@ test("turn rejects unknown intent with 400", async () => {
   try {
     const c = await makeCampaign(app);
     const res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "summon_dragon", args: {} },
     });
     assert.equal(res.statusCode, 400);
@@ -450,7 +450,7 @@ test("turn intent=damage targets a combatant in the encounter when target_id mat
   try {
     const c = await makeCampaign(app);
     await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/encounter`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/encounter`,
       payload: {
         combatants: [
           { id: "g1", name: "Goblin", initiative_bonus: 2, hp_max: 7, hp_current: 7, ac: 13 },
@@ -459,7 +459,7 @@ test("turn intent=damage targets a combatant in the encounter when target_id mat
       },
     });
     const res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "damage", args: { target_id: "g1", amount: 5 } },
     });
     assert.equal(res.statusCode, 200);
@@ -482,14 +482,14 @@ test("long rest restores HP, clears temp HP, resets death saves and hit dice", a
 
     // Hurt the character first.
     await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "damage", args: { amount: 7 } },
     });
-    let got = await app.inject({ method: "GET", url: `/magister/dm/campaigns/${c.id}/character` });
+    let got = await app.inject({ method: "GET", url: `/nusika/dm/campaigns/${c.id}/character` });
     assert.equal(got.json().character.hp_current, 4);
 
     const rest = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/rest`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/rest`,
       payload: { kind: "long" },
     });
     assert.equal(rest.statusCode, 200);
@@ -509,11 +509,11 @@ test("short rest without spendHitDice appends event but does not change HP", asy
     const c = await makeCampaign(app);
     await makeFighter(app, c.id);
     await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "damage", args: { amount: 4 } },
     });
     const rest = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/rest`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/rest`,
       payload: { kind: "short" },
     });
     assert.equal(rest.statusCode, 200);
@@ -535,11 +535,11 @@ test("short rest with spendHitDice rolls deterministically and heals", async () 
     const c = await makeCampaign(app);
     await makeFighter(app, c.id); // hp_max 11
     await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "damage", args: { amount: 9 } },
     }); // hp = 2
     const rest = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/rest`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/rest`,
       payload: { kind: "short", spendHitDice: 1 },
     });
     assert.equal(rest.statusCode, 200);
@@ -561,7 +561,7 @@ test("short rest rejects spending more hit dice than remaining", async () => {
     const c = await makeCampaign(app);
     await makeFighter(app, c.id); // remaining = 1
     const res = await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/rest`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/rest`,
       payload: { kind: "short", spendHitDice: 5 },
     });
     assert.equal(res.statusCode, 400);
@@ -578,14 +578,14 @@ test("event log is append-only and ordered chronologically", async () => {
     const c = await makeCampaign(app);
     await makeFighter(app, c.id);
     await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "damage", args: { amount: 1 } },
     });
     await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${c.id}/turn`,
+      method: "POST", url: `/nusika/dm/campaigns/${c.id}/turn`,
       payload: { intent: "heal", args: { amount: 1 } },
     });
-    const log = await app.inject({ method: "GET", url: `/magister/dm/campaigns/${c.id}/log` });
+    const log = await app.inject({ method: "GET", url: `/nusika/dm/campaigns/${c.id}/log` });
     const kinds = (log.json().events as Array<{ kind: string }>).map(e => e.kind);
     assert.deepEqual(kinds, ["campaign_created", "character_created", "damage", "heal"]);
   } finally {

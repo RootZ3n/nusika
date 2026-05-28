@@ -1,12 +1,12 @@
 [Unit]
-# Magister Kokoro — local TTS sub-service, loopback only.
+# Nusika Kokoro — local TTS sub-service, loopback only.
 #
-# Bound to 127.0.0.1:18794. Magister API dispatches POST /magister/tts
+# Bound to 127.0.0.1:18794. Nusika API dispatches POST /nusika/tts
 # here when a voice profile has engine:"kokoro". Bypasses start.sh on
 # purpose: we don't want pip install running on every boot — run
 # `voices/kokoro/start.sh` once manually to provision the venv, then
 # this unit just exec's uvicorn directly.
-Description=Magister Kokoro voice service (loopback)
+Description=Nusika Kokoro voice service (loopback)
 Documentation=https://github.com/anthropics/claude-code
 After=network-online.target
 Wants=network-online.target
@@ -15,9 +15,9 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=/mnt/ai/magister/voices/kokoro
 ExecStart=/mnt/ai/magister/voices/kokoro/.venv/bin/uvicorn server:app --host 127.0.0.1 --port 18794 --log-level info
-Environment=MAGISTER_KOKORO_HOST=127.0.0.1
-Environment=MAGISTER_KOKORO_PORT=18794
-Environment=MAGISTER_KOKORO_LOG_LEVEL=INFO
+Environment=NUSIKA_KOKORO_HOST=127.0.0.1
+Environment=NUSIKA_KOKORO_PORT=18794
+Environment=NUSIKA_KOKORO_LOG_LEVEL=INFO
 Restart=on-failure
 RestartSec=5
 NoNewPrivileges=true

@@ -1,7 +1,7 @@
 /**
  * Slice 6D — voice cache unit tests.
  *
- * Each test points MAGISTER_STATE_DIR at a fresh tmpdir so the live
+ * Each test points NUSIKA_STATE_DIR at a fresh tmpdir so the live
  * state/voices/cache/ directory is never touched.
  */
 
@@ -23,13 +23,13 @@ import {
 
 function withIsolatedState(): { dir: string; cleanup: () => void } {
   const dir = mkdtempSync(join(tmpdir(), "magister-6d-cache-"));
-  const prev = process.env["MAGISTER_STATE_DIR"];
-  process.env["MAGISTER_STATE_DIR"] = dir;
+  const prev = process.env["NUSIKA_STATE_DIR"];
+  process.env["NUSIKA_STATE_DIR"] = dir;
   return {
     dir,
     cleanup: () => {
-      if (prev === undefined) delete process.env["MAGISTER_STATE_DIR"];
-      else process.env["MAGISTER_STATE_DIR"] = prev;
+      if (prev === undefined) delete process.env["NUSIKA_STATE_DIR"];
+      else process.env["NUSIKA_STATE_DIR"] = prev;
       rmSync(dir, { recursive: true, force: true });
     },
   };
@@ -132,24 +132,24 @@ test("evictVoiceCacheTo(N) removes oldest first by mtime", async () => {
   }
 });
 
-test("voiceCacheMaxBytes honors MAGISTER_VOICE_CACHE_MAX_MB", () => {
-  const prev = process.env["MAGISTER_VOICE_CACHE_MAX_MB"];
+test("voiceCacheMaxBytes honors NUSIKA_VOICE_CACHE_MAX_MB", () => {
+  const prev = process.env["NUSIKA_VOICE_CACHE_MAX_MB"];
   try {
-    delete process.env["MAGISTER_VOICE_CACHE_MAX_MB"];
+    delete process.env["NUSIKA_VOICE_CACHE_MAX_MB"];
     assert.equal(voiceCacheMaxBytes(), 500 * 1024 * 1024, "default 500 MB");
-    process.env["MAGISTER_VOICE_CACHE_MAX_MB"] = "10";
+    process.env["NUSIKA_VOICE_CACHE_MAX_MB"] = "10";
     assert.equal(voiceCacheMaxBytes(), 10 * 1024 * 1024);
-    process.env["MAGISTER_VOICE_CACHE_MAX_MB"] = "0.5";
+    process.env["NUSIKA_VOICE_CACHE_MAX_MB"] = "0.5";
     assert.equal(voiceCacheMaxBytes(), Math.floor(0.5 * 1024 * 1024));
-    process.env["MAGISTER_VOICE_CACHE_MAX_MB"] = "garbage";
+    process.env["NUSIKA_VOICE_CACHE_MAX_MB"] = "garbage";
     assert.equal(voiceCacheMaxBytes(), 500 * 1024 * 1024, "garbage falls back to default");
   } finally {
-    if (prev === undefined) delete process.env["MAGISTER_VOICE_CACHE_MAX_MB"];
-    else process.env["MAGISTER_VOICE_CACHE_MAX_MB"] = prev;
+    if (prev === undefined) delete process.env["NUSIKA_VOICE_CACHE_MAX_MB"];
+    else process.env["NUSIKA_VOICE_CACHE_MAX_MB"] = prev;
   }
 });
 
-test("voiceCacheDir respects MAGISTER_STATE_DIR", () => {
+test("voiceCacheDir respects NUSIKA_STATE_DIR", () => {
   const { dir, cleanup } = withIsolatedState();
   try {
     const cacheDir = voiceCacheDir();

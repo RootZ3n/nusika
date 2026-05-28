@@ -1,29 +1,30 @@
 /**
- * Magister Server — Fastify on MAGISTER_PORT (default 18793).
+ * Nusika Server — Fastify on NUSIKA_PORT (default 18793).
  *
  * Boots the SQLite layer, scans the curriculum directory to register every
  * subject module config, mounts all routes, and listens.
  *
  * Originally lived inside squidley-v2 as an experience module; extracted
  * to standalone in May 2026. Squidley calls this server over HTTP via
- * MAGISTER_URL (default http://127.0.0.1:18793).
+ * NUSIKA_URL (default http://127.0.0.1:18793).
  */
 
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
-import { MagisterDB } from "./db.js";
+import { NusikaDB } from "./db.js";
 import { scanCurriculum } from "./curriculum.js";
 import { registerAllRoutes } from "./routes/index.js";
 import { dbPath, curriculumDir } from "./lib/paths.js";
 import { consoleLogger } from "./lib/log.js";
+import { nenv } from "./lib/env.js";
 
-const PORT = Number.parseInt(process.env["MAGISTER_PORT"] ?? "18793", 10);
-const HOST = process.env["MAGISTER_HOST"] ?? "127.0.0.1";
-const ALLOW_PUBLIC_BIND = process.env["MAGISTER_ALLOW_PUBLIC_BIND"] === "true";
+const PORT = Number.parseInt(nenv("PORT", "18793")!, 10);
+const HOST = nenv("HOST", "127.0.0.1")!;
+const ALLOW_PUBLIC_BIND = (process.env["NUSIKA_ALLOW_PUBLIC_BIND"] ?? process.env["MAGISTER_ALLOW_PUBLIC_BIND"]) === "true";
 
 if (!HOST.startsWith("127.") && HOST !== "localhost" && !ALLOW_PUBLIC_BIND) {
   consoleLogger.error(
-    `refusing to bind to ${HOST}: set MAGISTER_ALLOW_PUBLIC_BIND=true to expose magister on a non-loopback interface`,
+    `refusing to bind to ${HOST}: set NUSIKA_ALLOW_PUBLIC_BIND=true to expose nusika on a non-loopback interface`,
   );
   process.exit(1);
 }
@@ -31,7 +32,7 @@ if (!HOST.startsWith("127.") && HOST !== "localhost" && !ALLOW_PUBLIC_BIND) {
 async function main(): Promise<void> {
   const isProd = process.env["NODE_ENV"] === "production";
   const loggerOpts: Record<string, unknown> = {
-    level: process.env["MAGISTER_LOG_LEVEL"] ?? "info",
+    level: nenv("LOG_LEVEL", "info"),
   };
   if (!isProd) {
     loggerOpts.transport = { target: "pino-pretty", options: { colorize: true } };
@@ -39,6 +40,13 @@ async function main(): Promise<void> {
   const app = Fastify({
     logger: loggerOpts,
     bodyLimit: 10 * 1024 * 1024, // 10 MB — generous enough for resume/audio uploads
+    rewriteUrl: (req) => {
+      const url = req.url ?? "";
+      if (url.startsWith("/magister/")) {
+        return "/nusika/" + url.slice("/magister/".length);
+      }
+      return url;
+    },
   });
 
   // Permissive CORS for now — locked down later when we know the production caller set.
@@ -58,7 +66,7 @@ async function main(): Promise<void> {
     limits: { fileSize: 25 * 1024 * 1024, files: 1, fields: 5 },
   });
 
-  const db = new MagisterDB(dbPath());
+  const db = new NusikaDB(dbPath());
   consoleLogger.info(`db opened at ${dbPath()}`);
 
   const scanned = await scanCurriculum(db, curriculumDir(), consoleLogger);

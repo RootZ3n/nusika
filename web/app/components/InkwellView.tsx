@@ -2,11 +2,11 @@
 
 /**
  * InkwellView — three-pane writing workshop: drafts list (left), editor
- * (center), Maren's feedback (right). Extracted verbatim from page.tsx
+ * (center), Varros' feedback (right). Extracted verbatim from page.tsx
  * during the 2026-05-22 refactor.
  *
- * Drafts persistence + Maren feedback go through the parent's
- * useMagisterApi hook so the component itself stays display-focused. UI-
+ * Drafts persistence + Varros feedback go through the parent's
+ * useNusikaApi hook so the component itself stays display-focused. UI-
  * local state (current title/text/feedback/save-message) lives here
  * because nothing outside this view consumes it.
  */
@@ -41,7 +41,7 @@ export function InkwellView(props: InkwellViewProps) {
 
   const mono: React.CSSProperties = { fontFamily: "var(--font-mono)", fontSize: 14 };
 
-  async function shareWithMaren() {
+  async function shareWithVarros() {
     if (!text.trim() || feedbackLoading) return;
     setFeedbackLoading(true);
     setFeedback("");
@@ -52,7 +52,7 @@ export function InkwellView(props: InkwellViewProps) {
     if (result.ok && typeof result.feedback === "string") {
       setFeedback(result.feedback);
     } else {
-      setFeedback(`Maren is unavailable right now: ${result.error ?? "unknown error"}`);
+      setFeedback(`Varros is unavailable right now: ${result.error ?? "unknown error"}`);
     }
     setFeedbackLoading(false);
   }
@@ -135,7 +135,7 @@ export function InkwellView(props: InkwellViewProps) {
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
-          placeholder="Write here. When you're ready for feedback, share with Maren."
+          placeholder="Write here. When you're ready for feedback, share with Varros."
           style={{
             flex: 1, background: "none", border: "none", outline: "none", resize: "none",
             fontFamily: "var(--font-body)", fontSize: 15, lineHeight: 1.8,
@@ -144,7 +144,7 @@ export function InkwellView(props: InkwellViewProps) {
         />
         <div style={{ display: "flex", gap: 8, paddingTop: 12, borderTop: "1px solid var(--border)", flexShrink: 0 }}>
           <button
-            onClick={() => void shareWithMaren()}
+            onClick={() => void shareWithVarros()}
             disabled={!text.trim() || feedbackLoading}
             style={{
               padding: "9px 16px", borderRadius: 8, border: "none",
@@ -153,7 +153,7 @@ export function InkwellView(props: InkwellViewProps) {
               fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 700,
               cursor: text.trim() ? "pointer" : "default",
             }}
-          >{feedbackLoading ? "Maren is reading..." : "Share with Maren"}</button>
+          >{feedbackLoading ? "Varros is reading..." : "Share with Varros"}</button>
           <button
             onClick={() => void handleSaveDraft()}
             disabled={!text.trim()}
@@ -175,12 +175,12 @@ export function InkwellView(props: InkwellViewProps) {
         </div>
       </div>
 
-      {/* ── Right: Maren's Feedback ──────────────────────────────────── */}
+      {/* ── Right: Varros' Feedback ──────────────────────────────────── */}
       <div style={{ width: 320, flexShrink: 0, borderLeft: "1px solid var(--border)", overflowY: "auto", padding: 16, display: "flex", flexDirection: "column", gap: 12 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{ width: 28, height: 28, borderRadius: "50%", background: INKWELL_ACCENT, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700, color: "#060810" }}>M</div>
+          <div style={{ width: 28, height: 28, borderRadius: "50%", background: INKWELL_ACCENT, display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700, color: "#060810" }}>V</div>
           <div>
-            <div style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700, color: INKWELL_ACCENT }}>Maren</div>
+            <div style={{ fontFamily: "var(--font-display)", fontSize: 14, fontWeight: 700, color: INKWELL_ACCENT }}>Varros</div>
             <div style={{ ...mono, color: "var(--text-muted)" }}>Senior Editor</div>
           </div>
         </div>

@@ -47,7 +47,7 @@ export function useTeachApi(): TeachApi {
 
   const fetchLessons = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/magister/lessons`);
+      const res = await fetch(`${API_BASE}/nusika/lessons`);
       if (!res.ok) return;
       const data = (await res.json()) as { lessons?: Lesson[] };
       setLessons(data.lessons ?? []);
@@ -56,7 +56,7 @@ export function useTeachApi(): TeachApi {
 
   const fetchLesson = useCallback(async (id: string): Promise<Turn[] | null> => {
     try {
-      const res = await fetch(`${API_BASE}/magister/lessons/${id}`);
+      const res = await fetch(`${API_BASE}/nusika/lessons/${id}`);
       if (!res.ok) return null;
       const data = (await res.json()) as { lesson?: Lesson; turns?: Turn[] };
       if (data.lesson) setActive(data.lesson);
@@ -79,7 +79,7 @@ export function useTeachApi(): TeachApi {
     if (!t) return null;
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/magister/lessons`, {
+      const res = await fetch(`${API_BASE}/nusika/lessons`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ title: t }),
@@ -104,7 +104,7 @@ export function useTeachApi(): TeachApi {
     if (typeof window !== "undefined" && !window.confirm(`Delete lesson "${lessonTitle}"? This cannot be undone.`)) return;
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/magister/lessons/${lessonId}`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/nusika/lessons/${lessonId}`, { method: "DELETE" });
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         setError(data.error ?? `Delete failed (HTTP ${res.status}).`);
@@ -125,7 +125,7 @@ export function useTeachApi(): TeachApi {
     if (!active) return;
     setActive({ ...active, depth });
     try {
-      await fetch(`${API_BASE}/magister/lessons/${active.id}`, {
+      await fetch(`${API_BASE}/nusika/lessons/${active.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ depth }),
@@ -153,7 +153,7 @@ export function useTeachApi(): TeachApi {
     let chatOk = true;
     let freshTurns: Turn[] | null = null;
     try {
-      const res = await fetch(`${API_BASE}/magister/lessons/${active.id}/chat`, {
+      const res = await fetch(`${API_BASE}/nusika/lessons/${active.id}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: msg, depth: active.depth }),
@@ -182,7 +182,7 @@ export function useTeachApi(): TeachApi {
     setRecapBusy(true);
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/magister/lessons/${active.id}/recap`, {
+      const res = await fetch(`${API_BASE}/nusika/lessons/${active.id}/recap`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),

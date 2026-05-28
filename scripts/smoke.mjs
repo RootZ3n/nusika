@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * Magister smoke test.
+ * Nusika smoke test.
  *
  * Spawns the server with `tsx server/index.ts` on a randomly-chosen high
- * port (or honors MAGISTER_PORT if set), waits for the listener to come
- * up, then probes /health and /magister/modules. Exits 0 on success and
+ * port (or honors NUSIKA_PORT if set), waits for the listener to come
+ * up, then probes /health and /nusika/modules. Exits 0 on success and
  * non-zero on any failure. Always tears down the child process.
  *
  * Run with: `npm run smoke`
@@ -18,7 +18,7 @@ import { dirname, resolve } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
 const projectRoot = resolve(here, "..");
 
-const PORT = Number(process.env.MAGISTER_PORT ?? (40000 + Math.floor(Math.random() * 20000)));
+const PORT = Number(process.env.NUSIKA_PORT ?? process.env.MAGISTER_PORT ?? (40000 + Math.floor(Math.random() * 20000)));
 const HOST = "127.0.0.1";
 const BOOT_TIMEOUT_MS = 15_000;
 
@@ -60,7 +60,7 @@ async function probe(path, validator) {
 try {
   child = spawn("npx", ["tsx", "server/index.ts"], {
     cwd: projectRoot,
-    env: { ...process.env, MAGISTER_PORT: String(PORT), MAGISTER_HOST: HOST },
+    env: { ...process.env, NUSIKA_PORT: String(PORT), NUSIKA_HOST: HOST },
     stdio: ["ignore", "pipe", "pipe"],
   });
 
@@ -81,7 +81,7 @@ try {
   await probe("/health", (d) =>
     d?.ok === true && d?.status === "healthy" ? null : `unexpected payload: ${JSON.stringify(d).slice(0, 200)}`,
   );
-  await probe("/magister/modules", (d) =>
+  await probe("/nusika/modules", (d) =>
     d?.ok === true && Array.isArray(d?.modules) && d.modules.length > 0
       ? null
       : `expected non-empty modules array, got: ${JSON.stringify(d).slice(0, 200)}`,

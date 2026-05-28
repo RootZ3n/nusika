@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Magister Kokoro smoke — checks /health, /voices, and /generate.
-# Assumes the service is already running on MAGISTER_KOKORO_HOST/PORT
+# Nusika Kokoro smoke — checks /health, /voices, and /generate.
+# Assumes the service is already running on NUSIKA_KOKORO_HOST/PORT
 # (defaults: 127.0.0.1:18794). Run start.sh in another terminal first.
 
 set -uo pipefail
 
-HOST="${MAGISTER_KOKORO_HOST:-127.0.0.1}"
-PORT="${MAGISTER_KOKORO_PORT:-18794}"
+HOST="${NUSIKA_KOKORO_HOST:-${MAGISTER_KOKORO_HOST:-127.0.0.1}}"
+PORT="${NUSIKA_KOKORO_PORT:-${MAGISTER_KOKORO_PORT:-18794}}"
 BASE="http://${HOST}:${PORT}"
 
 fail() { echo "[smoke] FAIL: $*" >&2; exit 1; }

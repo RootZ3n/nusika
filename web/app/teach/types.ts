@@ -11,7 +11,8 @@ export const ACCENT_DIM = "rgba(167,139,250,0.10)";
 
 // Slice 6H — opt-in auto-play TTS for assistant replies. Off by default;
 // the value is mirrored to localStorage so the choice survives reload.
-export const AUTOPLAY_KEY = "magister.teach.autoplayVoice";
+// Legacy: "magister.teach.autoplayVoice"
+export const AUTOPLAY_KEY = "nusika.teach.autoplayVoice";
 export const VOICE_UNAVAILABLE_MSG = "Voice playback unavailable. Start the Kokoro service or choose another voice.";
 
 export type Depth = "intro" | "deeper" | "example" | "practice" | "review";

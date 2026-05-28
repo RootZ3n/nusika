@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Magister root — orchestration shell.
+ * Nusika root — orchestration shell.
  *
  * Holds the cross-screen state (active session, practice mode, modal state,
  * map selection) and delegates rendering to the per-screen components:
@@ -11,7 +11,7 @@
  *   - AdvancedView     Advanced Studies shelf
  *   - InkwellView      writing workshop
  *
- * Data access goes through useMagisterApi; timer + audio through
+ * Data access goes through useNusikaApi; timer + audio through
  * useSessionTimer; voice through useVoicePlayback. The 2,537-line
  * monolith that used to live here was decomposed on 2026-05-22 — see
  * the per-file headers for what moved where.
@@ -23,7 +23,7 @@ import { SessionView } from "./components/SessionView";
 import { MapView } from "./components/MapView";
 import { AdvancedView } from "./components/AdvancedView";
 import { InkwellView } from "./components/InkwellView";
-import { useMagisterApi } from "./hooks/useMagisterApi";
+import { useNusikaApi } from "./hooks/useNusikaApi";
 import { useSessionTimer } from "./hooks/useSessionTimer";
 import { useVoicePlayback } from "./hooks/useVoicePlayback";
 import { useHallVoice } from "./hooks/useHallVoice";
@@ -35,14 +35,14 @@ import {
   tabStyle,
   type ChatReceipt,
   type LearnerProfile,
-  type MagisterModule,
-  type MagisterSession,
+  type NusikaModule,
+  type NusikaSession,
   type PracticeMessage,
   type Screen,
 } from "./types";
 
-export default function MagisterPage() {
-  const api = useMagisterApi();
+export default function NusikaPage() {
+  const api = useNusikaApi();
   const {
     modules, setModules, sessions, streak, loading, error, setError, refreshSessions,
     moduleProgress, companionMemories, fetchProgress, fetchMemories, fetchSessionDetail, deleteSession,
@@ -57,7 +57,7 @@ export default function MagisterPage() {
 
   // ── Active campaign session state (persists across tabs) ─────────────────
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
-  const [activeSession, setActiveSession] = useState<MagisterSession | null>(null);
+  const [activeSession, setActiveSession] = useState<NusikaSession | null>(null);
   const [sessionRunning, setSessionRunning] = useState(false);
   const [hintLevel, setHintLevel] = useState(0);
   const [speechBubbles, setSpeechBubbles] = useState<string[]>(["Welcome back! Ready to continue our journey?"]);
@@ -146,7 +146,7 @@ export default function MagisterPage() {
       setContentText("Your companion is preparing...");
       setSpeechBubbles(["Preparing your lesson..."]);
       try {
-        const chatRes = await fetch(`${API_BASE}/magister/sessions/${sessionId}/chat`, {
+        const chatRes = await fetch(`${API_BASE}/nusika/sessions/${sessionId}/chat`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -181,7 +181,7 @@ export default function MagisterPage() {
     setSessionRunning(false);
     if (activeSessionId) {
       try {
-        await fetch(`${API_BASE}/magister/sessions/${activeSessionId}`, {
+        await fetch(`${API_BASE}/nusika/sessions/${activeSessionId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ status: "paused" }),
@@ -199,7 +199,7 @@ export default function MagisterPage() {
     setSessionRunning(false);
     const sessionId = activeSessionId;
     try {
-      await fetch(`${API_BASE}/magister/sessions/${sessionId}/end`, {
+      await fetch(`${API_BASE}/nusika/sessions/${sessionId}/end`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -208,7 +208,7 @@ export default function MagisterPage() {
 
     let recapMsg = "Session ended.";
     try {
-      const res = await fetch(`${API_BASE}/magister/sessions/${sessionId}/recap`, {
+      const res = await fetch(`${API_BASE}/nusika/sessions/${sessionId}/recap`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({}),
@@ -240,7 +240,7 @@ export default function MagisterPage() {
   const createCampaign = useCallback(async () => {
     if (!selectedModuleId || !selectedCompanionId) return;
     try {
-      const res = await fetch(`${API_BASE}/magister/sessions`, {
+      const res = await fetch(`${API_BASE}/nusika/sessions`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -280,7 +280,7 @@ export default function MagisterPage() {
 
   // ── Derived collections ─────────────────────────────────────────────────
   // Same filtering rules as the original inline code.
-  const campaignModules: MagisterModule[] = (modules ?? []).filter((m) => m.id !== "inkwell");
+  const campaignModules: NusikaModule[] = (modules ?? []).filter((m) => m.id !== "inkwell");
   const hallModules = campaignModules.filter((m) => {
     const tier = (m as unknown as Record<string, unknown>).tier as string | undefined;
     const labOnly = (m as unknown as Record<string, unknown>).lab_only as boolean | undefined;
@@ -337,7 +337,7 @@ export default function MagisterPage() {
           padding: 40, color: "var(--text-muted)", fontSize: "14px",
           fontFamily: "var(--font-body)",
         }}>
-          Loading Magister...
+          Loading Nusika...
         </div>
       )}
 

@@ -1,5 +1,5 @@
 /**
- * Magister — Core Learning DB
+ * Nusika — Core Learning DB
  * ============================================================
  * Adaptive learning engine with companion-driven teaching,
  * spaced repetition, tiered hints, and creative portfolio.
@@ -105,7 +105,7 @@ export interface SessionAtom {
   recap_artifact?: string;     // optional artifact name written on session end
 }
 
-export interface MagisterSession {
+export interface NusikaSession {
   id: string;
   user_id: string;
   module_id: string;
@@ -130,7 +130,7 @@ export interface MagisterSession {
   completed_at: string | null;
 }
 
-export interface MagisterProgress {
+export interface NusikaProgress {
   id: string;
   user_id: string;
   module_id: string;
@@ -145,7 +145,7 @@ export interface MagisterProgress {
   updated_at: string;
 }
 
-export interface MagisterMemory {
+export interface NusikaMemory {
   id: string;
   user_id: string;
   companion_id: string;
@@ -157,7 +157,7 @@ export interface MagisterMemory {
   expires_at: string | null;
 }
 
-export interface MagisterCreative {
+export interface NusikaCreative {
   id: string;
   user_id: string;
   module_id: string;
@@ -173,11 +173,11 @@ export interface MagisterCreative {
  * Public, post-parse module record. Callers consume this — `companions`
  * is the JSON-decoded list of companion ids, not the raw SQL string.
  *
- * The DB layer keeps the JSON string form as a private `MagisterModuleRow`
+ * The DB layer keeps the JSON string form as a private `NusikaModuleRow`
  * type used only between the SQL prepare/run boundary and `parseModuleRow`;
  * external code should never see the string shape.
  */
-export interface MagisterModuleRecord {
+export interface NusikaModuleRecord {
   id: string;
   name: string;
   campaign_world: string | null;
@@ -196,13 +196,13 @@ export interface MagisterModuleRecord {
 /**
  * SQL row shape for magister_modules — companions stored as a JSON string.
  * Internal to the DB layer. Every read path runs rows through
- * `parseModuleRow` before returning a `MagisterModuleRecord` to callers.
+ * `parseModuleRow` before returning a `NusikaModuleRecord` to callers.
  */
-interface MagisterModuleRow extends Omit<MagisterModuleRecord, "companions"> {
+interface NusikaModuleRow extends Omit<NusikaModuleRecord, "companions"> {
   companions: string;
 }
 
-export interface MagisterLesson {
+export interface NusikaLesson {
   id: string;
   user_id: string;
   title: string;
@@ -217,7 +217,7 @@ export interface MagisterLesson {
   completed_at: string | null;
 }
 
-export interface MagisterLessonTurn {
+export interface NusikaLessonTurn {
   id: string;
   lesson_id: string;
   role: LessonTurnRole;
@@ -399,7 +399,7 @@ export function computeNextReaffirm(masteryLevel: MasteryLevel): string {
 
 // ── Companion Context Builder ─────────────────────────────────────────────────
 
-export function buildCompanionContext(session: MagisterSession): string {
+export function buildCompanionContext(session: NusikaSession): string {
   if (session.adult_mode) {
     return "Address the learner as a peer. Use direct failure framing — when they're wrong, say so clearly. Hints should provide direction not hand-holding. Acknowledge real-world stakes and career implications.";
   }
@@ -408,7 +408,7 @@ export function buildCompanionContext(session: MagisterSession): string {
 
 // ── Database ──────────────────────────────────────────────────────────────────
 
-export class MagisterDB {
+export class NusikaDB {
   private db: {
     pragma: (sql: string) => unknown;
     prepare: (sql: string) => any;
@@ -744,7 +744,7 @@ export class MagisterDB {
       userId?: string;
       adultMode?: boolean;
     },
-  ): MagisterSession {
+  ): NusikaSession {
     if (!opts.atom.concept_id || opts.atom.concept_id.trim() === "") {
       throw new Error("Session atom requires a non-empty concept_id");
     }
@@ -760,7 +760,7 @@ export class MagisterDB {
     }
 
     const now = new Date().toISOString();
-    const session: MagisterSession = {
+    const session: NusikaSession = {
       id: randomUUID(),
       user_id: opts.userId ?? "jeff",
       module_id: moduleId,
@@ -801,11 +801,11 @@ export class MagisterDB {
     return session;
   }
 
-  getSession(id: string): MagisterSession | null {
-    return (this.db.prepare("SELECT * FROM magister_sessions WHERE id = ?").get(id) as MagisterSession | undefined) ?? null;
+  getSession(id: string): NusikaSession | null {
+    return (this.db.prepare("SELECT * FROM magister_sessions WHERE id = ?").get(id) as NusikaSession | undefined) ?? null;
   }
 
-  listSessions(filters?: { moduleId?: string; status?: string; userId?: string }): MagisterSession[] {
+  listSessions(filters?: { moduleId?: string; status?: string; userId?: string }): NusikaSession[] {
     const clauses: string[] = [];
     const params: unknown[] = [];
 
@@ -814,12 +814,12 @@ export class MagisterDB {
     if (filters?.userId) { clauses.push("user_id = ?"); params.push(filters.userId); }
 
     const where = clauses.length > 0 ? `WHERE ${clauses.join(" AND ")}` : "";
-    return this.db.prepare(`SELECT * FROM magister_sessions ${where} ORDER BY updated_at DESC`).all(...params) as MagisterSession[];
+    return this.db.prepare(`SELECT * FROM magister_sessions ${where} ORDER BY updated_at DESC`).all(...params) as NusikaSession[];
   }
 
   updateSession(
     id: string,
-    patch: Partial<Pick<MagisterSession,
+    patch: Partial<Pick<NusikaSession,
       "status" | "teaching_mode" | "current_concept" | "current_story_beat" |
       "session_summary" | "companion_id" | "elapsed_seconds"
     >>,
@@ -872,7 +872,7 @@ export class MagisterDB {
 
   // ── Hint Tracking ─────────────────────────────────────────────────────────
 
-  recordHint(sessionId: string, level: HintLevel): MagisterSession | null {
+  recordHint(sessionId: string, level: HintLevel): NusikaSession | null {
     const col = `hint_count_l${level}` as const;
     const now = new Date().toISOString();
     this.db.prepare(`UPDATE magister_sessions SET ${col} = ${col} + 1, updated_at = ? WHERE id = ?`).run(now, sessionId);
@@ -904,18 +904,18 @@ export class MagisterDB {
   // other mode-specific tables. The SHARED_PROGRESS_MODES constant documents
   // which modes share this table.
 
-  getProgress(userId: string, moduleId: string, conceptId: string): MagisterProgress | null {
+  getProgress(userId: string, moduleId: string, conceptId: string): NusikaProgress | null {
     return (this.db.prepare(
       "SELECT * FROM magister_progress WHERE user_id = ? AND module_id = ? AND concept_id = ?",
-    ).get(userId, moduleId, conceptId) as MagisterProgress | undefined) ?? null;
+    ).get(userId, moduleId, conceptId) as NusikaProgress | undefined) ?? null;
   }
 
   updateProgress(
     userId: string,
     moduleId: string,
     conceptId: string,
-    patch: Partial<Pick<MagisterProgress, "mastery_level" | "mastery_score" | "hint_usage">>,
-  ): MagisterProgress {
+    patch: Partial<Pick<NusikaProgress, "mastery_level" | "mastery_score" | "hint_usage">>,
+  ): NusikaProgress {
     if (conceptId.includes(":")) {
       throw new Error(
         `Concept ID "${conceptId}" contains a colon — concept IDs must be mode-agnostic ` +
@@ -928,7 +928,7 @@ export class MagisterDB {
     const existing = this.getProgress(userId, moduleId, conceptId);
 
     if (!existing) {
-      const row: MagisterProgress = {
+      const row: NusikaProgress = {
         id: randomUUID(),
         user_id: userId,
         module_id: moduleId,
@@ -983,17 +983,17 @@ export class MagisterDB {
     return this.getProgress(userId, moduleId, conceptId)!;
   }
 
-  getModuleProgress(userId: string, moduleId: string): MagisterProgress[] {
+  getModuleProgress(userId: string, moduleId: string): NusikaProgress[] {
     return this.db.prepare(
       "SELECT * FROM magister_progress WHERE user_id = ? AND module_id = ? ORDER BY mastery_score DESC",
-    ).all(userId, moduleId) as MagisterProgress[];
+    ).all(userId, moduleId) as NusikaProgress[];
   }
 
-  getDueReaffirmations(userId: string = "jeff"): MagisterProgress[] {
+  getDueReaffirmations(userId: string = "jeff"): NusikaProgress[] {
     const now = new Date().toISOString();
     return this.db.prepare(
       "SELECT * FROM magister_progress WHERE user_id = ? AND next_reaffirm <= ? ORDER BY next_reaffirm ASC",
-    ).all(userId, now) as MagisterProgress[];
+    ).all(userId, now) as NusikaProgress[];
   }
 
   computeExamReadiness(userId: string, moduleId: string): {
@@ -1022,12 +1022,12 @@ export class MagisterDB {
 
   private saveMemory(
     companionId: string,
-    memoryType: MagisterMemory["memory_type"],
+    memoryType: NusikaMemory["memory_type"],
     content: string,
     opts: { sessionId?: string; archivumId?: string; userId?: string; expiresAt?: string } = {},
-  ): MagisterMemory {
+  ): NusikaMemory {
     const now = new Date().toISOString();
-    const memory: MagisterMemory = {
+    const memory: NusikaMemory = {
       id: randomUUID(),
       user_id: opts.userId ?? "jeff",
       companion_id: companionId,
@@ -1058,7 +1058,7 @@ export class MagisterDB {
     companionId: string,
     writeback: CompanionMemoryWriteback,
     opts: { sessionId?: string; userId?: string } = {},
-  ): MagisterMemory[] {
+  ): NusikaMemory[] {
     if (!validateCompanionWriteback(writeback)) {
       throw new Error(
         "Companion memory writeback failed validation. Must contain only: " +
@@ -1068,7 +1068,7 @@ export class MagisterDB {
       );
     }
 
-    const saved: MagisterMemory[] = [];
+    const saved: NusikaMemory[] = [];
     const baseOpts = {
       ...(opts.sessionId ? { sessionId: opts.sessionId } : {}),
       ...(opts.userId ? { userId: opts.userId } : {}),
@@ -1122,8 +1122,8 @@ export class MagisterDB {
 
   getCompanionMemories(
     companionId: string,
-    opts?: { userId?: string; memoryType?: MagisterMemory["memory_type"]; limit?: number },
-  ): MagisterMemory[] {
+    opts?: { userId?: string; memoryType?: NusikaMemory["memory_type"]; limit?: number },
+  ): NusikaMemory[] {
     const clauses: string[] = ["companion_id = ?"];
     const params: unknown[] = [companionId];
 
@@ -1139,7 +1139,7 @@ export class MagisterDB {
     const limit = opts?.limit ?? 100;
     return this.db.prepare(
       `SELECT * FROM magister_memory WHERE ${clauses.join(" AND ")} ORDER BY created_at DESC LIMIT ?`,
-    ).all(...params, limit) as MagisterMemory[];
+    ).all(...params, limit) as NusikaMemory[];
   }
 
   pruneExpiredMemories(): number {
@@ -1153,9 +1153,9 @@ export class MagisterDB {
   saveCreativeWork(
     moduleId: string,
     opts: { title?: string; content?: string; companionFeedback?: string; archivumId?: string; userId?: string } = {},
-  ): MagisterCreative {
+  ): NusikaCreative {
     const now = new Date().toISOString();
-    const work: MagisterCreative = {
+    const work: NusikaCreative = {
       id: randomUUID(),
       user_id: opts.userId ?? "jeff",
       module_id: moduleId,
@@ -1177,14 +1177,14 @@ export class MagisterDB {
     return work;
   }
 
-  getCreativeWorks(moduleId: string, userId: string = "jeff"): MagisterCreative[] {
+  getCreativeWorks(moduleId: string, userId: string = "jeff"): NusikaCreative[] {
     return this.db.prepare(
       "SELECT * FROM magister_creative WHERE module_id = ? AND user_id = ? ORDER BY updated_at DESC",
-    ).all(moduleId, userId) as MagisterCreative[];
+    ).all(moduleId, userId) as NusikaCreative[];
   }
 
-  getCreativeWork(id: string): MagisterCreative | null {
-    return (this.db.prepare("SELECT * FROM magister_creative WHERE id = ?").get(id) as MagisterCreative | undefined) ?? null;
+  getCreativeWork(id: string): NusikaCreative | null {
+    return (this.db.prepare("SELECT * FROM magister_creative WHERE id = ?").get(id) as NusikaCreative | undefined) ?? null;
   }
 
   /** Hard-delete a creative work by id. Returns true if a row was removed. */
@@ -1195,7 +1195,7 @@ export class MagisterDB {
 
   updateCreativeWork(
     id: string,
-    patch: Partial<Pick<MagisterCreative, "title" | "content" | "companion_feedback" | "archivum_id">>,
+    patch: Partial<Pick<NusikaCreative, "title" | "content" | "companion_feedback" | "archivum_id">>,
   ): boolean {
     const allowed = ["title", "content", "companion_feedback", "archivum_id"];
     const fields: string[] = [];
@@ -1232,7 +1232,7 @@ export class MagisterDB {
     masterySpine?: MasterySpine;
     tier?: string;
     labOnly?: boolean;
-  }): MagisterModuleRecord {
+  }): NusikaModuleRecord {
     const now = new Date().toISOString();
     const spineJson = mod.masterySpine ? JSON.stringify(mod.masterySpine) : null;
 
@@ -1263,7 +1263,7 @@ export class MagisterDB {
     const companionIds = (mod.companions ?? []).filter(
       (x): x is string => typeof x === "string",
     );
-    const row: MagisterModuleRow = {
+    const row: NusikaModuleRow = {
       id: mod.id,
       name: mod.name,
       campaign_world: mod.campaignWorld ?? null,
@@ -1289,7 +1289,7 @@ export class MagisterDB {
     return this.parseModuleRow(row);
   }
 
-  private parseModuleRow(row: MagisterModuleRow): MagisterModuleRecord {
+  private parseModuleRow(row: NusikaModuleRow): NusikaModuleRecord {
     let companions: string[] = [];
     try {
       const parsed = JSON.parse(row.companions) as unknown;
@@ -1303,14 +1303,14 @@ export class MagisterDB {
     return { ...row, companions };
   }
 
-  listModules(installedOnly: boolean = false): MagisterModuleRecord[] {
+  listModules(installedOnly: boolean = false): NusikaModuleRecord[] {
     const where = installedOnly ? "WHERE installed = 1" : "";
-    const rows = this.db.prepare(`SELECT * FROM magister_modules ${where} ORDER BY name`).all() as MagisterModuleRow[];
+    const rows = this.db.prepare(`SELECT * FROM magister_modules ${where} ORDER BY name`).all() as NusikaModuleRow[];
     return rows.map(r => this.parseModuleRow(r));
   }
 
-  getModule(id: string): MagisterModuleRecord | null {
-    const row = (this.db.prepare("SELECT * FROM magister_modules WHERE id = ?").get(id) as MagisterModuleRow | undefined) ?? null;
+  getModule(id: string): NusikaModuleRecord | null {
+    const row = (this.db.prepare("SELECT * FROM magister_modules WHERE id = ?").get(id) as NusikaModuleRow | undefined) ?? null;
     return row ? this.parseModuleRow(row) : null;
   }
 
@@ -1336,12 +1336,12 @@ export class MagisterDB {
     topic?: string;
     depth?: LessonDepth;
     userId?: string;
-  }): MagisterLesson {
+  }): NusikaLesson {
     const title = opts.title.trim();
     if (!title) throw new Error("Lesson title is required");
     const topic = (opts.topic ?? title).trim().toLowerCase();
     const now = new Date().toISOString();
-    const lesson: MagisterLesson = {
+    const lesson: NusikaLesson = {
       id: randomUUID(),
       user_id: opts.userId ?? "jeff",
       title,
@@ -1366,19 +1366,19 @@ export class MagisterDB {
     return lesson;
   }
 
-  listLessons(opts: { userId?: string; limit?: number } = {}): MagisterLesson[] {
+  listLessons(opts: { userId?: string; limit?: number } = {}): NusikaLesson[] {
     const userId = opts.userId ?? "jeff";
     const limit = opts.limit ?? 50;
     return this.db.prepare(
       "SELECT * FROM magister_lessons WHERE user_id = ? ORDER BY updated_at DESC LIMIT ?",
-    ).all(userId, limit) as MagisterLesson[];
+    ).all(userId, limit) as NusikaLesson[];
   }
 
-  getLesson(id: string): MagisterLesson | null {
-    return (this.db.prepare("SELECT * FROM magister_lessons WHERE id = ?").get(id) as MagisterLesson | undefined) ?? null;
+  getLesson(id: string): NusikaLesson | null {
+    return (this.db.prepare("SELECT * FROM magister_lessons WHERE id = ?").get(id) as NusikaLesson | undefined) ?? null;
   }
 
-  patchLesson(id: string, patch: Partial<Pick<MagisterLesson, "depth" | "status" | "title">>): MagisterLesson | null {
+  patchLesson(id: string, patch: Partial<Pick<NusikaLesson, "depth" | "status" | "title">>): NusikaLesson | null {
     const allowed = new Set(["depth", "status", "title"]);
     const fields: string[] = [];
     const values: unknown[] = [];
@@ -1419,9 +1419,9 @@ export class MagisterDB {
     tokensOut?: number | null;
     model?: string | null;
     provider?: string | null;
-  }): MagisterLessonTurn {
+  }): NusikaLessonTurn {
     const now = new Date().toISOString();
-    const turn: MagisterLessonTurn = {
+    const turn: NusikaLessonTurn = {
       id: randomUUID(),
       lesson_id: opts.lessonId,
       role: opts.role,
@@ -1442,7 +1442,7 @@ export class MagisterDB {
     const bumpLesson = this.db.prepare(
       "UPDATE magister_lessons SET turn_count = turn_count + 1, updated_at = ? WHERE id = ?",
     );
-    const tx = this.db.transaction((t: MagisterLessonTurn) => {
+    const tx = this.db.transaction((t: NusikaLessonTurn) => {
       insertTurn.run(t);
       bumpLesson.run(now, t.lesson_id);
     });
@@ -1450,12 +1450,12 @@ export class MagisterDB {
     return turn;
   }
 
-  getLessonTurns(lessonId: string, opts: { limit?: number } = {}): MagisterLessonTurn[] {
+  getLessonTurns(lessonId: string, opts: { limit?: number } = {}): NusikaLessonTurn[] {
     const limit = opts.limit ?? 100;
     // Return newest-first slice, then reverse so chat history reads oldest→newest.
     const rows = this.db.prepare(
       "SELECT * FROM magister_lesson_turns WHERE lesson_id = ? ORDER BY created_at DESC LIMIT ?",
-    ).all(lessonId, limit) as MagisterLessonTurn[];
+    ).all(lessonId, limit) as NusikaLessonTurn[];
     return rows.reverse();
   }
 

@@ -4,7 +4,7 @@
  * Direct port of the squidley-v2 implementation in apps/api/src/routes/chat.ts
  * (~lines 4683-4995). The original code shells out to local binaries with
  * no squidley-specific deps beyond paths + receipts, so the port is largely
- * a copy with paths and receipts swapped for the magister equivalents.
+ * a copy with paths and receipts swapped for the nusika equivalents.
  */
 
 import type { FastifyInstance, FastifyReply } from "fastify";
@@ -13,8 +13,9 @@ import { randomUUID } from "node:crypto";
 import { join, resolve } from "node:path";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { createReadStream, existsSync } from "node:fs";
-import type { MagisterDB } from "../db.js";
+import type { NusikaDB } from "../db.js";
 import { stateDir } from "../lib/paths.js";
+import { nenv } from "../lib/env.js";
 import { writeReceipt } from "../lib/receipts.js";
 import { safeServeFile } from "../lib/safe-serve-file.js";
 import { resolveVoiceProfile, type VoiceProfile } from "../lib/voice-registry.js";
@@ -36,7 +37,7 @@ export const piperVoicesDir = () => process.env["PIPER_VOICES_DIR"] ?? "/home/ze
 const whisperBin = () => process.env["WHISPER_BIN"] ?? "/mnt/ai/whisper.cpp/build/bin/whisper-cli";
 const whisperModelEn = () => process.env["WHISPER_MODEL"] ?? "/mnt/ai/whisper.cpp/models/ggml-base.en.bin";
 const whisperModelMulti = () => process.env["WHISPER_MODEL_MULTILINGUAL"] ?? "/mnt/ai/whisper.cpp/models/ggml-base.bin";
-export const ttsDefaultVoice = () => process.env["MAGISTER_TTS_DEFAULT_VOICE"] ?? "en_GB-alba-medium";
+export const ttsDefaultVoice = () => nenv("TTS_DEFAULT_VOICE", "en_GB-alba-medium") ?? "en_GB-alba-medium";
 
 /** Where Piper expects to find a voice's .onnx file. */
 export function voiceModelPath(voice: string): string {
@@ -145,7 +146,7 @@ async function runPiperSynthesis(
     return r.send(audio);
   } catch (err) {
     const fullDetail = err instanceof Error ? err.message : String(err);
-    app.log.error(`magister:tts: Piper failed: ${fullDetail}`);
+    app.log.error(`nusika:tts: Piper failed: ${fullDetail}`);
     void writeReceipt({
       componentType: "module-event", componentName: "magister-tts",
       reason: "magister:tts:piper", status: "failure",
@@ -164,7 +165,7 @@ async function runPiperSynthesis(
 /**
  * Run Kokoro synthesis through the local Python sub-service. Cache hits
  * skip the upstream call. On failure, optionally fall back to Piper if
- * `MAGISTER_VOICE_FALLBACK=piper`.
+ * `NUSIKA_VOICE_FALLBACK=piper`.
  */
 async function runKokoroSynthesis(
   app: FastifyInstance,
@@ -216,15 +217,15 @@ async function runKokoroSynthesis(
   } catch (err) {
     const e = err as KokoroGenerateError;
     const detail = e.detail ?? (err instanceof Error ? err.message : String(err));
-    app.log.warn(`magister:tts: Kokoro failed: ${detail}`);
+    app.log.warn(`nusika:tts: Kokoro failed: ${detail}`);
     void writeReceipt({
       componentType: "module-event", componentName: "magister-tts",
       reason: "magister:tts:kokoro", status: "failure",
       meta: { voice: profile.voice_ref, profile_id: profile.id, error: detail, status: e.status, reachable: e.reachable },
     });
 
-    if (process.env["MAGISTER_VOICE_FALLBACK"] === "piper") {
-      app.log.info("magister:tts: falling back to Piper after Kokoro failure");
+    if (nenv("VOICE_FALLBACK") === "piper") {
+      app.log.info("nusika:tts: falling back to Piper after Kokoro failure");
       return runPiperSynthesis(app, reply, text, ttsDefaultVoice(), /*isFallback=*/ true);
     }
     return reply.status(503).send({
@@ -235,8 +236,8 @@ async function runKokoroSynthesis(
   }
 }
 
-export async function registerVoiceRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
-  // ── POST /magister/tts — voice-profile dispatch + Piper backward-compat ──
+export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
+  // ── POST /nusika/tts — voice-profile dispatch + Piper backward-compat ──
   //
   // Accepts:
   //   { text, voice?, scope? }
@@ -252,7 +253,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: MagisterDB):
   // existing callers don't break.
 
   app.post<{ Body: { text?: string; voice?: string; scope?: string } }>(
-    "/magister/tts",
+    "/nusika/tts",
     async (req, reply) => {
       const text = req.body?.text;
       if (!text) return reply.status(400).send({ ok: false, error: "text required" });
@@ -271,10 +272,10 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: MagisterDB):
             return reply.status(409).send({
               ok: false,
               error: "ElevenLabs voice profile is deprecated.",
-              detail: "Use POST /magister/tts/elevenlabs explicitly, or rebind this companion to a local engine.",
+              detail: "Use POST /nusika/tts/elevenlabs explicitly, or rebind this companion to a local engine.",
             });
           case "none":
-            if (process.env["MAGISTER_VOICE_FALLBACK"] === "piper") {
+            if (nenv("VOICE_FALLBACK") === "piper") {
               return runPiperSynthesis(app, reply, text, ttsDefaultVoice(), /*isFallback=*/ true);
             }
             return reply.status(503).send({
@@ -292,10 +293,10 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: MagisterDB):
     },
   );
 
-  // ── POST /magister/tts/elevenlabs — ElevenLabs cloud, Piper fallback ──────
+  // ── POST /nusika/tts/elevenlabs — ElevenLabs cloud, Piper fallback ──────
 
   app.post<{ Body: { text: string; voice_id?: string; companion_voice?: boolean } }>(
-    "/magister/tts/elevenlabs",
+    "/nusika/tts/elevenlabs",
     async (req, reply) => {
       const { text, voice_id: explicitVoiceId, companion_voice } = req.body ?? {};
       if (!text) return reply.status(400).send({ ok: false, error: "text required" });
@@ -347,9 +348,9 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: MagisterDB):
               .send(audioBuffer);
           }
 
-          app.log.warn(`magister:tts: ElevenLabs HTTP ${res.status}, falling back to Piper`);
+          app.log.warn(`nusika:tts: ElevenLabs HTTP ${res.status}, falling back to Piper`);
         } catch (err) {
-          app.log.warn(`magister:tts: ElevenLabs error, falling back to Piper: ${err}`);
+          app.log.warn(`nusika:tts: ElevenLabs error, falling back to Piper: ${err}`);
         }
       }
 
@@ -390,7 +391,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: MagisterDB):
           .send(audio);
       } catch (err) {
         const fullDetail = err instanceof Error ? err.message : String(err);
-        app.log.error(`magister:tts: All providers failed: ${fullDetail}`);
+        app.log.error(`nusika:tts: All providers failed: ${fullDetail}`);
         return reply.status(500).send({
           ok: false,
           error: "TTS execution failed.",
@@ -402,9 +403,9 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: MagisterDB):
     },
   );
 
-  // ── POST /magister/stt — whisper.cpp local STT ────────────────────────────
+  // ── POST /nusika/stt — whisper.cpp local STT ────────────────────────────
 
-  app.post("/magister/stt", async (req, reply) => {
+  app.post("/nusika/stt", async (req, reply) => {
     const start = Date.now();
     let audioPath = "";
     let txtPath = "";
@@ -511,7 +512,7 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: MagisterDB):
     } catch (err) {
       // Log full detail server-side; sanitized message to client (no stderr leak).
       const fullDetail = err instanceof Error ? err.message : String(err);
-      app.log.error(`magister:stt: Whisper failed: ${fullDetail}`);
+      app.log.error(`nusika:stt: Whisper failed: ${fullDetail}`);
       void writeReceipt({
         componentType: "module-event", componentName: "magister-stt",
         reason: "magister:stt:whisper", status: "failure",
@@ -528,10 +529,10 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: MagisterDB):
     }
   });
 
-  // ── GET /magister/audio/:filename — ambient audio file serving ────────────
+  // ── GET /nusika/audio/:filename — ambient audio file serving ────────────
 
   app.get<{ Params: { filename: string } }>(
-    "/magister/audio/:filename",
+    "/nusika/audio/:filename",
     async (req, reply) => {
       const audioDir = resolve(stateDir(), "uploads", "magister", "audio");
       try {

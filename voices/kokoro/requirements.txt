@@ -1,4 +1,4 @@
-# Magister Kokoro voice service — Slice 6C
+# Nusika Kokoro voice service — Slice 6C
 #
 # Install: ./start.sh (creates .venv and pip-installs everything below).
 #

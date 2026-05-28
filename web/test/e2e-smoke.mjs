@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Magister web — end-to-end HTTP smoke.
+ * Nusika web — end-to-end HTTP smoke.
  *
  * Pure Node (no Playwright, no Puppeteer): boots the built dist API
  * server and `next start` for the prebuilt web app, then fetches each
@@ -115,7 +115,7 @@ async function checkPage(label, path, expectedSubstrings) {
 async function checkProxy() {
   // Lookup is the safest probe: it never calls the LLM, never mutates state,
   // and has a stable contract (`{ ok: true, supported: false, reason }`).
-  const url = `http://${HOST}:${WEB_PORT}/api/proxy/magister/lookup`;
+  const url = `http://${HOST}:${WEB_PORT}/api/proxy/nusika/lookup`;
   let res;
   try {
     res = await fetch(url, {
@@ -129,22 +129,22 @@ async function checkProxy() {
     return;
   }
   if (res.status !== 200) {
-    fail(`proxy → /magister/lookup returned HTTP ${res.status}`);
+    fail(`proxy → /nusika/lookup returned HTTP ${res.status}`);
     return;
   }
   const body = await res.json().catch(() => ({}));
   if (body.ok !== true || body.supported !== false) {
-    fail(`proxy → /magister/lookup unexpected body: ${JSON.stringify(body).slice(0, 200)}`);
+    fail(`proxy → /nusika/lookup unexpected body: ${JSON.stringify(body).slice(0, 200)}`);
     return;
   }
-  console.log("[web-smoke] OK proxy → /magister/lookup honest no-browse contract");
+  console.log("[web-smoke] OK proxy → /nusika/lookup honest no-browse contract");
 }
 
 async function checkVoicesRegistry() {
-  // Slice 6B contract: GET /magister/voices is always 200, lists Varros and
+  // Slice 6B contract: GET /nusika/voices is always 200, lists Varros and
   // every companion, reports Kokoro as not wired, never crashes on missing
   // binaries. Probe through the proxy to verify the proxy + registry work.
-  const url = `http://${HOST}:${WEB_PORT}/api/proxy/magister/voices`;
+  const url = `http://${HOST}:${WEB_PORT}/api/proxy/nusika/voices`;
   let res;
   try {
     res = await fetch(url, { signal: AbortSignal.timeout(5_000) });
@@ -153,36 +153,36 @@ async function checkVoicesRegistry() {
     return;
   }
   if (res.status !== 200) {
-    fail(`proxy → /magister/voices returned HTTP ${res.status}`);
+    fail(`proxy → /nusika/voices returned HTTP ${res.status}`);
     return;
   }
   const body = await res.json().catch(() => ({}));
   if (body.ok !== true || !Array.isArray(body.voices)) {
-    fail(`proxy → /magister/voices unexpected body: ${JSON.stringify(body).slice(0, 200)}`);
+    fail(`proxy → /nusika/voices unexpected body: ${JSON.stringify(body).slice(0, 200)}`);
     return;
   }
   const ids = body.voices.map((v) => v.id);
   if (!ids.includes("varros-default")) {
-    fail(`/magister/voices missing varros-default: got ${ids.slice(0, 6).join(", ")}…`);
+    fail(`/nusika/voices missing varros-default: got ${ids.slice(0, 6).join(", ")}…`);
     return;
   }
   // Slice 6D: the registry probes Kokoro live. Assert the field exists
   // with the right shape; its boolean depends on whether the local
   // Kokoro sub-service happens to be running.
   if (typeof body.engines?.kokoro?.configured !== "boolean") {
-    fail(`/magister/voices kokoro.configured must be boolean; got ${JSON.stringify(body.engines?.kokoro)}`);
+    fail(`/nusika/voices kokoro.configured must be boolean; got ${JSON.stringify(body.engines?.kokoro)}`);
     return;
   }
   if (typeof body.engines?.kokoro?.detail !== "string") {
-    fail(`/magister/voices kokoro.detail must be a string; got ${JSON.stringify(body.engines?.kokoro)}`);
+    fail(`/nusika/voices kokoro.detail must be a string; got ${JSON.stringify(body.engines?.kokoro)}`);
     return;
   }
   if (body.engines?.elevenlabs?.deprecated !== true) {
-    fail(`/magister/voices elevenlabs must be deprecated:true; got ${JSON.stringify(body.engines?.elevenlabs)}`);
+    fail(`/nusika/voices elevenlabs must be deprecated:true; got ${JSON.stringify(body.engines?.elevenlabs)}`);
     return;
   }
   const kokoroState = body.engines.kokoro.configured ? "live" : "down";
-  console.log(`[web-smoke] OK proxy → /magister/voices (${ids.length} voices, kokoro ${kokoroState})`);
+  console.log(`[web-smoke] OK proxy → /nusika/voices (${ids.length} voices, kokoro ${kokoroState})`);
 }
 
 try {
@@ -192,11 +192,11 @@ try {
     cwd: projectRoot,
     env: {
       ...process.env,
-      MAGISTER_PORT: String(API_PORT),
-      MAGISTER_HOST: HOST,
+      NUSIKA_PORT: String(API_PORT),
+      NUSIKA_HOST: HOST,
       // Force the LLM client to a dead address so any accidental call fails fast
       // with the friendly 502 contract — never reaches a real provider.
-      MAGISTER_LOCAL_OLLAMA_URL: "http://127.0.0.1:1",
+      NUSIKA_LOCAL_OLLAMA_URL: "http://127.0.0.1:1",
     },
     stdio: ["ignore", "pipe", "pipe"],
   });
@@ -219,7 +219,7 @@ try {
     cwd: webRoot,
     env: {
       ...process.env,
-      MAGISTER_API_URL: `http://${HOST}:${API_PORT}`,
+      NUSIKA_API_URL: `http://${HOST}:${API_PORT}`,
       // Suppress noisy Next.js telemetry prompts in CI/scripts.
       NEXT_TELEMETRY_DISABLED: "1",
     },
@@ -240,7 +240,7 @@ try {
   }
   console.log("[web-smoke] OK web ready");
 
-  // Hall (/) — the Hall renders a "Loading Magister…" shell during SSR
+  // Hall (/) — the Hall renders a "Loading Nusika…" shell during SSR
   // and only surfaces the narrator greeting + /teach + /dm links after
   // client-side hydration. We therefore assert what SSR actually emits:
   // the tab labels (which are static) and the loading shell.
@@ -251,7 +251,7 @@ try {
     "The Hall",                     // active tab label
     "The Session",                  // sibling tab label, always SSR'd
     "The Inkwell",                  // sibling tab label, always SSR'd
-    "Loading Magister",             // loading shell — proves SSR completed
+    "Loading Nusika",               // loading shell — proves SSR completed
   ]);
 
   // Teach Me Anything (/teach) — fully SSR'd standalone page.

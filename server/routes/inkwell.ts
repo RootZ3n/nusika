@@ -27,14 +27,14 @@
  */
 
 import type { FastifyInstance } from "fastify";
-import type { MagisterDB, MagisterCreative } from "../db.js";
+import type { NusikaDB, NusikaCreative } from "../db.js";
 import { complete } from "../lib/llm.js";
 import { writeReceipt } from "../lib/receipts.js";
 
 const INKWELL_MODULE = "inkwell";
 
 const EDITOR_SYSTEM_PROMPT =
-  "You are Varros, the Magister narrator acting as senior editor and writing guide. " +
+  "You are Varros, the Nusika narrator acting as senior editor and writing guide. " +
   "Read carefully and respond as a thoughtful editor: what works, what doesn't, what " +
   "you want to know more about. Celebrate strong sentences specifically. Ask one " +
   "focused question. Direct, honest, no false encouragement. One piece of feedback at " +
@@ -49,7 +49,7 @@ interface DraftDTO {
   updatedAt: string;
 }
 
-function toDraftDTO(row: MagisterCreative): DraftDTO {
+function toDraftDTO(row: NusikaCreative): DraftDTO {
   return {
     id: row.id,
     title: row.title,
@@ -74,15 +74,15 @@ interface FeedbackBody {
   model?: string;
 }
 
-export async function registerInkwellRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
-  // GET /magister/inkwell/drafts — list all drafts for the default user
-  app.get("/magister/inkwell/drafts", async (_req, reply) => {
+export async function registerInkwellRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
+  // GET /nusika/inkwell/drafts — list all drafts for the default user
+  app.get("/nusika/inkwell/drafts", async (_req, reply) => {
     const works = db.getCreativeWorks(INKWELL_MODULE);
     return reply.send({ ok: true, drafts: works.map(toDraftDTO) });
   });
 
-  // GET /magister/inkwell/drafts/:id — single draft (404 if missing or wrong module)
-  app.get<{ Params: { id: string } }>("/magister/inkwell/drafts/:id", async (req, reply) => {
+  // GET /nusika/inkwell/drafts/:id — single draft (404 if missing or wrong module)
+  app.get<{ Params: { id: string } }>("/nusika/inkwell/drafts/:id", async (req, reply) => {
     const work = db.getCreativeWork(req.params.id);
     if (!work || work.module_id !== INKWELL_MODULE) {
       return reply.status(404).send({ ok: false, error: "Draft not found" });
@@ -90,10 +90,10 @@ export async function registerInkwellRoutes(app: FastifyInstance, db: MagisterDB
     return reply.send({ ok: true, draft: toDraftDTO(work) });
   });
 
-  // DELETE /magister/inkwell/drafts/:id — hard delete a draft.
+  // DELETE /nusika/inkwell/drafts/:id — hard delete a draft.
   // Verifies the row belongs to module_id="inkwell" so this route cannot
   // be used to delete creative work owned by another module.
-  app.delete<{ Params: { id: string } }>("/magister/inkwell/drafts/:id", async (req, reply) => {
+  app.delete<{ Params: { id: string } }>("/nusika/inkwell/drafts/:id", async (req, reply) => {
     const work = db.getCreativeWork(req.params.id);
     if (!work || work.module_id !== INKWELL_MODULE) {
       return reply.status(404).send({ ok: false, error: "Draft not found" });
@@ -103,9 +103,9 @@ export async function registerInkwellRoutes(app: FastifyInstance, db: MagisterDB
     return reply.send({ ok: true, deleted: true, id: req.params.id });
   });
 
-  // POST /magister/inkwell/drafts — create or upsert a draft.
+  // POST /nusika/inkwell/drafts — create or upsert a draft.
   // Provide `id` to update an existing draft; omit it to create a new one.
-  app.post<{ Body: UpsertBody }>("/magister/inkwell/drafts", async (req, reply) => {
+  app.post<{ Body: UpsertBody }>("/nusika/inkwell/drafts", async (req, reply) => {
     const body = req.body ?? ({} as UpsertBody);
     if (typeof body.content !== "string" || body.content.trim() === "") {
       return reply.status(400).send({ ok: false, error: "content required" });
@@ -137,9 +137,9 @@ export async function registerInkwellRoutes(app: FastifyInstance, db: MagisterDB
     return reply.status(201).send({ ok: true, draft: toDraftDTO(created) });
   });
 
-  // POST /magister/inkwell/feedback — Varros editorial feedback on a piece of writing.
+  // POST /nusika/inkwell/feedback — Varros editorial feedback on a piece of writing.
   // Calls the configured LLM. If no backend is configured/reachable, returns 502.
-  app.post<{ Body: FeedbackBody }>("/magister/inkwell/feedback", async (req, reply) => {
+  app.post<{ Body: FeedbackBody }>("/nusika/inkwell/feedback", async (req, reply) => {
     const body = req.body ?? ({} as FeedbackBody);
     if (typeof body.content !== "string" || body.content.trim() === "") {
       return reply.status(400).send({ ok: false, error: "content required" });

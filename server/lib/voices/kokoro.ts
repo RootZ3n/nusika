@@ -4,7 +4,7 @@
  * Talks HTTP to the Python sub-service that lives in voices/kokoro/.
  * Loopback-only by default (127.0.0.1:18794). Override via env:
  *
- *   MAGISTER_KOKORO_URL=http://127.0.0.1:18794
+ *   NUSIKA_KOKORO_URL=http://127.0.0.1:18794 (or legacy MAGISTER_KOKORO_URL)
  *
  * The client never throws on a network failure during a health probe —
  * it returns `{ reachable: false }` so the registry can render an honest
@@ -15,6 +15,8 @@
  * in a `finally` so production traffic isn't affected by a stuck stub.
  */
 
+import { nenv } from "../env.js";
+
 const DEFAULT_URL = "http://127.0.0.1:18794";
 
 /**
@@ -23,7 +25,7 @@ const DEFAULT_URL = "http://127.0.0.1:18794";
  * If the Python service grows or shrinks its list, mirror the change here.
  *
  * Used by:
- *   - voice-registry to render the available preset list at /magister/voices
+ *   - voice-registry to render the available preset list at /nusika/voices
  *   - curriculum/test assertions that no companion references an unknown id
  *   - any future voice-picker UI
  */
@@ -42,7 +44,7 @@ export const KOKORO_VOICE_IDS: ReadonlySet<string> = new Set([
 
 /** Read the Kokoro service URL from env at call time (test-friendly). */
 export function kokoroBaseUrl(): string {
-  return (process.env["MAGISTER_KOKORO_URL"] ?? DEFAULT_URL).replace(/\/+$/, "");
+  return (nenv("KOKORO_URL") ?? DEFAULT_URL).replace(/\/+$/, "");
 }
 
 // ── Test seam ────────────────────────────────────────────────────────────────
@@ -67,7 +69,7 @@ export interface KokoroHealth {
 }
 
 export interface KokoroHealthOptions {
-  /** Default 750ms — short enough that /magister/voices stays snappy. */
+  /** Default 750ms — short enough that /nusika/voices stays snappy. */
   timeoutMs?: number;
 }
 
@@ -88,7 +90,7 @@ export interface KokoroHealthOptions {
  * `engine: "kokoro"` from /health, including in cold/error states, so
  * this check is safe across all Kokoro-internal status values.
  *
- * The 750ms default timeout means /magister/voices stays under a second
+ * The 750ms default timeout means /nusika/voices stays under a second
  * even when the service is missing entirely.
  */
 export async function kokoroHealth(opts: KokoroHealthOptions = {}): Promise<KokoroHealth> {
@@ -118,7 +120,7 @@ export async function kokoroHealth(opts: KokoroHealthOptions = {}): Promise<Koko
         reachable: false,
         url,
         detail: `Service at ${url} is not Kokoro (identified as "${seen}"). ` +
-          `Stop or move the other service, or override MAGISTER_KOKORO_URL.`,
+          `Stop or move the other service, or override NUSIKA_KOKORO_URL.`,
       };
     }
     const out: KokoroHealth = { reachable: true, ok: true, url };

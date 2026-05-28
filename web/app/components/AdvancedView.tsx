@@ -17,13 +17,13 @@ import {
   companionColor,
   companionInitial,
   panelStyle,
-  type MagisterModule,
+  type NusikaModule,
   type Screen,
 } from "../types";
 
 export interface AdvancedViewProps {
-  modules: MagisterModule[];
-  advancedModules: MagisterModule[];
+  modules: NusikaModule[];
+  advancedModules: NusikaModule[];
   loading: boolean;
   onInstallModule: (moduleId: string) => void;
   onStartCampaign: (moduleId: string, companionId: string | null) => void;
@@ -35,7 +35,7 @@ export function AdvancedView(props: AdvancedViewProps) {
 
   // Group into shelves-of-3 (visual rows). Same chunking the inline original
   // did — re-computed here from the already-filtered list.
-  const advShelves: MagisterModule[][] = [];
+  const advShelves: NusikaModule[][] = [];
   for (let i = 0; i < advancedModules.length; i += 3) advShelves.push(advancedModules.slice(i, i + 3));
 
   return (

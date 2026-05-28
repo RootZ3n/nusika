@@ -1,21 +1,23 @@
 /**
- * Magister LLM client.
+ * Nusika LLM client.
  *
  * Two backends:
  *   - OpenRouter (cloud, primary) — OpenAI-API-compatible HTTP, supports any
- *     model OpenRouter routes. Model picked from MAGISTER_LLM_MODEL env or
+ *     model OpenRouter routes. Model picked from NUSIKA_LLM_MODEL env or
  *     per-call override. Cost estimated from OpenRouter's response when
  *     available, otherwise null.
- *   - Ollama (local fallback) — for local-only mode. Talks to MAGISTER_LOCAL_OLLAMA_URL.
+ *   - Ollama (local fallback) — for local-only mode. Talks to NUSIKA_LOCAL_OLLAMA_URL.
  *     Cost is always 0.
  *
  * The chat endpoint picks a backend at request time based on
- *   - MAGISTER_LOCAL_ONLY=true                → Ollama only
+ *   - NUSIKA_LOCAL_ONLY=true                  → Ollama only
  *   - OPENROUTER_API_KEY present + not local-only → OpenRouter, fall back to Ollama on failure
  *   - neither configured                      → throws "no LLM backend available"
  *
- * No streaming yet — magister UI doesn't depend on it.
+ * No streaming yet — nusika UI doesn't depend on it.
  */
+
+import { nenv } from "./env.js";
 
 export interface CompletionMessage {
   role: "system" | "user" | "assistant";
@@ -53,12 +55,12 @@ export interface LlmConfig {
 export function loadLlmConfig(): LlmConfig {
   return {
     ...(process.env["OPENROUTER_API_KEY"] ? { openrouterApiKey: process.env["OPENROUTER_API_KEY"] } : {}),
-    openrouterDefaultModel: process.env["MAGISTER_LLM_MODEL"] ?? "anthropic/claude-haiku-4-5",
-    ...(process.env["MAGISTER_OPENROUTER_REFERER"] ? { openrouterReferer: process.env["MAGISTER_OPENROUTER_REFERER"] } : {}),
-    openrouterAppName: process.env["MAGISTER_OPENROUTER_APP_NAME"] ?? "Magister",
-    ollamaUrl: process.env["MAGISTER_LOCAL_OLLAMA_URL"] ?? "http://127.0.0.1:11434",
-    ollamaDefaultModel: process.env["MAGISTER_LOCAL_OLLAMA_MODEL"] ?? "qwen2.5:7b",
-    localOnly: process.env["MAGISTER_LOCAL_ONLY"] === "true",
+    openrouterDefaultModel: nenv("LLM_MODEL", "anthropic/claude-haiku-4-5")!,
+    ...(nenv("OPENROUTER_REFERER") ? { openrouterReferer: nenv("OPENROUTER_REFERER")! } : {}),
+    openrouterAppName: nenv("OPENROUTER_APP_NAME", "Nusika")!,
+    ollamaUrl: nenv("LOCAL_OLLAMA_URL", "http://127.0.0.1:11434")!,
+    ollamaDefaultModel: nenv("LOCAL_OLLAMA_MODEL", "qwen2.5:7b")!,
+    localOnly: (process.env["NUSIKA_LOCAL_ONLY"] ?? process.env["MAGISTER_LOCAL_ONLY"]) === "true",
   };
 }
 
@@ -81,7 +83,7 @@ async function completeOpenRouter(req: CompletionRequest, cfg: LlmConfig): Promi
   const headers: Record<string, string> = {
     "Authorization": `Bearer ${cfg.openrouterApiKey}`,
     "Content-Type": "application/json",
-    "X-Title": cfg.openrouterAppName ?? "Magister",
+    "X-Title": cfg.openrouterAppName ?? "Nusika",
   };
   if (cfg.openrouterReferer) headers["HTTP-Referer"] = cfg.openrouterReferer;
 

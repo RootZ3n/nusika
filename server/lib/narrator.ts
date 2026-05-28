@@ -1,7 +1,7 @@
 /**
- * Magister product narrator identity.
+ * Nusika product narrator identity.
  *
- * Varros is the central narrator/tutor/DM persona for Magister. Subject
+ * Varros is the central narrator/tutor/DM persona for Nusika. Subject
  * companions (Marcus for Latin, Wei for Mandarin, etc.) still drive their
  * own modules and inherit their own personalities; Varros is the voice
  * the learner hears at the product layer — landing, between sessions,
@@ -43,7 +43,7 @@ export interface NarratorIdentity {
 export const VARROS: NarratorIdentity = {
   id: "varros",
   name: "Varros",
-  role: "Magister Narrator & Guide",
+  role: "Nusika Narrator & Guide",
   personality:
     "Calm, attentive, well-read. Treats every learner as capable of more than they think. " +
     "Patient without being slow. Curious about what the learner wants to understand and why.",

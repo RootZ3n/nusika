@@ -1,6 +1,6 @@
 import { readdir, readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { MagisterDB, MasterySpine, AgeTrack } from "./db.js";
+import type { NusikaDB, MasterySpine, AgeTrack } from "./db.js";
 import type { Logger } from "./lib/log.js";
 
 interface RawConfig {
@@ -10,8 +10,10 @@ interface RawConfig {
   subject?: string;
   description?: string;
   age_track?: string;
-  companions?: Array<{ id: string; name: string; [key: string]: unknown }> | string[];
+  companions?: unknown;
   mastery_spine?: MasterySpine;
+  tier?: string;
+  lab_only?: boolean;
 }
 
 /**
@@ -21,7 +23,7 @@ interface RawConfig {
  * Returns the count of successfully registered modules.
  */
 export async function scanCurriculum(
-  db: MagisterDB,
+  db: NusikaDB,
   curriculumDir: string,
   log: Logger,
 ): Promise<number> {
@@ -74,6 +76,8 @@ export async function scanCurriculum(
         companions,
         configPath,
         ...(config.mastery_spine ? { masterySpine: config.mastery_spine } : {}),
+        ...(config.tier ? { tier: config.tier } : {}),
+        ...(config.lab_only !== undefined ? { labOnly: config.lab_only } : {}),
       });
 
       registered++;

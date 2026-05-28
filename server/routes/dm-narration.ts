@@ -10,7 +10,7 @@
  */
 
 import type { FastifyInstance } from "fastify";
-import type { MagisterDB, DmEvent } from "../db.js";
+import type { NusikaDB, DmEvent } from "../db.js";
 import { complete } from "../lib/llm.js";
 import { writeReceipt } from "../lib/receipts.js";
 import { buildDmNarrationPrompt, type NarrationStyle } from "../lib/dm-narration-prompt.js";
@@ -28,9 +28,9 @@ interface NarrateBody {
   model?: string;
 }
 
-export async function registerDmNarrationRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
+export async function registerDmNarrationRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
   app.post<{ Params: { id: string }; Body: NarrateBody }>(
-    "/magister/dm/campaigns/:id/narrate",
+    "/nusika/dm/campaigns/:id/narrate",
     async (req, reply) => {
       const campaignId = req.params.id;
       const campaign = db.getDmCampaign(campaignId);

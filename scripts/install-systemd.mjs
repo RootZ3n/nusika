@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * Magister systemd installer (Slice 7A).
+ * Nusika systemd installer (Slice 7A).
  *
  * Copies the four unit files in contrib/systemd/ into
  * ~/.config/systemd/user/, runs `systemctl --user daemon-reload`, and
@@ -62,17 +62,17 @@ console.log(`[install-systemd] OK — installed ${copied} unit files.`);
 console.log("");
 console.log("Next steps:");
 console.log("  # one-shot start:");
-console.log("    systemctl --user start magister.target");
+console.log("    systemctl --user start nusika.target");
 console.log("");
 console.log("  # auto-start on login:");
-console.log("    systemctl --user enable magister.target");
+console.log("    systemctl --user enable nusika.target");
 console.log("");
 console.log("  # keep services running after logout (optional, requires sudo):");
 console.log("    sudo loginctl enable-linger \"$USER\"");
 console.log("");
 console.log("  # status / logs:");
-console.log("    systemctl --user status magister-api magister-kokoro magister-web");
-console.log("    journalctl --user -u magister-api -f");
+console.log("    systemctl --user status nusika-api nusika-kokoro nusika-web");
+console.log("    journalctl --user -u nusika-api -f");
 console.log("");
 console.log("  # health probe:");
 console.log("    npm run service:health");

@@ -19,8 +19,8 @@ try {
   }
   pkg.type = "commonjs";
   await writeFile(target, JSON.stringify(pkg) + "\n", "utf-8");
-  console.log("[magister-web] patched next/punycode package.json with type=commonjs");
+  console.log("[nusika-web] patched next/punycode package.json with type=commonjs");
 } catch (err) {
   // Not fatal — only matters when `next build` is going to run.
-  console.warn(`[magister-web] could not patch next/punycode: ${err.message}`);
+  console.warn(`[nusika-web] could not patch next/punycode: ${err.message}`);
 }

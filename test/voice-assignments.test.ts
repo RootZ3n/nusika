@@ -9,7 +9,7 @@
  *   - Varros has a Kokoro voice override.
  *   - When the Kokoro service is reachable, Kokoro-bound voices flip
  *     available:true through the registry.
- *   - GET /magister/voices yields one profile per companion plus Varros.
+ *   - GET /nusika/voices yields one profile per companion plus Varros.
  */
 
 import { test } from "node:test";
@@ -19,7 +19,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import Fastify from "fastify";
-import { MagisterDB } from "../server/db.js";
+import { NusikaDB } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 import { buildVoiceRegistry, type VoiceRegistry } from "../server/lib/voice-registry.js";
 import { VARROS } from "../server/lib/narrator.js";
@@ -115,9 +115,9 @@ test("VARROS has a Kokoro voice override with a known voice_ref", () => {
 
 // ── Registry round-trip ────────────────────────────────────────────────────
 
-async function bootRegistryHarness(): Promise<{ db: MagisterDB; cleanup: () => Promise<void> }> {
+async function bootRegistryHarness(): Promise<{ db: NusikaDB; cleanup: () => Promise<void> }> {
   const dir = mkdtempSync(join(tmpdir(), "magister-6e-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   const app = Fastify({ logger: false });
   // Boot the routes so the curriculum scanner registers everything.
   // We use the real curriculum directory (not a fixture) so this test
@@ -204,9 +204,9 @@ test("with Kokoro stubbed unreachable, Kokoro-bound voices are unavailable with 
 
 // ── Kokoro sub-state surfacing on engines.kokoro.detail ─────────────────────
 //
-// The runtime-posture doc (docs/MAGISTER_KOKORO_RUNTIME.md) names five
+// The runtime-posture doc (docs/NUSIKA_KOKORO_RUNTIME.md) names five
 // observable states; these three are the ones the registry can report
-// directly via /magister/voices. "Wrong service on port" is covered by
+// directly via /nusika/voices. "Wrong service on port" is covered by
 // the opencode-sidecar test in voices-kokoro-client.test.ts.
 
 test("Kokoro detail surfaces status:'ready' when the service is fully loaded", async () => {
@@ -330,11 +330,11 @@ test("no profile in the live registry uses engine:'elevenlabs' (Maren migrated)"
   }
 });
 
-test("GET /magister/voices returns exactly 31 entries when run against the real curriculum", async () => {
+test("GET /nusika/voices returns exactly 31 entries when run against the real curriculum", async () => {
   // Mirror of the buildVoiceRegistry count above. Bump together.
   __setKokoroFetchForTesting(async () => { throw new Error("stub"); });
   const dir = mkdtempSync(join(tmpdir(), "magister-6e-route-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   const { scanCurriculum } = await import("../server/curriculum.js");
   await scanCurriculum(db, CURRICULUM_DIR, {
     info: () => {}, warn: () => {}, error: () => {}, debug: () => {},
@@ -342,7 +342,7 @@ test("GET /magister/voices returns exactly 31 entries when run against the real 
   const app = Fastify({ logger: false });
   await registerAllRoutes(app, db);
   try {
-    const res = await app.inject({ method: "GET", url: "/magister/voices" });
+    const res = await app.inject({ method: "GET", url: "/nusika/voices" });
     assert.equal(res.statusCode, 200);
     const body = res.json() as { ok: boolean } & VoiceRegistry;
     assert.equal(body.ok, true);

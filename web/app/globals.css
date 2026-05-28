@@ -1,46 +1,111 @@
-/* Magister — global styles
+/* Nusika — Crucible-inspired design language
  *
- * The page uses CSS variables matching squidley's palette so the vendored
- * MarkdownMessage renders consistently. Tweak freely once magister has its
- * own visual identity.
+ * Deep violet/indigo glass surfaces, cyan neon borders, pink/violet
+ * highlights, playful sci-fi lab console feel. Matches crucibulum.css.
  */
 
 :root {
-  --font-display: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-mono: ui-monospace, "DM Mono", "SF Mono", "Roboto Mono", Consolas, monospace;
-  --bg: #0b0d12;
-  --bg-alt: #11141a;
-  --text-primary: #e6e7eb;
-  --text-secondary: #9ca3af;
-  --border: rgba(255, 255, 255, 0.08);
-  --accent: #a78bfa;
+  color-scheme: dark;
+
+  /* ─── Indigo/violet palette ─────────────────────────────────────── */
+  --bg: #0c0a1a;
+  --bg-alt: #130f28;
+  --bg-raised: #1a1538;
+  --bg-surface: rgba(22, 18, 52, 0.78);
+  --bg-card-hover: rgba(30, 24, 62, 0.88);
+  --bg-void: rgba(17, 21, 40, 0.5);
+  --bg-deep: #0b0d12;
+  --border: rgba(139, 92, 246, 0.15);
+  --border-lit: rgba(139, 92, 246, 0.25);
+  --border-bright: rgba(139, 92, 246, 0.4);
+  --border-cyan: rgba(34, 211, 238, 0.3);
+  --border-pink: rgba(236, 72, 153, 0.25);
+
+  /* ─── Signals ───────────────────────────────────────────────────── */
+  --cyan: #22d3ee;
+  --cyan-hot: #67e8f9;
+  --violet: #8b5cf6;
+  --violet-hot: #a78bfa;
+  --magenta: #ec4899;
+  --magenta-hot: #f472b6;
+  --teal: #34d399;
+  --teal-hot: #6ee7b7;
+  --orange: #f59e0b;
+  --red: #ef4444;
+  --green: #22c55e;
+
+  /* ─── Text ──────────────────────────────────────────────────────── */
+  --text-primary: #f0eaff;
+  --text-secondary: #d4cafe;
+  --text-muted: #9b8ec4;
+  --text-ghost: rgba(155, 142, 196, 0.5);
+  --text-on-accent: #060810;
+
+  /* ─── Typography ────────────────────────────────────────────────── */
+  --font-display: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-mono: "SF Mono", "SFMono-Regular", Consolas, "Liberation Mono", "Courier New", monospace;
+  --font-body: var(--font-display);
+
+  /* ─── Radii ─────────────────────────────────────────────────────── */
+  --radius-sm: 10px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
+
+  /* ─── Glows ─────────────────────────────────────────────────────── */
+  --glow-violet: 0 0 30px rgba(139, 92, 246, 0.2), 0 0 60px rgba(139, 92, 246, 0.08);
+  --glow-cyan: 0 0 20px rgba(34, 211, 238, 0.15);
+  --glow-pink: 0 0 20px rgba(236, 72, 153, 0.12);
+  --shadow-panel: 0 8px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.15);
+
+  /* ─── Gradients ─────────────────────────────────────────────────── */
+  --gradient-accent: linear-gradient(90deg, #22d3ee 0%, #8b5cf6 50%, #ec4899 100%);
+  --gradient-accent-soft: linear-gradient(90deg, rgba(34, 211, 238, 0.35) 0%, rgba(139, 92, 246, 0.3) 50%, rgba(236, 72, 153, 0.25) 100%);
+  --gradient-btn: linear-gradient(135deg, #8b5cf6, rgba(139, 92, 246, 0.7));
 }
 
-* {
-  box-sizing: border-box;
-}
-
-html,
-body {
+/* ─── Background ──────────────────────────────────────────────────── */
+html, body {
   margin: 0;
   padding: 0;
+  min-height: 100vh;
   background: var(--bg);
+  background-image:
+    radial-gradient(ellipse 80% 60% at 50% 20%, rgba(139, 92, 246, 0.08), transparent 60%),
+    radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.05), transparent 50%),
+    radial-gradient(circle at 20% 70%, rgba(34, 211, 238, 0.04), transparent 45%);
   color: var(--text-primary);
   font-family: var(--font-display);
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
 }
 
+* { box-sizing: border-box; }
+
+body { position: relative; }
+
+/* ─── Links ───────────────────────────────────────────────────────── */
+a {
+  color: var(--violet-hot);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+  text-decoration-color: rgba(167, 139, 250, 0.5);
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────── */
 button {
   font-family: inherit;
   color: inherit;
 }
 
-a {
-  color: var(--accent);
-  text-decoration: none;
-}
+/* ─── Scrollbar ───────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(139, 92, 246, 0.2); border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(139, 92, 246, 0.4); }
 
-a:hover {
-  text-decoration: underline;
-}
+/* ─── Selection ───────────────────────────────────────────────────── */
+::selection { background: rgba(139, 92, 246, 0.3); color: #f0eaff; }

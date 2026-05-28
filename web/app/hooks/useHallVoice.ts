@@ -7,7 +7,7 @@
  * no audio cache UI) because the Hall path's runtime narration is
  * already owned by useVoicePlayback and the Comfort drawer.
  *
- * Wire contract: this hook's Preview calls POST /magister/tts with
+ * Wire contract: this hook's Preview calls POST /nusika/tts with
  *   { text, voice: <profile-id> }
  * which is the same shape /teach uses for its reply autoplay. The
  * server resolves the profile id through the voice registry — so an
@@ -55,7 +55,7 @@ export interface HallVoice {
   previewVoice: () => Promise<void>;
 }
 
-const PREVIEW_TEXT_FALLBACK = "Hello. I'm a Magister voice.";
+const PREVIEW_TEXT_FALLBACK = "Hello. I'm a Nusika voice.";
 const VOICE_UNAVAILABLE_MSG =
   "Voice playback unavailable. Start Kokoro or pick a different voice.";
 
@@ -72,7 +72,7 @@ export function useHallVoice(): HallVoice {
 
   const fetchVoices = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/magister/voices`);
+      const res = await fetch(`${API_BASE}/nusika/voices`);
       if (!res.ok) return;
       const data = (await res.json()) as {
         voices?: VoiceOption[];
@@ -107,14 +107,14 @@ export function useHallVoice(): HallVoice {
       .replace(/\s*\(default voice\)\s*$/i, "")
       .trim() ||
       selectedVoice.companion_id ||
-      "a Magister voice";
-    const text = speakerName === "a Magister voice"
+      "a Nusika voice";
+    const text = speakerName === "a Nusika voice"
       ? PREVIEW_TEXT_FALLBACK
       : `Hello. I am ${speakerName}.`;
 
     let createdUrl: string | null = null;
     try {
-      const res = await fetch(`${API_BASE}/magister/tts`, {
+      const res = await fetch(`${API_BASE}/nusika/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, voice: selectedVoice.id }),

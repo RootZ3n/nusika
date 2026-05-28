@@ -5,16 +5,16 @@
  * curriculum module, concept, or companion. The route layer owns
  * validation; db.ts owns persistence.
  *
- * Endpoints under /magister/lessons:
- *   POST   /magister/lessons              create
- *   GET    /magister/lessons              list (most recent first)
- *   GET    /magister/lessons/:id          detail with recent turns
- *   PATCH  /magister/lessons/:id          update depth/status/title
- *   POST   /magister/lessons/:id/chat     Varros turn — persists user + assistant
- *   POST   /magister/lessons/:id/recap    rolling summary update (strict JSON)
+ * Endpoints under /nusika/lessons:
+ *   POST   /nusika/lessons              create
+ *   GET    /nusika/lessons              list (most recent first)
+ *   GET    /nusika/lessons/:id          detail with recent turns
+ *   PATCH  /nusika/lessons/:id          update depth/status/title
+ *   POST   /nusika/lessons/:id/chat     Varros turn — persists user + assistant
+ *   POST   /nusika/lessons/:id/recap    rolling summary update (strict JSON)
  *
  * Plus the lookup placeholder:
- *   POST   /magister/lookup               returns { supported: false } today
+ *   POST   /nusika/lookup               returns { supported: false } today
  *
  * The lookup placeholder is intentional: Varros may surface "I'd want to
  * look this up" in chat, and a real lookup backend can be plugged into this
@@ -23,10 +23,10 @@
 
 import type { FastifyInstance } from "fastify";
 import {
-  type MagisterDB,
+  type NusikaDB,
   type LessonDepth,
   type LessonStatus,
-  type MagisterLessonTurn,
+  type NusikaLessonTurn,
   LESSON_DEPTHS,
   LESSON_STATUSES,
 } from "../db.js";
@@ -44,7 +44,7 @@ interface RecapBody { model?: string }
 interface LookupBody { query?: string; mode?: string }
 
 const RECAP_SYSTEM_PROMPT = [
-  "You produce a JSON-only rolling summary of a Magister Teach Me Anything lesson.",
+  "You produce a JSON-only rolling summary of a Nusika Teach Me Anything lesson.",
   "Output exactly one JSON object with this shape and nothing else:",
   "{",
   '  "summary": string,           // 2-4 sentence rolling synopsis of what has been taught',
@@ -86,14 +86,14 @@ function unfence(text: string): string {
   return fenced ? fenced[1]!.trim() : trimmed;
 }
 
-function turnToMsg(t: MagisterLessonTurn): CompletionMessage | null {
+function turnToMsg(t: NusikaLessonTurn): CompletionMessage | null {
   if (t.role === "tool") return null; // tool turns aren't replayed back to the model today
   return { role: t.role, content: t.content };
 }
 
-export async function registerLessonRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
-  // ── POST /magister/lessons — create ───────────────────────────────────────
-  app.post<{ Body: CreateLessonBody }>("/magister/lessons", async (req, reply) => {
+export async function registerLessonRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
+  // ── POST /nusika/lessons — create ───────────────────────────────────────
+  app.post<{ Body: CreateLessonBody }>("/nusika/lessons", async (req, reply) => {
     const body = req.body ?? {};
     const title = (body.title ?? "").trim();
     if (!title) return reply.status(400).send({ ok: false, error: "title required" });
@@ -110,24 +110,24 @@ export async function registerLessonRoutes(app: FastifyInstance, db: MagisterDB)
     return reply.status(201).send({ ok: true, lesson });
   });
 
-  // ── GET /magister/lessons — list ──────────────────────────────────────────
-  app.get<{ Querystring: { limit?: string } }>("/magister/lessons", async (req, reply) => {
+  // ── GET /nusika/lessons — list ──────────────────────────────────────────
+  app.get<{ Querystring: { limit?: string } }>("/nusika/lessons", async (req, reply) => {
     const limitRaw = req.query?.limit ? Number.parseInt(req.query.limit, 10) : NaN;
     const limit = Number.isFinite(limitRaw) && limitRaw > 0 ? Math.min(limitRaw, 200) : 50;
     const lessons = db.listLessons({ limit });
     return reply.send({ ok: true, lessons });
   });
 
-  // ── GET /magister/lessons/:id — detail with recent turns ─────────────────
-  app.get<{ Params: { id: string } }>("/magister/lessons/:id", async (req, reply) => {
+  // ── GET /nusika/lessons/:id — detail with recent turns ─────────────────
+  app.get<{ Params: { id: string } }>("/nusika/lessons/:id", async (req, reply) => {
     const lesson = db.getLesson(req.params.id);
     if (!lesson) return reply.status(404).send({ ok: false, error: "Lesson not found" });
     const turns = db.getLessonTurns(req.params.id);
     return reply.send({ ok: true, lesson, turns });
   });
 
-  // ── DELETE /magister/lessons/:id — hard delete (turns cascade) ───────────
-  app.delete<{ Params: { id: string } }>("/magister/lessons/:id", async (req, reply) => {
+  // ── DELETE /nusika/lessons/:id — hard delete (turns cascade) ───────────
+  app.delete<{ Params: { id: string } }>("/nusika/lessons/:id", async (req, reply) => {
     if (!db.getLesson(req.params.id)) {
       return reply.status(404).send({ ok: false, error: "Lesson not found" });
     }
@@ -136,9 +136,9 @@ export async function registerLessonRoutes(app: FastifyInstance, db: MagisterDB)
     return reply.send({ ok: true, deleted: true, id: req.params.id });
   });
 
-  // ── PATCH /magister/lessons/:id — depth/status/title ─────────────────────
+  // ── PATCH /nusika/lessons/:id — depth/status/title ─────────────────────
   app.patch<{ Params: { id: string }; Body: PatchLessonBody }>(
-    "/magister/lessons/:id",
+    "/nusika/lessons/:id",
     async (req, reply) => {
       const existing = db.getLesson(req.params.id);
       if (!existing) return reply.status(404).send({ ok: false, error: "Lesson not found" });
@@ -163,9 +163,9 @@ export async function registerLessonRoutes(app: FastifyInstance, db: MagisterDB)
     },
   );
 
-  // ── POST /magister/lessons/:id/chat — Varros turn ────────────────────────
+  // ── POST /nusika/lessons/:id/chat — Varros turn ────────────────────────
   app.post<{ Params: { id: string }; Body: ChatBody }>(
-    "/magister/lessons/:id/chat",
+    "/nusika/lessons/:id/chat",
     async (req, reply) => {
       const lesson = db.getLesson(req.params.id);
       if (!lesson) return reply.status(404).send({ ok: false, error: "Lesson not found" });
@@ -271,9 +271,9 @@ export async function registerLessonRoutes(app: FastifyInstance, db: MagisterDB)
     },
   );
 
-  // ── POST /magister/lessons/:id/recap — rolling summary update ─────────────
+  // ── POST /nusika/lessons/:id/recap — rolling summary update ─────────────
   app.post<{ Params: { id: string }; Body: RecapBody }>(
-    "/magister/lessons/:id/recap",
+    "/nusika/lessons/:id/recap",
     async (req, reply) => {
       const lesson = db.getLesson(req.params.id);
       if (!lesson) return reply.status(404).send({ ok: false, error: "Lesson not found" });
@@ -382,17 +382,17 @@ export async function registerLessonRoutes(app: FastifyInstance, db: MagisterDB)
     },
   );
 
-  // ── POST /magister/lookup — placeholder (intentional) ─────────────────────
+  // ── POST /nusika/lookup — placeholder (intentional) ─────────────────────
   // Varros may say "a lookup would help here" in chat. This route gives the
   // architecture a single hook to plug a real research backend into later.
   // It does NOT browse, search, or fetch external content today.
-  app.post<{ Body: LookupBody }>("/magister/lookup", async (req, reply) => {
+  app.post<{ Body: LookupBody }>("/nusika/lookup", async (req, reply) => {
     const query = (req.body?.query ?? "").toString().slice(0, 500);
     return reply.send({
       ok: true,
       supported: false,
-      reason: "Lookup is not wired yet. Magister does not browse, search, or fetch external content. " +
-              "Plug a real backend into POST /magister/lookup to enable this.",
+      reason: "Lookup is not wired yet. Nusika does not browse, search, or fetch external content. " +
+              "Plug a real backend into POST /nusika/lookup to enable this.",
       echo: { query, mode: req.body?.mode ?? null },
     });
   });

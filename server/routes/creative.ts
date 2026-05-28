@@ -1,18 +1,18 @@
 import type { FastifyInstance } from "fastify";
-import type { MagisterDB } from "../db.js";
+import type { NusikaDB } from "../db.js";
 
-export async function registerCreativeRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
-  // GET /magister/creative/:moduleId — saved creative works for a module
+export async function registerCreativeRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
+  // GET /nusika/creative/:moduleId — saved creative works for a module
   app.get<{ Params: { moduleId: string } }>(
-    "/magister/creative/:moduleId",
+    "/nusika/creative/:moduleId",
     async (req, reply) => {
       return reply.send({ ok: true, works: db.getCreativeWorks(req.params.moduleId) });
     },
   );
 
-  // POST /magister/creative/:moduleId — save a new creative work
+  // POST /nusika/creative/:moduleId — save a new creative work
   app.post<{ Params: { moduleId: string }; Body: { title: string; content: string } }>(
-    "/magister/creative/:moduleId",
+    "/nusika/creative/:moduleId",
     async (req, reply) => {
       const { title, content } = req.body ?? {};
       if (!title || !content) {

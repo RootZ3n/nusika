@@ -3,7 +3,7 @@
 /**
  * Service health banner.
  *
- * Polls /api/proxy/magister/health/services every POLL_INTERVAL_MS and
+ * Polls /api/proxy/nusika/health/services every POLL_INTERVAL_MS and
  * renders a visible banner whenever any required sub-service is degraded:
  *
  *   - API unreachable (proxy returns 502)            → red, blocking
@@ -12,7 +12,7 @@
  *   - Kokoro unreachable                              → amber, advisory
  *
  * When the API is unreachable the banner is full-width and announces that
- * Magister is offline — the rest of the UI is still rendered so the user
+ * Nusika is offline — the rest of the UI is still rendered so the user
  * can read existing state, but actions will fail. We deliberately do NOT
  * silently hide errors; the audit on 2026-05-21 flagged "frontend shell,
  * backend corpse" as a top operational risk.
@@ -22,7 +22,7 @@ import { useEffect, useState } from "react";
 
 const POLL_INTERVAL_MS = 15_000;
 const PROBE_TIMEOUT_MS = 4_000;
-const PROBE_URL = "/api/proxy/magister/health/services";
+const PROBE_URL = "/api/proxy/nusika/health/services";
 
 type ServiceHealth = {
   ok: boolean;
@@ -98,10 +98,10 @@ export function ServiceHealthBanner() {
           fontFamily: "system-ui, -apple-system, sans-serif",
         }}
       >
-        <strong>Magister API offline.</strong> Lessons, sessions, voice and DM
+        <strong>Nusika API offline.</strong> Lessons, sessions, voice and DM
         actions will fail. Try{" "}
         <code style={{ background: "rgba(0,0,0,0.25)", padding: "1px 5px", borderRadius: 3 }}>
-          systemctl --user start magister-api
+          systemctl --user start nusika-api
         </code>
         . <span style={{ opacity: 0.7 }}>({state.detail.slice(0, 140)})</span>
       </div>
@@ -114,9 +114,9 @@ export function ServiceHealthBanner() {
   if (!d.db.ok) parts.push(`DB unreachable${d.db.detail ? ` — ${d.db.detail}` : ""}`);
   if (!d.llm.ok) {
     if (d.llm.mode === "local-only") {
-      parts.push(`LLM offline — Ollama not reachable at ${d.llm.ollama.url} (MAGISTER_LOCAL_ONLY=true)`);
+      parts.push(`LLM offline — Ollama not reachable at ${d.llm.ollama.url} (NUSIKA_LOCAL_ONLY=true)`);
     } else if (d.llm.mode === "unconfigured") {
-      parts.push("LLM unconfigured — set OPENROUTER_API_KEY or MAGISTER_LOCAL_ONLY=true with Ollama running");
+      parts.push("LLM unconfigured — set OPENROUTER_API_KEY or NUSIKA_LOCAL_ONLY=true with Ollama running");
     } else {
       parts.push("LLM unavailable");
     }
@@ -138,7 +138,7 @@ export function ServiceHealthBanner() {
         fontFamily: "system-ui, -apple-system, sans-serif",
       }}
     >
-      <strong>{blocking ? "Magister degraded:" : "Magister partial:"}</strong>{" "}
+      <strong>{blocking ? "Nusika degraded:" : "Nusika partial:"}</strong>{" "}
       {parts.join(" · ")}
     </div>
   );

@@ -1,9 +1,10 @@
 import type { FastifyInstance } from "fastify";
-import type { MagisterDB } from "../db.js";
+import type { NusikaDB } from "../db.js";
+import { nenv } from "../lib/env.js";
 import { kokoroHealth, kokoroBaseUrl } from "../lib/voices/kokoro.js";
 import { loadLlmConfig } from "../lib/llm.js";
 
-export async function registerHealthRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
+export async function registerHealthRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
   // GET /health — top-level liveness for monitors
   app.get("/health", async (_req, reply) => {
     const timestamp = new Date().toISOString();
@@ -12,7 +13,7 @@ export async function registerHealthRoutes(app: FastifyInstance, db: MagisterDB)
       return reply.send({
         ok: true,
         status: "healthy",
-        detail: `magister DB reachable; ${installed} module${installed === 1 ? "" : "s"} installed`,
+        detail: `nusika DB reachable; ${installed} module${installed === 1 ? "" : "s"} installed`,
         installedCount: installed,
         timestamp,
       });
@@ -26,15 +27,15 @@ export async function registerHealthRoutes(app: FastifyInstance, db: MagisterDB)
     }
   });
 
-  // GET /magister/health — same payload, /magister-prefixed for proxy parity
-  app.get("/magister/health", async (_req, reply) => {
+  // GET /nusika/health — same payload, /nusika-prefixed for proxy parity
+  app.get("/nusika/health", async (_req, reply) => {
     const timestamp = new Date().toISOString();
     try {
       const modules = db.listModules();
       return reply.send({
         ok: true,
         status: "healthy",
-        detail: `magister service reachable; ${modules.length} module${modules.length === 1 ? "" : "s"} registered`,
+        detail: `nusika service reachable; ${modules.length} module${modules.length === 1 ? "" : "s"} registered`,
         moduleCount: modules.length,
         timestamp,
       });
@@ -42,13 +43,13 @@ export async function registerHealthRoutes(app: FastifyInstance, db: MagisterDB)
       return reply.status(503).send({
         ok: false,
         status: "degraded",
-        detail: `magister DB probe threw: ${String(err).slice(0, 200)}`,
+        detail: `nusika DB probe threw: ${String(err).slice(0, 200)}`,
         timestamp,
       });
     }
   });
 
-  // GET /magister/health/services — composite probe used by the web banner.
+  // GET /nusika/health/services — composite probe used by the web banner.
   //
   // Reports every sub-service the API depends on. Reaching this endpoint at
   // all is proof the API itself is up; the body breaks down DB, Kokoro and
@@ -56,7 +57,7 @@ export async function registerHealthRoutes(app: FastifyInstance, db: MagisterDB)
   // state. Probes are short-timeout and never throw — `ok` reflects whether
   // the API is in a USABLE state (DB reachable). Kokoro/LLM degrade silently
   // because the product is still partially usable without them.
-  app.get("/magister/health/services", async (_req, reply) => {
+  app.get("/nusika/health/services", async (_req, reply) => {
     const timestamp = new Date().toISOString();
 
     // DB probe — cheap, in-process.
@@ -111,7 +112,7 @@ export async function registerHealthRoutes(app: FastifyInstance, db: MagisterDB)
 
     return reply.send({
       ok: dbReachable, // API is "usable" iff DB is reachable.
-      api: { ok: true, host: process.env["MAGISTER_HOST"] ?? "127.0.0.1", port: Number(process.env["MAGISTER_PORT"] ?? 18793) },
+      api: { ok: true, host: nenv("HOST", "127.0.0.1"), port: Number(nenv("PORT", "18793")) },
       db: {
         ok: dbReachable,
         ...(dbDetail ? { detail: dbDetail } : {}),
@@ -139,7 +140,7 @@ export async function registerHealthRoutes(app: FastifyInstance, db: MagisterDB)
           model: llmCfg.openrouterDefaultModel ?? null,
         },
       },
-      publicBindAllowed: process.env["MAGISTER_ALLOW_PUBLIC_BIND"] === "true",
+      publicBindAllowed: (process.env["NUSIKA_ALLOW_PUBLIC_BIND"] ?? process.env["MAGISTER_ALLOW_PUBLIC_BIND"]) === "true",
       timestamp,
     });
   });

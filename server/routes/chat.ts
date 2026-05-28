@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { readFile } from "node:fs/promises";
-import type { MagisterDB } from "../db.js";
+import type { NusikaDB } from "../db.js";
 import { complete, type CompletionMessage } from "../lib/llm.js";
 import { writeReceipt } from "../lib/receipts.js";
 import { buildCompanionSystemPrompt, renderMemoryBlock } from "../lib/companion-prompt.js";
@@ -38,11 +38,11 @@ interface ModuleConfig {
  * Companion memory writeback is intentionally NOT performed here — the
  * strict schema enforced by saveCompanionMemory is mismatched with the
  * lightweight signals we'd extract per-turn. End-of-session writeback
- * lives in POST /magister/sessions/:id/recap (server/routes/recap.ts).
+ * lives in POST /nusika/sessions/:id/recap (server/routes/recap.ts).
  */
-export async function registerChatRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
+export async function registerChatRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
   app.post<{ Params: { id: string }; Body: ChatBody }>(
-    "/magister/sessions/:id/chat",
+    "/nusika/sessions/:id/chat",
     async (req, reply) => {
       const { message, history = [], model: modelOverride } = req.body ?? ({} as ChatBody);
       if (!message) return reply.status(400).send({ ok: false, error: "message required" });
@@ -78,7 +78,7 @@ export async function registerChatRoutes(app: FastifyInstance, db: MagisterDB): 
             companionTeachingRules = companion.teaching_rules ?? "";
           }
         } catch (err) {
-          app.log.warn(`magister:chat: config load failed for module ${moduleId}: ${String(err)}`);
+          app.log.warn(`nusika:chat: config load failed for module ${moduleId}: ${String(err)}`);
         }
       }
 

@@ -6,10 +6,10 @@ export interface Logger {
 }
 
 export const consoleLogger: Logger = {
-  info: (msg, ...args) => console.log(`[magister] ${msg}`, ...args),
-  warn: (msg, ...args) => console.warn(`[magister] ${msg}`, ...args),
-  error: (msg, ...args) => console.error(`[magister] ${msg}`, ...args),
+  info: (msg, ...args) => console.log(`[nusika] ${msg}`, ...args),
+  warn: (msg, ...args) => console.warn(`[nusika] ${msg}`, ...args),
+  error: (msg, ...args) => console.error(`[nusika] ${msg}`, ...args),
   debug: (msg, ...args) => {
-    if (process.env["MAGISTER_DEBUG"]) console.log(`[magister:debug] ${msg}`, ...args);
+    if (process.env["NUSIKA_DEBUG"] ?? process.env["MAGISTER_DEBUG"]) console.log(`[nusika:debug] ${msg}`, ...args);
   },
 };

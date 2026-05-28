@@ -14,13 +14,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
-import { MagisterDB } from "../server/db.js";
+import { NusikaDB } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 import { __setCompleteForTesting, __resetCompleteForTesting } from "../server/lib/llm.js";
 
 async function bootApp() {
   const dir = mkdtempSync(join(tmpdir(), "magister-5a-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   db.registerModule({ id: "linux", name: "Linux Fundamentals" });
 
   const app = Fastify({ logger: false });
@@ -44,7 +44,7 @@ test("POST /sessions/:id/chat returns 502 with friendly error when LLM fails", a
   __setCompleteForTesting(async () => { throw new Error("simulated fetch failed"); });
   try {
     const create = await harness.app.inject({
-      method: "POST", url: "/magister/sessions",
+      method: "POST", url: "/nusika/sessions",
       payload: {
         module_id: "linux",
         teaching_mode: "narrative",
@@ -55,7 +55,7 @@ test("POST /sessions/:id/chat returns 502 with friendly error when LLM fails", a
     const sessionId = create.json().session.id as string;
 
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/sessions/${sessionId}/chat`,
+      method: "POST", url: `/nusika/sessions/${sessionId}/chat`,
       payload: { message: "hi" },
     });
     assert.equal(res.statusCode, 502);
@@ -72,12 +72,12 @@ test("POST /sessions/:id/chat returns 502 with friendly error when LLM fails", a
 
 // ── Translate error contract ────────────────────────────────────────────────
 
-test("POST /magister/translate returns 502 with friendly error when LLM fails", async () => {
+test("POST /nusika/translate returns 502 with friendly error when LLM fails", async () => {
   const harness = await bootApp();
   __setCompleteForTesting(async () => { throw new Error("simulated upstream failure"); });
   try {
     const res = await harness.app.inject({
-      method: "POST", url: "/magister/translate",
+      method: "POST", url: "/nusika/translate",
       payload: { text: "hello", target_lang: "french" },
     });
     assert.equal(res.statusCode, 502);
@@ -91,16 +91,16 @@ test("POST /magister/translate returns 502 with friendly error when LLM fails", 
   }
 });
 
-test("POST /magister/translate still validates required fields with 400", async () => {
+test("POST /nusika/translate still validates required fields with 400", async () => {
   const harness = await bootApp();
   try {
     const noText = await harness.app.inject({
-      method: "POST", url: "/magister/translate",
+      method: "POST", url: "/nusika/translate",
       payload: { target_lang: "french" },
     });
     assert.equal(noText.statusCode, 400);
     const noLang = await harness.app.inject({
-      method: "POST", url: "/magister/translate",
+      method: "POST", url: "/nusika/translate",
       payload: { text: "hello" },
     });
     assert.equal(noLang.statusCode, 400);
@@ -109,7 +109,7 @@ test("POST /magister/translate still validates required fields with 400", async 
   }
 });
 
-test("POST /magister/translate succeeds with mocked completer", async () => {
+test("POST /nusika/translate succeeds with mocked completer", async () => {
   const harness = await bootApp();
   __setCompleteForTesting(async () => ({
     text: "Bonjour", model: "test-model", provider: "openrouter",
@@ -117,7 +117,7 @@ test("POST /magister/translate succeeds with mocked completer", async () => {
   }));
   try {
     const res = await harness.app.inject({
-      method: "POST", url: "/magister/translate",
+      method: "POST", url: "/nusika/translate",
       payload: { text: "hello", target_lang: "french" },
     });
     assert.equal(res.statusCode, 200);
@@ -132,7 +132,7 @@ test("POST /magister/translate succeeds with mocked completer", async () => {
 
 // ── Voice graceful degrade ──────────────────────────────────────────────────
 
-test("POST /magister/tts returns 503 when PIPER_BIN is missing", async () => {
+test("POST /nusika/tts returns 503 when PIPER_BIN is missing", async () => {
   const harness = await bootApp();
   const prevBin = process.env["PIPER_BIN"];
   const prevDir = process.env["PIPER_VOICES_DIR"];
@@ -140,7 +140,7 @@ test("POST /magister/tts returns 503 when PIPER_BIN is missing", async () => {
   process.env["PIPER_VOICES_DIR"] = "/tmp/voices-do-not-exist";
   try {
     const res = await harness.app.inject({
-      method: "POST", url: "/magister/tts",
+      method: "POST", url: "/nusika/tts",
       payload: { text: "hello", voice: "test" },
     });
     assert.equal(res.statusCode, 503);
@@ -160,7 +160,7 @@ test("POST /magister/tts returns 503 when PIPER_BIN is missing", async () => {
   }
 });
 
-test("POST /magister/tts returns 503 when voice file is missing", async () => {
+test("POST /nusika/tts returns 503 when voice file is missing", async () => {
   const harness = await bootApp();
   const prevBin = process.env["PIPER_BIN"];
   const prevDir = process.env["PIPER_VOICES_DIR"];
@@ -169,7 +169,7 @@ test("POST /magister/tts returns 503 when voice file is missing", async () => {
   process.env["PIPER_VOICES_DIR"] = "/tmp/magister-test-voices-missing";
   try {
     const res = await harness.app.inject({
-      method: "POST", url: "/magister/tts",
+      method: "POST", url: "/nusika/tts",
       payload: { text: "hello", voice: "nonexistent-voice" },
     });
     assert.equal(res.statusCode, 503);
@@ -188,11 +188,11 @@ test("POST /magister/tts returns 503 when voice file is missing", async () => {
   }
 });
 
-test("POST /magister/tts validates `text` required with 400", async () => {
+test("POST /nusika/tts validates `text` required with 400", async () => {
   const harness = await bootApp();
   try {
     const res = await harness.app.inject({
-      method: "POST", url: "/magister/tts",
+      method: "POST", url: "/nusika/tts",
       payload: {},
     });
     assert.equal(res.statusCode, 400);
@@ -201,7 +201,7 @@ test("POST /magister/tts validates `text` required with 400", async () => {
   }
 });
 
-test("POST /magister/stt returns 503 when WHISPER_BIN is missing", async () => {
+test("POST /nusika/stt returns 503 when WHISPER_BIN is missing", async () => {
   const harness = await bootApp();
   const prevBin = process.env["WHISPER_BIN"];
   process.env["WHISPER_BIN"] = "/tmp/this-binary-does-not-exist-magister-test";
@@ -216,7 +216,7 @@ test("POST /magister/stt returns 503 when WHISPER_BIN is missing", async () => {
       `RIFFXXXXWAVEfmt placeholder\r\n` +
       `--${boundary}--\r\n`;
     const res = await harness.app.inject({
-      method: "POST", url: "/magister/stt",
+      method: "POST", url: "/nusika/stt",
       payload: body,
       headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
     });
@@ -234,7 +234,7 @@ test("POST /magister/stt returns 503 when WHISPER_BIN is missing", async () => {
   }
 });
 
-test("POST /magister/stt returns 503 when whisper model is missing (binary present)", async () => {
+test("POST /nusika/stt returns 503 when whisper model is missing (binary present)", async () => {
   const harness = await bootApp();
   const prevBin = process.env["WHISPER_BIN"];
   const prevModel = process.env["WHISPER_MODEL"];
@@ -249,7 +249,7 @@ test("POST /magister/stt returns 503 when whisper model is missing (binary prese
       `RIFFXXXXWAVE\r\n` +
       `--${boundary}--\r\n`;
     const res = await harness.app.inject({
-      method: "POST", url: "/magister/stt",
+      method: "POST", url: "/nusika/stt",
       payload: body,
       headers: { "content-type": `multipart/form-data; boundary=${boundary}` },
     });

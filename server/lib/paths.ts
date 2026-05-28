@@ -1,11 +1,12 @@
 import { resolve, dirname } from "node:path";
 import { mkdirSync, existsSync } from "node:fs";
 import { fileURLToPath } from "node:url";
+import { nenv } from "./env.js";
 
 /**
- * Resolve the magister repo root.
+ * Resolve the nusika repo root.
  *
- * 1. MAGISTER_PROJECT_ROOT override always wins (useful for tests + ops).
+ * 1. NUSIKA_PROJECT_ROOT (or legacy MAGISTER_PROJECT_ROOT) override always wins (useful for tests + ops).
  * 2. Otherwise walk upward from this file until we find a directory that
  *    contains both package.json and the curriculum/ directory. This works
  *    in tsx dev mode (file lives in server/lib/) and in built mode (file
@@ -13,7 +14,7 @@ import { fileURLToPath } from "node:url";
  *    dist/ rather than the real project root.
  */
 function resolveProjectRoot(): string {
-  const override = process.env["MAGISTER_PROJECT_ROOT"];
+  const override = nenv("PROJECT_ROOT");
   if (override) return resolve(override);
 
   let current = dirname(fileURLToPath(import.meta.url));
@@ -41,27 +42,27 @@ export function projectRoot(): string {
 }
 
 export function stateDir(): string {
-  const dir = process.env["MAGISTER_STATE_DIR"]
-    ? resolve(process.env["MAGISTER_STATE_DIR"])
-    : resolve(ROOT, "state");
+  const envVal = nenv("STATE_DIR");
+  const dir = envVal ? resolve(envVal) : resolve(ROOT, "state");
   mkdirSync(dir, { recursive: true });
   return dir;
 }
 
 export function curriculumDir(): string {
-  return process.env["MAGISTER_CURRICULUM_DIR"]
-    ? resolve(process.env["MAGISTER_CURRICULUM_DIR"])
-    : resolve(ROOT, "curriculum");
+  const envVal = nenv("CURRICULUM_DIR");
+  return envVal ? resolve(envVal) : resolve(ROOT, "curriculum");
 }
 
 export function receiptsDir(): string {
-  const dir = process.env["MAGISTER_RECEIPTS_DIR"]
-    ? resolve(process.env["MAGISTER_RECEIPTS_DIR"])
-    : resolve(stateDir(), "receipts");
+  const envVal = nenv("RECEIPTS_DIR");
+  const dir = envVal ? resolve(envVal) : resolve(stateDir(), "receipts");
   mkdirSync(dir, { recursive: true });
   return dir;
 }
 
 export function dbPath(): string {
-  return resolve(stateDir(), "magister.db");
+  const nusikaPath = resolve(stateDir(), "nusika.db");
+  const legacyPath = resolve(stateDir(), "magister.db");
+  if (!existsSync(nusikaPath) && existsSync(legacyPath)) return legacyPath;
+  return nusikaPath;
 }

@@ -1,4 +1,4 @@
-# Magister Kokoro service — local artifacts only.
+# Nusika Kokoro service — local artifacts only.
 
 # Python virtual environment (created by start.sh).
 .venv/

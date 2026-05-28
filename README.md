@@ -1,4 +1,4 @@
-# Magister
+# Nusika
 
 Adaptive learning engine — companion-driven teaching, spaced repetition, mastery spine, creative portfolio. Varros is the central narrator.
 
@@ -6,26 +6,26 @@ Adaptive learning engine — companion-driven teaching, spaced repetition, maste
 
 ## What it is
 
-Magister teaches one concept per session through a chosen companion (a character with a defined personality, speech pattern, and teaching style) inside a campaign world. Sessions are atomic — one `concept_id`, one `objective`, one `mastery_signal`. Mastery accrues across `introduced -> practiced -> mastered -> reaffirmed` with spaced-repetition reaffirmation due-dates per concept. Hints are tiered (L1 nudge, L2 guided, L3 direct) and tracked. Companion memory is schema-enforced: only `mastered_concepts`, `struggled_concepts`, `hint_patterns`, `preferences`, `relationship_beat` are accepted, validated on every write.
+Nusika teaches one concept per session through a chosen companion (a character with a defined personality, speech pattern, and teaching style) inside a campaign world. Sessions are atomic — one `concept_id`, one `objective`, one `mastery_signal`. Mastery accrues across `introduced -> practiced -> mastered -> reaffirmed` with spaced-repetition reaffirmation due-dates per concept. Hints are tiered (L1 nudge, L2 guided, L3 direct) and tracked. Companion memory is schema-enforced: only `mastered_concepts`, `struggled_concepts`, `hint_patterns`, `preferences`, `relationship_beat` are accepted, validated on every write.
 
-Above the subject companions sits **Varros**, the product narrator — the voice the learner hears at the Hall, between sessions, and in any future product-level mode that does not bind to a subject companion. Varros is defined in `server/lib/narrator.ts` and surfaced via `GET /magister/config`. Subject companions (Marcus for Latin, Wei for Mandarin, etc.) are unchanged.
+Above the subject companions sits **Varros**, the product narrator — the voice the learner hears at the Hall, between sessions, and in any future product-level mode that does not bind to a subject companion. Varros is defined in `server/lib/narrator.ts` and surfaced via `GET /nusika/config`. Subject companions (Marcus for Latin, Wei for Mandarin, etc.) are unchanged.
 
 Curriculum lives in `./curriculum/<subject>/config.json` — each one declares the world, companions, domains, concepts, and (optionally) a mastery spine. 19 subjects ship today: latin, mandarin, vietnamese, spanish, french, history, history-through-story, science, mathematics, social-emotional, financial-basics, inkwell, linux, a-plus, network-plus, security-plus, prompt-engineering, **ai-literacy**, **ai-systems**.
 
 ### AI Literacy and AI Systems
 
-Two modules focused on using and operating AI well — added because Magister is meant to be an AI-native open-source learning environment, and the literature in this space tends toward either marketing or vendor lock-in. These are deliberately neither.
+Two modules focused on using and operating AI well — added because Nusika is meant to be an AI-native open-source learning environment, and the literature in this space tends toward either marketing or vendor lock-in. These are deliberately neither.
 
 - **AI Literacy** (`curriculum/ai-literacy/`, beginner, `all` ages) — ten lessons covering what large language models actually do, how to write prompts that work, recognising hallucinations and verifying answers, the trade-off between local and cloud AI, privacy and data boundaries, and practical workflows for learning, writing, and coding with AI. The mentor (Iris) is patient and plain-spoken; the second companion (Field) is an evidence-first researcher who teaches verification habits alongside use. No hype, no brand recommendations, and a strong default toward verifying anything that matters before acting.
-- **AI Systems & Agent Operations** (`curriculum/ai-systems/`, intermediate, `adult`) — ten lessons on what makes an agent different from a chatbot, tool calls and action boundaries, capability contracts, memory vs chat history, runtime truth and health checks, receipts and audit trails, approval gates and operator authority, model routing, drift detection, and release readiness with backups and rollback. Atlas (the release captain) and Pico (an agent engineer) co-teach. Anchors the systems angle the rest of Magister already lives by: a system that cannot be inspected, paused, or rolled back is not a system you control.
+- **AI Systems & Agent Operations** (`curriculum/ai-systems/`, intermediate, `adult`) — ten lessons on what makes an agent different from a chatbot, tool calls and action boundaries, capability contracts, memory vs chat history, runtime truth and health checks, receipts and audit trails, approval gates and operator authority, model routing, drift detection, and release readiness with backups and rollback. Atlas (the release captain) and Pico (an agent engineer) co-teach. Anchors the systems angle the rest of Nusika already lives by: a system that cannot be inspected, paused, or rolled back is not a system you control.
 
-Both modules expose `learning_objectives`, `lessons[]` (each with `objectives`, `key_concepts`, `practice`, and a `mastery_checkpoint`), `practice_activities[]` for free-form exercises, and `review_questions[]` with model answers — the structured fields are available via `GET /magister/modules/:id` for any UI that wants to render them outside of the companion-driven session flow.
+Both modules expose `learning_objectives`, `lessons[]` (each with `objectives`, `key_concepts`, `practice`, and a `mastery_checkpoint`), `practice_activities[]` for free-form exercises, and `review_questions[]` with model answers — the structured fields are available via `GET /nusika/modules/:id` for any UI that wants to render them outside of the companion-driven session flow.
 
 ## Architecture
 
 ```
 magister/
-├── server/              Fastify API on MAGISTER_PORT (default 18793)
+├── server/              Fastify API on NUSIKA_PORT (default 18793)
 │   ├── index.ts         Entry — boot DB, scan curriculum, mount routes
 │   ├── db.ts            SQLite layer (better-sqlite3) — sessions, modules, progress, memory,
 │   │                    creative, lessons, DM campaigns/characters/events
@@ -33,8 +33,8 @@ magister/
 │   ├── lib/             Helpers (paths, safety patterns, LLM client, narrator, prompts, receipts)
 │   ├── srd/             Deterministic SRD-style DM engine (dice, checks, combat, leveling, inventory)
 │   └── routes/          HTTP handlers
-├── voices/              Optional local voice sub-services (sibling, not required to run Magister)
-│   └── kokoro/          Local Kokoro 82M TTS service (Slice 6C — not yet wired into /magister/tts)
+├── voices/              Optional local voice sub-services (sibling, not required to run Nusika)
+│   └── kokoro/          Local Kokoro 82M TTS service (Slice 6C — not yet wired into /nusika/tts)
 ├── curriculum/          Subject configs (gitted)
 ├── web/                 Next.js UI on port 3003 — pages: /, /teach, /dm
 └── state/               Local DB + receipts + uploads (gitignored)
@@ -50,7 +50,7 @@ npm run dev                # tsx watch
 npm run build && npm run start:dist
 ```
 
-Listens on `MAGISTER_HOST:MAGISTER_PORT` (default `127.0.0.1:18793`).
+Listens on `NUSIKA_HOST:NUSIKA_PORT` (default `127.0.0.1:18793`).
 
 | Script | Purpose |
 |---|---|
@@ -60,71 +60,71 @@ Listens on `MAGISTER_HOST:MAGISTER_PORT` (default `127.0.0.1:18793`).
 | `npm run start:dist` | run the built server (`node dist/server/index.js`) |
 | `npm run typecheck` | server type checking |
 | `npm test` | node:test under `test/` and any `*.test.ts` next to source |
-| `npm run smoke` | spawn the server, probe `/health` + `/magister/modules`, tear down |
-| `cd web && npm run test:e2e` | Boot dist API + `next start`, fetch `/`, `/teach`, `/dm` HTML, probe `/api/proxy/magister/lookup`. Pure-Node, no browsers. Requires both `npm run build` and `cd web && npm run build` first. |
+| `npm run smoke` | spawn the server, probe `/health` + `/nusika/modules`, tear down |
+| `cd web && npm run test:e2e` | Boot dist API + `next start`, fetch `/`, `/teach`, `/dm` HTML, probe `/api/proxy/nusika/lookup`. Pure-Node, no browsers. Requires both `npm run build` and `cd web && npm run build` first. |
 
-The built server (`start:dist`) and the dev server both resolve the project root by walking up from `server/lib/paths.ts` until they find `package.json` + `curriculum/`. Set `MAGISTER_PROJECT_ROOT` to override.
+The built server (`start:dist`) and the dev server both resolve the project root by walking up from `server/lib/paths.ts` until they find `package.json` + `curriculum/`. Set `NUSIKA_PROJECT_ROOT` to override.
 
 ## API
 
 | Method | Path | Purpose |
 |---|---|---|
 | GET  | `/health` | Liveness + module count |
-| GET  | `/magister/modules` | List subject modules |
-| GET  | `/magister/modules/:id` | Module detail (companions, domains, spine) |
-| POST | `/magister/modules/:id/install` | Mark module installed |
-| GET  | `/magister/sessions` | List sessions (enriched w/ module + companion) |
-| POST | `/magister/sessions` | Start a session — `{ module_id, companion_id?, concept_id?, ... }` |
-| GET  | `/magister/sessions/:id` | Session detail |
-| PATCH| `/magister/sessions/:id` | Patch session fields |
-| POST | `/magister/sessions/:id/end` | End session, optionally with summary |
-| POST | `/magister/sessions/:id/hint` | Record hint use — `{ level: 1\|2\|3 }` |
-| POST | `/magister/sessions/:id/tick` | Advance session timer — `{ seconds }` |
-| POST | `/magister/sessions/:id/chat` | Companion chat — wired to OpenRouter (cloud) and Ollama (local) via `server/lib/llm.ts` |
-| POST | `/magister/sessions/:id/recap` | LLM-driven companion memory writeback (schema-validated). Requires an LLM backend; returns 502 if unreachable, 422 if the model output fails the writeback schema. Sessions without a `companion_id` short-circuit with `saved=false, skipped=true`. |
-| GET  | `/magister/progress/:moduleId` | Concept mastery + exam readiness for the module |
-| GET  | `/magister/reaffirmations` | Concepts due for spaced-repetition reaffirm |
-| GET  | `/magister/memory/:companionId` | Companion's memories of the learner |
-| POST | `/magister/memory/:companionId` | Schema-validated companion memory writeback |
-| GET  | `/magister/creative/:moduleId` | Saved creative works for a module |
-| POST | `/magister/creative/:moduleId` | Save creative work — `{ title, content }` |
-| GET  | `/magister/inkwell/drafts` | List Inkwell drafts (stored in `magister_creative` under `module_id="inkwell"`) |
-| GET  | `/magister/inkwell/drafts/:id` | Single Inkwell draft |
-| POST | `/magister/inkwell/drafts` | Upsert an Inkwell draft — `{ id?, title?, content, feedback? }` |
-| DELETE | `/magister/inkwell/drafts/:id` | Hard-delete a draft. 404 if missing or if the row's `module_id` is not `inkwell` (cross-module-safe). |
-| POST | `/magister/inkwell/feedback` | Varros editorial feedback on a draft — `{ content, title?, context? }`. Returns 502 if no LLM backend is reachable. |
-| GET  | `/magister/lessons` | List Teach Me Anything lessons (most recent first) |
-| POST | `/magister/lessons` | Create a new lesson — `{ title, topic?, depth? }` |
-| GET  | `/magister/lessons/:id` | Lesson detail + recent turns |
-| PATCH | `/magister/lessons/:id` | Update lesson `depth` (`intro\|deeper\|example\|practice\|review`), `status` (`active\|paused\|complete`), or `title` |
-| DELETE | `/magister/lessons/:id` | Hard-delete a lesson. Turns cascade via FK ON DELETE CASCADE. |
-| POST | `/magister/lessons/:id/chat` | Varros turn — persists user + assistant turns. Requires an LLM backend; returns 502 if none reachable (user turn is still persisted). |
-| POST | `/magister/lessons/:id/recap` | Strict-JSON rolling summary update for a lesson. Requires an LLM backend; 502/422 on parse/schema failure with no persistence. |
-| POST | `/magister/lookup` | Intentional placeholder. Returns `{ ok: true, supported: false, reason }` today — Magister does not browse, search, or fetch external content. Plug a real backend into this route to enable lookups; the chat prompt instructs Varros to surface "I'd want to look this up" rather than fabricating results. |
-| POST | `/magister/dm/campaigns` | Create a Dungeon Master campaign — `{ title, setting_blurb? }` |
-| GET  | `/magister/dm/campaigns` | List campaigns (most recent first) |
-| GET  | `/magister/dm/campaigns/:id` | Campaign detail with character (if any) and last N events |
-| PATCH | `/magister/dm/campaigns/:id` | Update `title`, `status` (`active\|paused\|complete`), `current_scene`, `setting_blurb`, `quest_state`, `world_memory`. The `/dm` UI's "Archive campaign" button uses `status="complete"` as a lossless archive (character + events preserved). |
-| DELETE | `/magister/dm/campaigns/:id` | Hard-delete a campaign and cascade through to its character and events. Use `PATCH … {status:"complete"}` if you want to keep the audit log. |
-| POST | `/magister/dm/campaigns/:id/character` | Create a level-1 SRD-class character. Validates `class_name` against SRD list; computes HP from class hit die + CON mod. **409 if a character already exists.** |
-| GET  | `/magister/dm/campaigns/:id/character` | Character sheet |
-| POST | `/magister/dm/campaigns/:id/roll` | Deterministic dice roll — `{ formula, label? }`. Appends a `roll` event. |
-| POST | `/magister/dm/campaigns/:id/encounter` | Create encounter from `combatants` list. Persists `encounter_state` on the campaign and appends `encounter_start`. |
-| GET  | `/magister/dm/campaigns/:id/encounter` | Current `encounter_state` (or null) |
-| POST | `/magister/dm/campaigns/:id/turn` | Resolve a single deterministic intent: `check\|save\|attack\|damage\|heal\|condition_add\|condition_remove\|end_turn`. Each appends an event. |
-| POST | `/magister/dm/campaigns/:id/rest` | `{ kind: "short"\|"long", spendHitDice? }`. Long rest restores HP / temp / death saves / hit dice. Short rest spends hit dice only when `spendHitDice` is supplied. |
-| GET  | `/magister/dm/campaigns/:id/log` | Append-only event log (chronological) |
-| POST | `/magister/dm/campaigns/:id/narrate` | Narrate a slice of confirmed events — `{ since_event_id?, event_ids?, limit?, style? }`. Style: `brief\|cinematic\|tactical`. Appends a `narration` event to the log. **Descriptive only** — does not mutate engine state. Returns 502 if no LLM, 422 on empty model output. |
-| GET  | `/magister/config` | Accessibility settings + product narrator (Varros) identity |
+| GET  | `/nusika/modules` | List subject modules |
+| GET  | `/nusika/modules/:id` | Module detail (companions, domains, spine) |
+| POST | `/nusika/modules/:id/install` | Mark module installed |
+| GET  | `/nusika/sessions` | List sessions (enriched w/ module + companion) |
+| POST | `/nusika/sessions` | Start a session — `{ module_id, companion_id?, concept_id?, ... }` |
+| GET  | `/nusika/sessions/:id` | Session detail |
+| PATCH| `/nusika/sessions/:id` | Patch session fields |
+| POST | `/nusika/sessions/:id/end` | End session, optionally with summary |
+| POST | `/nusika/sessions/:id/hint` | Record hint use — `{ level: 1\|2\|3 }` |
+| POST | `/nusika/sessions/:id/tick` | Advance session timer — `{ seconds }` |
+| POST | `/nusika/sessions/:id/chat` | Companion chat — wired to OpenRouter (cloud) and Ollama (local) via `server/lib/llm.ts` |
+| POST | `/nusika/sessions/:id/recap` | LLM-driven companion memory writeback (schema-validated). Requires an LLM backend; returns 502 if unreachable, 422 if the model output fails the writeback schema. Sessions without a `companion_id` short-circuit with `saved=false, skipped=true`. |
+| GET  | `/nusika/progress/:moduleId` | Concept mastery + exam readiness for the module |
+| GET  | `/nusika/reaffirmations` | Concepts due for spaced-repetition reaffirm |
+| GET  | `/nusika/memory/:companionId` | Companion's memories of the learner |
+| POST | `/nusika/memory/:companionId` | Schema-validated companion memory writeback |
+| GET  | `/nusika/creative/:moduleId` | Saved creative works for a module |
+| POST | `/nusika/creative/:moduleId` | Save creative work — `{ title, content }` |
+| GET  | `/nusika/inkwell/drafts` | List Inkwell drafts (stored in `magister_creative` under `module_id="inkwell"`) |
+| GET  | `/nusika/inkwell/drafts/:id` | Single Inkwell draft |
+| POST | `/nusika/inkwell/drafts` | Upsert an Inkwell draft — `{ id?, title?, content, feedback? }` |
+| DELETE | `/nusika/inkwell/drafts/:id` | Hard-delete a draft. 404 if missing or if the row's `module_id` is not `inkwell` (cross-module-safe). |
+| POST | `/nusika/inkwell/feedback` | Varros editorial feedback on a draft — `{ content, title?, context? }`. Returns 502 if no LLM backend is reachable. |
+| GET  | `/nusika/lessons` | List Teach Me Anything lessons (most recent first) |
+| POST | `/nusika/lessons` | Create a new lesson — `{ title, topic?, depth? }` |
+| GET  | `/nusika/lessons/:id` | Lesson detail + recent turns |
+| PATCH | `/nusika/lessons/:id` | Update lesson `depth` (`intro\|deeper\|example\|practice\|review`), `status` (`active\|paused\|complete`), or `title` |
+| DELETE | `/nusika/lessons/:id` | Hard-delete a lesson. Turns cascade via FK ON DELETE CASCADE. |
+| POST | `/nusika/lessons/:id/chat` | Varros turn — persists user + assistant turns. Requires an LLM backend; returns 502 if none reachable (user turn is still persisted). |
+| POST | `/nusika/lessons/:id/recap` | Strict-JSON rolling summary update for a lesson. Requires an LLM backend; 502/422 on parse/schema failure with no persistence. |
+| POST | `/nusika/lookup` | Intentional placeholder. Returns `{ ok: true, supported: false, reason }` today — Nusika does not browse, search, or fetch external content. Plug a real backend into this route to enable lookups; the chat prompt instructs Varros to surface "I'd want to look this up" rather than fabricating results. |
+| POST | `/nusika/dm/campaigns` | Create a Dungeon Master campaign — `{ title, setting_blurb? }` |
+| GET  | `/nusika/dm/campaigns` | List campaigns (most recent first) |
+| GET  | `/nusika/dm/campaigns/:id` | Campaign detail with character (if any) and last N events |
+| PATCH | `/nusika/dm/campaigns/:id` | Update `title`, `status` (`active\|paused\|complete`), `current_scene`, `setting_blurb`, `quest_state`, `world_memory`. The `/dm` UI's "Archive campaign" button uses `status="complete"` as a lossless archive (character + events preserved). |
+| DELETE | `/nusika/dm/campaigns/:id` | Hard-delete a campaign and cascade through to its character and events. Use `PATCH … {status:"complete"}` if you want to keep the audit log. |
+| POST | `/nusika/dm/campaigns/:id/character` | Create a level-1 SRD-class character. Validates `class_name` against SRD list; computes HP from class hit die + CON mod. **409 if a character already exists.** |
+| GET  | `/nusika/dm/campaigns/:id/character` | Character sheet |
+| POST | `/nusika/dm/campaigns/:id/roll` | Deterministic dice roll — `{ formula, label? }`. Appends a `roll` event. |
+| POST | `/nusika/dm/campaigns/:id/encounter` | Create encounter from `combatants` list. Persists `encounter_state` on the campaign and appends `encounter_start`. |
+| GET  | `/nusika/dm/campaigns/:id/encounter` | Current `encounter_state` (or null) |
+| POST | `/nusika/dm/campaigns/:id/turn` | Resolve a single deterministic intent: `check\|save\|attack\|damage\|heal\|condition_add\|condition_remove\|end_turn`. Each appends an event. |
+| POST | `/nusika/dm/campaigns/:id/rest` | `{ kind: "short"\|"long", spendHitDice? }`. Long rest restores HP / temp / death saves / hit dice. Short rest spends hit dice only when `spendHitDice` is supplied. |
+| GET  | `/nusika/dm/campaigns/:id/log` | Append-only event log (chronological) |
+| POST | `/nusika/dm/campaigns/:id/narrate` | Narrate a slice of confirmed events — `{ since_event_id?, event_ids?, limit?, style? }`. Style: `brief\|cinematic\|tactical`. Appends a `narration` event to the log. **Descriptive only** — does not mutate engine state. Returns 502 if no LLM, 422 on empty model output. |
+| GET  | `/nusika/config` | Accessibility settings + product narrator (Varros) identity |
 
-| POST | `/magister/translate` | Companion-friendly translation via the configured LLM |
-| GET  | `/magister/voices` | Voice registry: every companion + Varros + per-engine status (Piper / Kokoro / ElevenLabs). Always returns 200; missing binaries surface as `available:false` with a `reason`, not a crash. Probes Kokoro health live with a 750ms timeout. |
-| GET  | `/magister/voices/preview/:engine/:voice_id` | Synthesises a short sample phrase (`"Hello, I am <name>."` when `?name=` is given) and returns `audio/wav`. Engine: `kokoro` or `piper`. Shares the `/magister/tts` audio cache; identical previews return cached bytes with `X-TTS-Provider: kokoro-cached` / `X-TTS-Cache-Hit: true`. 400 on bad input; 503 on engine failure with a sanitised `detail`. |
-| GET  | `/magister/voices/cache` | Returns `{ ok, bytes, mb, maxBytes, maxMb }` describing the voice cache state. |
-| DELETE | `/magister/voices/cache` | Clears `*.wav` files inside `state/voices/cache/` only; never touches other state files. Returns `{ ok, deletedFiles, deletedBytes }`. |
-| POST | `/magister/tts` | Local TTS via Piper — requires `PIPER_BIN` and a voice model |
-| POST | `/magister/tts/elevenlabs` | Cloud TTS, falls back to Piper — requires `ELEVENLABS_API_KEY`. *Deprecated.* |
-| POST | `/magister/stt` | Local STT via whisper.cpp — requires `WHISPER_BIN` and a model |
+| POST | `/nusika/translate` | Companion-friendly translation via the configured LLM |
+| GET  | `/nusika/voices` | Voice registry: every companion + Varros + per-engine status (Piper / Kokoro / ElevenLabs). Always returns 200; missing binaries surface as `available:false` with a `reason`, not a crash. Probes Kokoro health live with a 750ms timeout. |
+| GET  | `/nusika/voices/preview/:engine/:voice_id` | Synthesises a short sample phrase (`"Hello, I am <name>."` when `?name=` is given) and returns `audio/wav`. Engine: `kokoro` or `piper`. Shares the `/nusika/tts` audio cache; identical previews return cached bytes with `X-TTS-Provider: kokoro-cached` / `X-TTS-Cache-Hit: true`. 400 on bad input; 503 on engine failure with a sanitised `detail`. |
+| GET  | `/nusika/voices/cache` | Returns `{ ok, bytes, mb, maxBytes, maxMb }` describing the voice cache state. |
+| DELETE | `/nusika/voices/cache` | Clears `*.wav` files inside `state/voices/cache/` only; never touches other state files. Returns `{ ok, deletedFiles, deletedBytes }`. |
+| POST | `/nusika/tts` | Local TTS via Piper — requires `PIPER_BIN` and a voice model |
+| POST | `/nusika/tts/elevenlabs` | Cloud TTS, falls back to Piper — requires `ELEVENLABS_API_KEY`. *Deprecated.* |
+| POST | `/nusika/stt` | Local STT via whisper.cpp — requires `WHISPER_BIN` and a model |
 
 > **DM mode separates rules from narration.** Every HP, XP, condition,
 > initiative, and dice result flows through `server/srd/*`; no model
@@ -139,8 +139,8 @@ The built server (`start:dist`) and the dev server both resolve the project root
 >
 > An optional **Kokoro 82M** voice sub-service lives in
 > [`voices/kokoro/`](voices/kokoro/README.md). It runs as a separate
-> Python process on `127.0.0.1:18794`. Magister dispatches `POST
-> /magister/tts` to Kokoro when a resolved voice profile has
+> Python process on `127.0.0.1:18794`. Nusika dispatches `POST
+> /nusika/tts` to Kokoro when a resolved voice profile has
 > `engine: "kokoro"`. The near-term runtime posture (manual start
 > via `voices/kokoro/start.sh`, honest degradation when down,
 > optional systemd unit) is documented in
@@ -159,18 +159,18 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > **Voice picker (per-user, browser-only).** `/teach` and `/dm` each
 > include a small voice dropdown next to the existing Preview button.
 > Selections persist in `localStorage` only — never in the DB and never
-> as a companion default. Keys: `magister.teach.voiceProfileId`,
-> `magister.dm.voiceProfileId`. The picker does not change the default
+> as a companion default. Keys: `nusika.teach.voiceProfileId`,
+> `nusika.dm.voiceProfileId`. The picker does not change the default
 > voice for any companion across users; it only affects which voice the
 > Preview button plays on this device. Clearing browser storage resets
 > the selection back to Varros.
 >
 > **Auto voice for `/teach` (Slice 6H).** `/teach` has an optional
 > "Auto voice" toggle next to the voice picker. When enabled, the page
-> calls `POST /magister/tts` with the selected voice for each assistant
+> calls `POST /nusika/tts` with the selected voice for each assistant
 > reply and plays the returned WAV. **It is off by default** — autoplay
 > is opt-in per-device. Persisted in `localStorage` under
-> `magister.teach.autoplayVoice`. Requires a working TTS backend such as
+> `nusika.teach.autoplayVoice`. Requires a working TTS backend such as
 > Kokoro (or Piper as a fallback). If no backend is reachable, the page
 > shows a small "Voice playback unavailable…" line and the lesson chat
 > continues to work normally — TTS errors never fail the chat. A
@@ -178,9 +178,9 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > assistant reply on demand. Only `/teach` has this toggle; `/dm` does
 > not yet.
 >
-> `/magister/tts/elevenlabs` is still wired but **deprecated**: any
+> `/nusika/tts/elevenlabs` is still wired but **deprecated**: any
 > request whose resolved profile uses `engine: "elevenlabs"` returns
-> HTTP 409 from `/magister/tts` with a pointer to the dedicated route.
+> HTTP 409 from `/nusika/tts` with a pointer to the dedicated route.
 > The Inkwell companion (formerly Maren on an ElevenLabs voice) was
 > rebound to Varros on a local Kokoro voice in Slice 6E; the legacy
 > ElevenLabs path remains wired but no shipped companion uses it.
@@ -189,28 +189,28 @@ The built server (`start:dist`) and the dev server both resolve the project root
 >
 > | Variable | Default | Purpose |
 > |---|---|---|
-> | `MAGISTER_KOKORO_URL` | `http://127.0.0.1:18794` | Where the Kokoro sub-service listens. |
-> | `MAGISTER_VOICE_CACHE_MAX_MB` | `500` | LRU cap for `state/voices/cache/`. |
-> | `MAGISTER_VOICE_FALLBACK` | unset | Set to `piper` to fall through to Piper when Kokoro is down. |
+> | `NUSIKA_KOKORO_URL` | `http://127.0.0.1:18794` | Where the Kokoro sub-service listens. |
+> | `NUSIKA_VOICE_CACHE_MAX_MB` | `500` | LRU cap for `state/voices/cache/`. |
+> | `NUSIKA_VOICE_FALLBACK` | unset | Set to `piper` to fall through to Piper when Kokoro is down. |
 >
-> The `/magister/voices` route probes Kokoro's `/health` (with a 750 ms
+> The `/nusika/voices` route probes Kokoro's `/health` (with a 750 ms
 > timeout) on every call so its `engines.kokoro.configured` reflects the
 > live service. The probe requires the response to carry
 > `engine: "kokoro"` — without that identity check, any unrelated
 > uvicorn sidecar that happens to answer `{ok: true}` on `/health` (e.g.
 > `opencode-sidecar`, which has been observed squatting `:18794` on dev
 > machines) would be silently accepted as Kokoro. The dispatch path skips
-> the probe to keep `/magister/tts` snappy — it just tries the engine
+> the probe to keep `/nusika/tts` snappy — it just tries the engine
 > and surfaces the failure honestly. Companion chat, lesson chat, lesson recap, Inkwell feedback,
 > session recap, DM narration, and translate all require either
-> `OPENROUTER_API_KEY` set or a running Ollama at `MAGISTER_LOCAL_OLLAMA_URL`.
-> Set `MAGISTER_LOCAL_ONLY=true` to skip cloud entirely. All LLM-backed
+> `OPENROUTER_API_KEY` set or a running Ollama at `NUSIKA_LOCAL_OLLAMA_URL`.
+> Set `NUSIKA_LOCAL_ONLY=true` to skip cloud entirely. All LLM-backed
 > routes return **HTTP 502** with a structured error when no provider is
 > reachable.
 >
-> **Lookup is a placeholder.** `POST /magister/lookup` exists so the
+> **Lookup is a placeholder.** `POST /nusika/lookup` exists so the
 > Teach Me Anything chat path can request lookups today, but the route returns
-> `supported: false` and Magister does not browse the web or fetch external
+> `supported: false` and Nusika does not browse the web or fetch external
 > content. Varros is prompted to say "I'd want to look this up" rather than
 > invent sources, statistics, dates, or quotations.
 
@@ -229,18 +229,18 @@ Magister is the extraction of `/mnt/ai/squidley-v2/modules/experiences/magister/
 - DB layer (sessions, modules, progress, memory, creative, lessons, DM campaigns/characters/events, curriculum scanner)
 - Module / session / progress / memory / creative / config / translate / chat routes
 - LLM client (OpenRouter + Ollama with fallback) plus a test seam for deterministic mocking
-- Inkwell drafts persistence + Varros editorial feedback (`/magister/inkwell/*`)
-- Session recap with companion memory writeback (`/magister/sessions/:id/recap`)
-- Teach Me Anything mode (`/magister/lessons/*`, `/teach` web UI)
+- Inkwell drafts persistence + Varros editorial feedback (`/nusika/inkwell/*`)
+- Session recap with companion memory writeback (`/nusika/sessions/:id/recap`)
+- Teach Me Anything mode (`/nusika/lessons/*`, `/teach` web UI)
 - Lookup placeholder that honestly returns `supported: false`
 - All 17 curriculum modules carry at least one companion (globally unique ids)
 - SRD-style deterministic DM engine (`server/srd/`)
-- DM persistence + routes (`/magister/dm/*`) — campaigns, characters, rolls, encounters, turn intents, rest, event log
-- DM narration endpoint that is structurally prevented from mutating engine state (`/magister/dm/campaigns/:id/narrate`)
+- DM persistence + routes (`/nusika/dm/*`) — campaigns, characters, rolls, encounters, turn intents, rest, event log
+- DM narration endpoint that is structurally prevented from mutating engine state (`/nusika/dm/campaigns/:id/narrate`)
 - `/dm` standalone web UI
 - Voice routes (Piper TTS, ElevenLabs TTS, whisper.cpp STT — when local binaries are configured)
 - Curriculum scan of 19 subjects (now includes `ai-literacy` and `ai-systems`)
-- Product narrator (Varros) exposed via `/magister/config`
+- Product narrator (Varros) exposed via `/nusika/config`
 - Smoke test (`npm run smoke`) and baseline node:test suite (`npm test` — 241 tests)
 
 Known limitations (not blockers, future polish):
@@ -255,7 +255,7 @@ Known limitations (not blockers, future polish):
 ```bash
 cd web/
 npm install        # postinstall patches a Next.js bundled package.json bug
-npm run dev        # http://127.0.0.1:3003 — proxies API via /api/proxy/* → MAGISTER_API_URL (default http://127.0.0.1:18793)
+npm run dev        # http://127.0.0.1:3003 — proxies API via /api/proxy/* → NUSIKA_API_URL (default http://127.0.0.1:18793)
 npm run build      # production build
 npm run start      # serve the production build
 ```
@@ -270,9 +270,9 @@ The `postinstall` script (`scripts/patch-punycode.mjs`) adds
 it, `next build` throws `ERR_INVALID_PACKAGE_CONFIG` on Node 22+ —
 upstream Next.js bug; remove the script when fixed there.
 
-## Running Magister as a service
+## Running Nusika as a service
 
-For Jeff's Mushin box (`/mnt/ai/magister`, user `zen`), Magister ships
+For Jeff's Mushin box (`/mnt/ai/magister`, user `zen`), Nusika ships
 with `systemd --user` units that run the API, the Kokoro voice
 sub-service, and the Next.js web app together. The web app is the only
 LAN/Tailscale-exposed surface; the API and Kokoro stay on loopback.
@@ -281,9 +281,9 @@ LAN/Tailscale-exposed surface; the API and Kokoro stay on loopback.
 
 | Service                | Bind             | Why |
 |------------------------|------------------|---|
-| `magister-api`         | `127.0.0.1:18793`| Loopback only — no auth/rate-limit yet. |
-| `magister-kokoro`      | `127.0.0.1:18794`| Loopback only — internal TTS sub-service. |
-| `magister-web`         | `0.0.0.0:3003`   | LAN/Tailscale-reachable. Proxies API via `MAGISTER_API_URL`. |
+| `nusika-api`         | `127.0.0.1:18793`| Loopback only — no auth/rate-limit yet. |
+| `nusika-kokoro`      | `127.0.0.1:18794`| Loopback only — internal TTS sub-service. |
+| `nusika-web`         | `0.0.0.0:3003`   | LAN/Tailscale-reachable. Proxies API via `NUSIKA_API_URL`. |
 
 ### One-time setup
 
@@ -305,10 +305,10 @@ npm run service:install
 ### Bring everything up
 
 ```bash
-systemctl --user start magister.target
+systemctl --user start nusika.target
 
 # auto-start on next login:
-systemctl --user enable magister.target
+systemctl --user enable nusika.target
 
 # keep services running across logout (optional, requires sudo):
 sudo loginctl enable-linger "$USER"
@@ -317,16 +317,16 @@ sudo loginctl enable-linger "$USER"
 ### Status / logs
 
 ```bash
-systemctl --user status magister-api magister-kokoro magister-web
-journalctl --user -u magister-api    -f
-journalctl --user -u magister-web    -f
-journalctl --user -u magister-kokoro -f
+systemctl --user status nusika-api nusika-kokoro nusika-web
+journalctl --user -u nusika-api    -f
+journalctl --user -u nusika-web    -f
+journalctl --user -u nusika-kokoro -f
 ```
 
 ### Stop everything
 
 ```bash
-systemctl --user stop magister.target
+systemctl --user stop nusika.target
 ```
 
 ### Health probe
@@ -361,7 +361,7 @@ Run `hostname -I` to see this machine's reachable interfaces, and
 
 If you ever need to override the hardcoded `/mnt/ai/magister` paths,
 edit the unit files in `contrib/systemd/` (or use a `systemctl --user
-edit magister-api.service` drop-in) and re-run `npm run service:install`.
+edit nusika-api.service` drop-in) and re-run `npm run service:install`.
 
 ## License
 

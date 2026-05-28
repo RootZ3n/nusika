@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import Fastify from "fastify";
-import { MagisterDB } from "../server/db.js";
+import { NusikaDB } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 import {
   __setCompleteForTesting,
@@ -20,7 +20,7 @@ import type { DmCampaign, DmCharacter, DmEvent } from "../server/db.js";
 
 async function bootApp() {
   const dir = mkdtempSync(join(tmpdir(), "magister-narrate-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   const app = Fastify({ logger: false });
   await registerAllRoutes(app, db);
   return {
@@ -35,12 +35,12 @@ async function bootApp() {
 
 async function campaignWithFighter(harness: Awaited<ReturnType<typeof bootApp>>) {
   const c = await harness.app.inject({
-    method: "POST", url: "/magister/dm/campaigns",
+    method: "POST", url: "/nusika/dm/campaigns",
     payload: { title: "The Old Stones", setting_blurb: "A windswept moor." },
   });
   const campaignId = c.json().campaign.id as string;
   await harness.app.inject({
-    method: "POST", url: `/magister/dm/campaigns/${campaignId}/character`,
+    method: "POST", url: `/nusika/dm/campaigns/${campaignId}/character`,
     payload: { name: "Korr", ancestry: "human", class_name: "fighter" },
   });
   return campaignId;
@@ -139,7 +139,7 @@ test("POST .../narrate 404 for unknown campaign", async () => {
   const harness = await bootApp();
   try {
     const res = await harness.app.inject({
-      method: "POST", url: "/magister/dm/campaigns/no-such/narrate",
+      method: "POST", url: "/nusika/dm/campaigns/no-such/narrate",
       payload: {},
     });
     assert.equal(res.statusCode, 404);
@@ -153,10 +153,10 @@ test("POST .../narrate 400 when no events available (since=latest)", async () =>
   try {
     const campaignId = await campaignWithFighter(harness);
     // Get latest event id (character_created), then ask for narration of "events after it".
-    const log = await harness.app.inject({ method: "GET", url: `/magister/dm/campaigns/${campaignId}/log` });
+    const log = await harness.app.inject({ method: "GET", url: `/nusika/dm/campaigns/${campaignId}/log` });
     const latest = (log.json().events as DmEvent[]).at(-1)!;
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/narrate`,
       payload: { since_event_id: latest.id },
     });
     assert.equal(res.statusCode, 400);
@@ -171,10 +171,10 @@ test("POST .../narrate 400 when since_event_id is from a different campaign", as
   try {
     const a = await campaignWithFighter(harness);
     const b = await campaignWithFighter(harness);
-    const aLog = await harness.app.inject({ method: "GET", url: `/magister/dm/campaigns/${a}/log` });
+    const aLog = await harness.app.inject({ method: "GET", url: `/nusika/dm/campaigns/${a}/log` });
     const fromA = (aLog.json().events as DmEvent[])[0]!.id;
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${b}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${b}/narrate`,
       payload: { since_event_id: fromA },
     });
     assert.equal(res.statusCode, 400);
@@ -193,7 +193,7 @@ test("POST .../narrate success: returns prose, events_used, persists narration e
   try {
     const campaignId = await campaignWithFighter(harness);
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/narrate`,
       payload: { style: "brief" },
     });
     assert.equal(res.statusCode, 200);
@@ -206,7 +206,7 @@ test("POST .../narrate success: returns prose, events_used, persists narration e
     assert.ok(body.events_used.length >= 2, "campaign_created + character_created at minimum");
 
     // Persistence: the new narration event shows up in the log.
-    const log = await harness.app.inject({ method: "GET", url: `/magister/dm/campaigns/${campaignId}/log` });
+    const log = await harness.app.inject({ method: "GET", url: `/nusika/dm/campaigns/${campaignId}/log` });
     const kinds = (log.json().events as DmEvent[]).map(e => e.kind);
     assert.ok(kinds.includes("narration"), "narration event must be appended");
   } finally {
@@ -223,12 +223,12 @@ test("POST .../narrate 502 when LLM unavailable; engine state untouched", async 
 
     // Snapshot character state.
     const before = await harness.app.inject({
-      method: "GET", url: `/magister/dm/campaigns/${campaignId}/character`,
+      method: "GET", url: `/nusika/dm/campaigns/${campaignId}/character`,
     });
     const ch0 = before.json().character as DmCharacter;
 
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/narrate`,
       payload: {},
     });
     assert.equal(res.statusCode, 502);
@@ -236,7 +236,7 @@ test("POST .../narrate 502 when LLM unavailable; engine state untouched", async 
 
     // Character state must not have changed.
     const after = await harness.app.inject({
-      method: "GET", url: `/magister/dm/campaigns/${campaignId}/character`,
+      method: "GET", url: `/nusika/dm/campaigns/${campaignId}/character`,
     });
     const ch1 = after.json().character as DmCharacter;
     assert.equal(ch1.hp_current, ch0.hp_current);
@@ -245,7 +245,7 @@ test("POST .../narrate 502 when LLM unavailable; engine state untouched", async 
     assert.deepEqual(ch1.hit_dice, ch0.hit_dice);
 
     // No narration event got appended.
-    const log = await harness.app.inject({ method: "GET", url: `/magister/dm/campaigns/${campaignId}/log` });
+    const log = await harness.app.inject({ method: "GET", url: `/nusika/dm/campaigns/${campaignId}/log` });
     const kinds = (log.json().events as DmEvent[]).map(e => e.kind);
     assert.ok(!kinds.includes("narration"));
   } finally {
@@ -264,13 +264,13 @@ test("POST .../narrate 422 on empty model output; nothing persisted", async () =
   try {
     const campaignId = await campaignWithFighter(harness);
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/narrate`,
       payload: {},
     });
     assert.equal(res.statusCode, 422);
     assert.match(res.json().error, /empty/i);
 
-    const log = await harness.app.inject({ method: "GET", url: `/magister/dm/campaigns/${campaignId}/log` });
+    const log = await harness.app.inject({ method: "GET", url: `/nusika/dm/campaigns/${campaignId}/log` });
     const kinds = (log.json().events as DmEvent[]).map(e => e.kind);
     assert.ok(!kinds.includes("narration"));
   } finally {
@@ -298,12 +298,12 @@ test("POST .../narrate captures the prompt actually sent for assertion", async (
     const campaignId = await campaignWithFighter(harness);
     // Add a deterministic roll so we can confirm it shows up in the prompt.
     await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/roll`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/roll`,
       payload: { formula: "1d20", label: "perception" },
     });
 
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/narrate`,
       payload: { style: "tactical", limit: 5 },
     });
     assert.equal(res.statusCode, 200);
@@ -341,19 +341,19 @@ test("POST .../narrate event_ids selects only the requested events", async () =>
   try {
     const campaignId = await campaignWithFighter(harness);
     await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/roll`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/roll`,
       payload: { formula: "1d20", label: "alpha" },
     });
     await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/roll`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/roll`,
       payload: { formula: "1d20", label: "beta" },
     });
-    const log = await harness.app.inject({ method: "GET", url: `/magister/dm/campaigns/${campaignId}/log` });
+    const log = await harness.app.inject({ method: "GET", url: `/nusika/dm/campaigns/${campaignId}/log` });
     const events = log.json().events as DmEvent[];
     const alphaId = events.find(e => e.kind === "roll" && (e.payload as { label?: string }).label === "alpha")!.id;
 
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/narrate`,
       payload: { event_ids: [alphaId] },
     });
     assert.equal(res.statusCode, 200);
@@ -375,16 +375,16 @@ test("POST .../narrate since_event_id includes only events strictly after", asyn
   }));
   try {
     const campaignId = await campaignWithFighter(harness);
-    const log0 = await harness.app.inject({ method: "GET", url: `/magister/dm/campaigns/${campaignId}/log` });
+    const log0 = await harness.app.inject({ method: "GET", url: `/nusika/dm/campaigns/${campaignId}/log` });
     const characterEvent = (log0.json().events as DmEvent[]).find(e => e.kind === "character_created")!;
     // Tiny gap to keep created_at strictly newer than the boundary.
     await delay(5);
     await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/roll`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/roll`,
       payload: { formula: "1d20" },
     });
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/narrate`,
       payload: { since_event_id: characterEvent.id },
     });
     assert.equal(res.statusCode, 200);
@@ -414,12 +414,12 @@ test("POST .../narrate caps limit at 30 even when a larger number is supplied", 
     // Fire 35 rolls; default + cap should keep narration to <= 30 events.
     for (let i = 0; i < 35; i++) {
       await harness.app.inject({
-        method: "POST", url: `/magister/dm/campaigns/${campaignId}/roll`,
+        method: "POST", url: `/nusika/dm/campaigns/${campaignId}/roll`,
         payload: { formula: "1d6", label: `r${i}` },
       });
     }
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/narrate`,
       payload: { limit: 100 },
     });
     assert.equal(res.statusCode, 200);
@@ -436,7 +436,7 @@ test("POST .../narrate rejects unknown style with 400", async () => {
   try {
     const campaignId = await campaignWithFighter(harness);
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/narrate`,
       payload: { style: "epic" },
     });
     assert.equal(res.statusCode, 400);
@@ -456,15 +456,15 @@ test("POST .../narrate does not mutate engine state on success", async () => {
   try {
     const campaignId = await campaignWithFighter(harness);
     const before = (await harness.app.inject({
-      method: "GET", url: `/magister/dm/campaigns/${campaignId}/character`,
+      method: "GET", url: `/nusika/dm/campaigns/${campaignId}/character`,
     })).json().character as DmCharacter;
 
     await harness.app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${campaignId}/narrate`,
+      method: "POST", url: `/nusika/dm/campaigns/${campaignId}/narrate`,
       payload: {},
     });
     const after = (await harness.app.inject({
-      method: "GET", url: `/magister/dm/campaigns/${campaignId}/character`,
+      method: "GET", url: `/nusika/dm/campaigns/${campaignId}/character`,
     })).json().character as DmCharacter;
 
     assert.equal(after.hp_current, before.hp_current);

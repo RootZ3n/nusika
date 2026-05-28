@@ -18,12 +18,12 @@
  */
 
 import type { FastifyInstance } from "fastify";
-import type { MagisterDB, CompanionMemoryWriteback } from "../db.js";
+import type { NusikaDB, CompanionMemoryWriteback } from "../db.js";
 import { complete } from "../lib/llm.js";
 import { writeReceipt } from "../lib/receipts.js";
 
 const SYSTEM_PROMPT = [
-  "You produce a JSON-only memory record for a Magister teaching session.",
+  "You produce a JSON-only memory record for a Nusika teaching session.",
   "You will receive ONLY session metadata — there is NO transcript. Do not invent",
   "learner-specific details, do not speculate about personality, do not record",
   "personal or sensitive information.",
@@ -91,9 +91,9 @@ function unfence(text: string): string {
   return fenced ? fenced[1]!.trim() : trimmed;
 }
 
-export async function registerRecapRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
+export async function registerRecapRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
   app.post<{ Params: { id: string }; Body: { model?: string } }>(
-    "/magister/sessions/:id/recap",
+    "/nusika/sessions/:id/recap",
     async (req, reply) => {
       const session = db.getSession(req.params.id);
       if (!session) return reply.status(404).send({ ok: false, error: "Session not found" } satisfies RecapErrorResponse);

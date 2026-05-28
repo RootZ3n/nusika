@@ -1,7 +1,7 @@
 /**
  * Slice 6F — voice preview, cache status, and cache clear route tests.
  *
- * Each test isolates `MAGISTER_STATE_DIR` so the production cache is
+ * Each test isolates `NUSIKA_STATE_DIR` so the production cache is
  * never touched. Kokoro's fetch is stubbed via the test seam so no
  * Python service is required.
  */
@@ -13,7 +13,7 @@ import { writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Fastify from "fastify";
-import { MagisterDB } from "../server/db.js";
+import { NusikaDB } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 import {
   __setKokoroFetchForTesting,
@@ -25,14 +25,14 @@ const FAKE_WAV = Buffer.from("RIFF\x00\x00\x00\x00WAVE-fake-bytes-stable-for-tes
 
 interface Harness {
   app: Awaited<ReturnType<typeof Fastify>>;
-  db: MagisterDB;
+  db: NusikaDB;
   cleanup: () => Promise<void>;
 }
 
 async function bootApp(): Promise<Harness> {
   const dir = mkdtempSync(join(tmpdir(), "magister-6f-"));
-  process.env["MAGISTER_STATE_DIR"] = join(dir, "state");
-  const db = new MagisterDB(join(dir, "test.db"));
+  process.env["NUSIKA_STATE_DIR"] = join(dir, "state");
+  const db = new NusikaDB(join(dir, "test.db"));
   const app = Fastify({ logger: false });
   await registerAllRoutes(app, db);
   return {
@@ -40,7 +40,7 @@ async function bootApp(): Promise<Harness> {
     cleanup: async () => {
       await app.close();
       db.close();
-      delete process.env["MAGISTER_STATE_DIR"];
+      delete process.env["NUSIKA_STATE_DIR"];
       rmSync(dir, { recursive: true, force: true });
     },
   };
@@ -51,7 +51,7 @@ async function bootApp(): Promise<Harness> {
 test("preview rejects invalid engine with 400", async () => {
   const h = await bootApp();
   try {
-    const res = await h.app.inject({ method: "GET", url: "/magister/voices/preview/eleven/some_voice" });
+    const res = await h.app.inject({ method: "GET", url: "/nusika/voices/preview/eleven/some_voice" });
     assert.equal(res.statusCode, 400);
     const body = res.json();
     assert.equal(body.ok, false);
@@ -64,7 +64,7 @@ test("preview rejects invalid engine with 400", async () => {
 test("preview rejects unknown Kokoro voice with 400", async () => {
   const h = await bootApp();
   try {
-    const res = await h.app.inject({ method: "GET", url: "/magister/voices/preview/kokoro/not_a_real_voice" });
+    const res = await h.app.inject({ method: "GET", url: "/nusika/voices/preview/kokoro/not_a_real_voice" });
     assert.equal(res.statusCode, 400);
     const body = res.json();
     assert.equal(body.ok, false);
@@ -90,7 +90,7 @@ test("preview Kokoro returns WAV with X-TTS-Provider:kokoro on cache miss", asyn
   try {
     const res = await h.app.inject({
       method: "GET",
-      url: "/magister/voices/preview/kokoro/am_michael?name=Varros",
+      url: "/nusika/voices/preview/kokoro/am_michael?name=Varros",
     });
     assert.equal(res.statusCode, 200);
     assert.equal(res.headers["content-type"], "audio/wav");
@@ -114,14 +114,14 @@ test("preview second identical request hits cache; Kokoro client not called twic
   const h = await bootApp();
   try {
     const a = await h.app.inject({
-      method: "GET", url: "/magister/voices/preview/kokoro/am_michael?name=Varros",
+      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Varros",
     });
     assert.equal(a.statusCode, 200);
     assert.equal(a.headers["x-tts-cache-hit"], "false");
     assert.equal(calls, 1);
 
     const b = await h.app.inject({
-      method: "GET", url: "/magister/voices/preview/kokoro/am_michael?name=Varros",
+      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Varros",
     });
     assert.equal(b.statusCode, 200);
     assert.equal(b.headers["x-tts-provider"], "kokoro-cached");
@@ -139,7 +139,7 @@ test("preview Kokoro unavailable returns 503 friendly error; no cache write", as
   const h = await bootApp();
   try {
     const res = await h.app.inject({
-      method: "GET", url: "/magister/voices/preview/kokoro/am_michael?name=Varros",
+      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Varros",
     });
     assert.equal(res.statusCode, 503);
     const body = res.json();
@@ -151,7 +151,7 @@ test("preview Kokoro unavailable returns 503 friendly error; no cache write", as
     assert.ok(body.detail.length <= 240);
 
     // Confirm nothing made it into the cache.
-    const cacheRes = await h.app.inject({ method: "GET", url: "/magister/voices/cache" });
+    const cacheRes = await h.app.inject({ method: "GET", url: "/nusika/voices/cache" });
     assert.equal(cacheRes.json().bytes, 0);
   } finally {
     __resetKokoroFetchForTesting();
@@ -167,7 +167,7 @@ test("preview Piper returns 503 when PIPER_BIN is missing", async () => {
   const h = await bootApp();
   try {
     const res = await h.app.inject({
-      method: "GET", url: "/magister/voices/preview/piper/some_voice",
+      method: "GET", url: "/nusika/voices/preview/piper/some_voice",
     });
     assert.equal(res.statusCode, 503);
     const body = res.json();
@@ -182,10 +182,10 @@ test("preview Piper returns 503 when PIPER_BIN is missing", async () => {
 
 // ── Cache status ────────────────────────────────────────────────────────────
 
-test("GET /magister/voices/cache returns expected shape with empty cache", async () => {
+test("GET /nusika/voices/cache returns expected shape with empty cache", async () => {
   const h = await bootApp();
   try {
-    const res = await h.app.inject({ method: "GET", url: "/magister/voices/cache" });
+    const res = await h.app.inject({ method: "GET", url: "/nusika/voices/cache" });
     assert.equal(res.statusCode, 200);
     const body = res.json();
     assert.equal(body.ok, true);
@@ -199,16 +199,16 @@ test("GET /magister/voices/cache returns expected shape with empty cache", async
   }
 });
 
-test("GET /magister/voices/cache reports bytes after a preview is cached", async () => {
+test("GET /nusika/voices/cache reports bytes after a preview is cached", async () => {
   __setKokoroFetchForTesting(async () =>
     new Response(FAKE_WAV, { status: 200, headers: { "Content-Type": "audio/wav" } }),
   );
   const h = await bootApp();
   try {
     await h.app.inject({
-      method: "GET", url: "/magister/voices/preview/kokoro/am_michael?name=Varros",
+      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Varros",
     });
-    const res = await h.app.inject({ method: "GET", url: "/magister/voices/cache" });
+    const res = await h.app.inject({ method: "GET", url: "/nusika/voices/cache" });
     const body = res.json();
     assert.ok(body.bytes >= FAKE_WAV.length, `expected cache bytes >= ${FAKE_WAV.length}, got ${body.bytes}`);
   } finally {
@@ -219,10 +219,10 @@ test("GET /magister/voices/cache reports bytes after a preview is cached", async
 
 // ── Cache clear ─────────────────────────────────────────────────────────────
 
-test("DELETE /magister/voices/cache is safe on an empty cache", async () => {
+test("DELETE /nusika/voices/cache is safe on an empty cache", async () => {
   const h = await bootApp();
   try {
-    const res = await h.app.inject({ method: "DELETE", url: "/magister/voices/cache" });
+    const res = await h.app.inject({ method: "DELETE", url: "/nusika/voices/cache" });
     assert.equal(res.statusCode, 200);
     const body = res.json();
     assert.equal(body.ok, true);
@@ -233,25 +233,25 @@ test("DELETE /magister/voices/cache is safe on an empty cache", async () => {
   }
 });
 
-test("DELETE /magister/voices/cache removes cached preview WAVs", async () => {
+test("DELETE /nusika/voices/cache removes cached preview WAVs", async () => {
   __setKokoroFetchForTesting(async () =>
     new Response(FAKE_WAV, { status: 200, headers: { "Content-Type": "audio/wav" } }),
   );
   const h = await bootApp();
   try {
     // Generate two distinct previews so we have two cache entries.
-    await h.app.inject({ method: "GET", url: "/magister/voices/preview/kokoro/am_michael?name=Varros" });
-    await h.app.inject({ method: "GET", url: "/magister/voices/preview/kokoro/af_heart?name=Nova" });
-    const before = (await h.app.inject({ method: "GET", url: "/magister/voices/cache" })).json();
+    await h.app.inject({ method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Varros" });
+    await h.app.inject({ method: "GET", url: "/nusika/voices/preview/kokoro/af_heart?name=Nova" });
+    const before = (await h.app.inject({ method: "GET", url: "/nusika/voices/cache" })).json();
     assert.ok(before.bytes > 0);
 
-    const del = await h.app.inject({ method: "DELETE", url: "/magister/voices/cache" });
+    const del = await h.app.inject({ method: "DELETE", url: "/nusika/voices/cache" });
     const body = del.json();
     assert.equal(body.ok, true);
     assert.equal(body.deletedFiles, 2);
     assert.equal(body.deletedBytes, before.bytes);
 
-    const after = (await h.app.inject({ method: "GET", url: "/magister/voices/cache" })).json();
+    const after = (await h.app.inject({ method: "GET", url: "/nusika/voices/cache" })).json();
     assert.equal(after.bytes, 0);
   } finally {
     __resetKokoroFetchForTesting();
@@ -259,7 +259,7 @@ test("DELETE /magister/voices/cache removes cached preview WAVs", async () => {
   }
 });
 
-test("DELETE /magister/voices/cache only removes .wav files; leaves other files alone", async () => {
+test("DELETE /nusika/voices/cache only removes .wav files; leaves other files alone", async () => {
   const h = await bootApp();
   try {
     // Seed the cache directory with a wav AND a non-wav file.
@@ -272,7 +272,7 @@ test("DELETE /magister/voices/cache only removes .wav files; leaves other files 
     });
     writeFileSync(join(dir, "do-not-touch.txt"), "this is not a wav");
 
-    const del = await h.app.inject({ method: "DELETE", url: "/magister/voices/cache" });
+    const del = await h.app.inject({ method: "DELETE", url: "/nusika/voices/cache" });
     assert.equal(del.statusCode, 200);
     assert.equal(del.json().deletedFiles, 1);
     // The non-wav file must still be there.

@@ -1,7 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { buildCompanionSystemPrompt, renderMemoryBlock } from "../server/lib/companion-prompt.js";
-import type { MagisterMemory } from "../server/db.js";
+import type { NusikaMemory } from "../server/db.js";
 
 test("buildCompanionSystemPrompt locks identity, includes world + atom + tone", () => {
   const prompt = buildCompanionSystemPrompt({
@@ -58,7 +58,7 @@ test("renderMemoryBlock returns empty string for no memories", () => {
 
 test("renderMemoryBlock surfaces achievements and struggles", () => {
   const now = new Date().toISOString();
-  const memories: MagisterMemory[] = [
+  const memories: NusikaMemory[] = [
     {
       id: "m1", user_id: "jeff", companion_id: "marcus",
       memory_type: "achievement",

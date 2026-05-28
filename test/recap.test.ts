@@ -4,13 +4,13 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Fastify from "fastify";
-import { MagisterDB, type CompanionMemoryWriteback } from "../server/db.js";
+import { NusikaDB, type CompanionMemoryWriteback } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 import { __setCompleteForTesting, __resetCompleteForTesting } from "../server/lib/llm.js";
 
 async function bootApp() {
   const dir = mkdtempSync(join(tmpdir(), "magister-recap-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   db.registerModule({ id: "linux", name: "Linux Fundamentals" });
   db.registerModule({ id: "modulewithoutcompanion", name: "Module Without Companion" });
 
@@ -33,7 +33,7 @@ function createSession(app: ReturnType<typeof bootApp> extends Promise<infer T> 
   hint_l3?: number;
 } = {}) {
   return app.app.inject({
-    method: "POST", url: "/magister/sessions",
+    method: "POST", url: "/nusika/sessions",
     payload: {
       module_id: opts.module_id ?? "linux",
       ...(opts.companion_id !== null
@@ -47,11 +47,11 @@ function createSession(app: ReturnType<typeof bootApp> extends Promise<infer T> 
   });
 }
 
-test("POST /magister/sessions/:id/recap returns 404 for unknown session", async () => {
+test("POST /nusika/sessions/:id/recap returns 404 for unknown session", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/magister/sessions/does-not-exist/recap",
+      method: "POST", url: "/nusika/sessions/does-not-exist/recap",
       payload: {},
     });
     assert.equal(res.statusCode, 404);
@@ -63,9 +63,9 @@ test("POST /magister/sessions/:id/recap returns 404 for unknown session", async 
 
 test("recap returns 502 with structured error when LLM unavailable, persists nothing", async () => {
   const prevKey = process.env["OPENROUTER_API_KEY"];
-  const prevOllama = process.env["MAGISTER_LOCAL_OLLAMA_URL"];
+  const prevOllama = process.env["NUSIKA_LOCAL_OLLAMA_URL"];
   delete process.env["OPENROUTER_API_KEY"];
-  process.env["MAGISTER_LOCAL_OLLAMA_URL"] = "http://127.0.0.1:1";
+  process.env["NUSIKA_LOCAL_OLLAMA_URL"] = "http://127.0.0.1:1";
 
   const harness = await bootApp();
   try {
@@ -73,7 +73,7 @@ test("recap returns 502 with structured error when LLM unavailable, persists not
     const sessionId = create.json().session.id as string;
 
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/sessions/${sessionId}/recap`,
+      method: "POST", url: `/nusika/sessions/${sessionId}/recap`,
       payload: {},
     });
     assert.equal(res.statusCode, 502);
@@ -83,14 +83,14 @@ test("recap returns 502 with structured error when LLM unavailable, persists not
     assert.equal(typeof body.detail, "string");
 
     // No memory should have been written.
-    const memRes = await harness.app.inject({ method: "GET", url: "/magister/memory/cronk" });
+    const memRes = await harness.app.inject({ method: "GET", url: "/nusika/memory/cronk" });
     assert.deepEqual(memRes.json().memories, []);
   } finally {
     await harness.cleanup();
     if (prevKey === undefined) delete process.env["OPENROUTER_API_KEY"];
     else process.env["OPENROUTER_API_KEY"] = prevKey;
-    if (prevOllama === undefined) delete process.env["MAGISTER_LOCAL_OLLAMA_URL"];
-    else process.env["MAGISTER_LOCAL_OLLAMA_URL"] = prevOllama;
+    if (prevOllama === undefined) delete process.env["NUSIKA_LOCAL_OLLAMA_URL"];
+    else process.env["NUSIKA_LOCAL_OLLAMA_URL"] = prevOllama;
   }
 });
 
@@ -105,7 +105,7 @@ test("recap returns 502 when LLM returns invalid JSON, no memory written", async
     const create = await createSession(harness);
     const sessionId = create.json().session.id as string;
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/sessions/${sessionId}/recap`,
+      method: "POST", url: `/nusika/sessions/${sessionId}/recap`,
       payload: {},
     });
     assert.equal(res.statusCode, 502);
@@ -114,7 +114,7 @@ test("recap returns 502 when LLM returns invalid JSON, no memory written", async
     assert.match(body.error, /valid JSON/i);
     assert.equal(typeof body.raw, "string");
 
-    const memRes = await harness.app.inject({ method: "GET", url: "/magister/memory/cronk" });
+    const memRes = await harness.app.inject({ method: "GET", url: "/nusika/memory/cronk" });
     assert.deepEqual(memRes.json().memories, []);
   } finally {
     __resetCompleteForTesting();
@@ -134,7 +134,7 @@ test("recap returns 422 when JSON parses but fails schema, no memory written", a
     const create = await createSession(harness);
     const sessionId = create.json().session.id as string;
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/sessions/${sessionId}/recap`,
+      method: "POST", url: `/nusika/sessions/${sessionId}/recap`,
       payload: {},
     });
     assert.equal(res.statusCode, 422);
@@ -142,7 +142,7 @@ test("recap returns 422 when JSON parses but fails schema, no memory written", a
     assert.equal(body.ok, false);
     assert.match(body.error, /schema/i);
 
-    const memRes = await harness.app.inject({ method: "GET", url: "/magister/memory/cronk" });
+    const memRes = await harness.app.inject({ method: "GET", url: "/nusika/memory/cronk" });
     assert.deepEqual(memRes.json().memories, []);
   } finally {
     __resetCompleteForTesting();
@@ -169,7 +169,7 @@ test("recap success path writes memory and returns saved=true", async () => {
     const sessionId = create.json().session.id as string;
 
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/sessions/${sessionId}/recap`,
+      method: "POST", url: `/nusika/sessions/${sessionId}/recap`,
       payload: {},
     });
     assert.equal(res.statusCode, 200);
@@ -179,7 +179,7 @@ test("recap success path writes memory and returns saved=true", async () => {
     assert.deepEqual(body.writeback.mastered_concepts, ["filesystem-basics"]);
     assert.equal(body.model, "test-model");
 
-    const memRes = await harness.app.inject({ method: "GET", url: "/magister/memory/cronk" });
+    const memRes = await harness.app.inject({ method: "GET", url: "/nusika/memory/cronk" });
     const memories = memRes.json().memories as Array<{ memory_type: string; content: string }>;
     assert.ok(memories.length > 0, "memories must be persisted");
     const types = new Set(memories.map(m => m.memory_type));
@@ -209,7 +209,7 @@ test("recap unwraps fenced ```json blocks the model wraps around its JSON", asyn
     const create = await createSession(harness);
     const sessionId = create.json().session.id as string;
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/sessions/${sessionId}/recap`,
+      method: "POST", url: `/nusika/sessions/${sessionId}/recap`,
       payload: {},
     });
     assert.equal(res.statusCode, 200);
@@ -223,7 +223,7 @@ test("recap unwraps fenced ```json blocks the model wraps around its JSON", asyn
 test("recap on a session without companion_id returns saved=false, skipped=true", async () => {
   const harness = await bootApp();
   // Manually create a session with no companion via the DB to bypass the
-  // route's optional companion path (POST /magister/sessions accepts no companion).
+  // route's optional companion path (POST /nusika/sessions accepts no companion).
   const session = harness.db.createSession("modulewithoutcompanion", {
     atom: { concept_id: "x", objective: "y", mastery_signal: "z" },
   });
@@ -234,7 +234,7 @@ test("recap on a session without companion_id returns saved=false, skipped=true"
   });
   try {
     const res = await harness.app.inject({
-      method: "POST", url: `/magister/sessions/${session.id}/recap`,
+      method: "POST", url: `/nusika/sessions/${session.id}/recap`,
       payload: {},
     });
     assert.equal(res.statusCode, 200);

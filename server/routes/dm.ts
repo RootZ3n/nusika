@@ -14,7 +14,7 @@
 
 import type { FastifyInstance } from "fastify";
 import {
-  type MagisterDB,
+  type NusikaDB,
   type DmAbilityScores,
   type DmCampaign,
   type DmCampaignStatus,
@@ -182,9 +182,9 @@ function bodyToCombatant(b: CombatantBody, idx: number): Combatant | string {
 
 // ── Routes ───────────────────────────────────────────────────────────────────
 
-export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
-  // POST /magister/dm/campaigns
-  app.post<{ Body: CreateCampaignBody }>("/magister/dm/campaigns", async (req, reply) => {
+export async function registerDmRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
+  // POST /nusika/dm/campaigns
+  app.post<{ Body: CreateCampaignBody }>("/nusika/dm/campaigns", async (req, reply) => {
     const title = (req.body?.title ?? "").trim();
     if (!title) return reply.status(400).send({ ok: false, error: "title required" });
     const campaign = db.createDmCampaign({
@@ -199,15 +199,15 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     return reply.status(201).send({ ok: true, campaign });
   });
 
-  // GET /magister/dm/campaigns
-  app.get<{ Querystring: { limit?: string } }>("/magister/dm/campaigns", async (req, reply) => {
+  // GET /nusika/dm/campaigns
+  app.get<{ Querystring: { limit?: string } }>("/nusika/dm/campaigns", async (req, reply) => {
     const limit = Math.min(200, Math.max(1, Number.parseInt(req.query?.limit ?? "50", 10) || 50));
     return reply.send({ ok: true, campaigns: db.listDmCampaigns({ limit }) });
   });
 
-  // GET /magister/dm/campaigns/:id
+  // GET /nusika/dm/campaigns/:id
   app.get<{ Params: { id: string }; Querystring: { events?: string } }>(
-    "/magister/dm/campaigns/:id",
+    "/nusika/dm/campaigns/:id",
     async (req, reply) => {
       const campaign = db.getDmCampaign(req.params.id);
       if (!campaign) return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -218,11 +218,11 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     },
   );
 
-  // DELETE /magister/dm/campaigns/:id — hard delete.
+  // DELETE /nusika/dm/campaigns/:id — hard delete.
   // Cascades through FK ON DELETE CASCADE to characters and events.
   // The lossless option (status="archived"-ish) is PATCH … {status:"complete"}.
   app.delete<{ Params: { id: string } }>(
-    "/magister/dm/campaigns/:id",
+    "/nusika/dm/campaigns/:id",
     async (req, reply) => {
       if (!db.getDmCampaign(req.params.id)) {
         return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -233,9 +233,9 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     },
   );
 
-  // PATCH /magister/dm/campaigns/:id
+  // PATCH /nusika/dm/campaigns/:id
   app.patch<{ Params: { id: string }; Body: PatchCampaignBody }>(
-    "/magister/dm/campaigns/:id",
+    "/nusika/dm/campaigns/:id",
     async (req, reply) => {
       const campaign = db.getDmCampaign(req.params.id);
       if (!campaign) return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -249,7 +249,7 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
         return reply.status(400).send({ ok: false, error: "title cannot be empty" });
       }
 
-      const patch: Parameters<MagisterDB["patchDmCampaign"]>[1] = {};
+      const patch: Parameters<NusikaDB["patchDmCampaign"]>[1] = {};
       const eventPayload: Record<string, unknown> = {};
       if (body.title !== undefined && body.title !== campaign.title) {
         patch.title = body.title.trim(); eventPayload.title = patch.title;
@@ -282,9 +282,9 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     },
   );
 
-  // POST /magister/dm/campaigns/:id/character
+  // POST /nusika/dm/campaigns/:id/character
   app.post<{ Params: { id: string }; Body: CreateCharacterBody }>(
-    "/magister/dm/campaigns/:id/character",
+    "/nusika/dm/campaigns/:id/character",
     async (req, reply) => {
       const campaign = db.getDmCampaign(req.params.id);
       if (!campaign) return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -349,9 +349,9 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     },
   );
 
-  // GET /magister/dm/campaigns/:id/character
+  // GET /nusika/dm/campaigns/:id/character
   app.get<{ Params: { id: string } }>(
-    "/magister/dm/campaigns/:id/character",
+    "/nusika/dm/campaigns/:id/character",
     async (req, reply) => {
       const campaign = db.getDmCampaign(req.params.id);
       if (!campaign) return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -361,9 +361,9 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     },
   );
 
-  // POST /magister/dm/campaigns/:id/roll
+  // POST /nusika/dm/campaigns/:id/roll
   app.post<{ Params: { id: string }; Body: RollBody }>(
-    "/magister/dm/campaigns/:id/roll",
+    "/nusika/dm/campaigns/:id/roll",
     async (req, reply) => {
       const campaign = db.getDmCampaign(req.params.id);
       if (!campaign) return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -393,9 +393,9 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     },
   );
 
-  // POST /magister/dm/campaigns/:id/encounter
+  // POST /nusika/dm/campaigns/:id/encounter
   app.post<{ Params: { id: string }; Body: EncounterBody }>(
-    "/magister/dm/campaigns/:id/encounter",
+    "/nusika/dm/campaigns/:id/encounter",
     async (req, reply) => {
       const campaign = db.getDmCampaign(req.params.id);
       if (!campaign) return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -422,9 +422,9 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     },
   );
 
-  // GET /magister/dm/campaigns/:id/encounter
+  // GET /nusika/dm/campaigns/:id/encounter
   app.get<{ Params: { id: string } }>(
-    "/magister/dm/campaigns/:id/encounter",
+    "/nusika/dm/campaigns/:id/encounter",
     async (req, reply) => {
       const campaign = db.getDmCampaign(req.params.id);
       if (!campaign) return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -432,9 +432,9 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     },
   );
 
-  // POST /magister/dm/campaigns/:id/turn
+  // POST /nusika/dm/campaigns/:id/turn
   app.post<{ Params: { id: string }; Body: TurnBody }>(
-    "/magister/dm/campaigns/:id/turn",
+    "/nusika/dm/campaigns/:id/turn",
     async (req, reply) => {
       const campaign = db.getDmCampaign(req.params.id);
       if (!campaign) return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -572,9 +572,9 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     },
   );
 
-  // POST /magister/dm/campaigns/:id/rest
+  // POST /nusika/dm/campaigns/:id/rest
   app.post<{ Params: { id: string }; Body: RestBody }>(
-    "/magister/dm/campaigns/:id/rest",
+    "/nusika/dm/campaigns/:id/rest",
     async (req, reply) => {
       const campaign = db.getDmCampaign(req.params.id);
       if (!campaign) return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -650,9 +650,9 @@ export async function registerDmRoutes(app: FastifyInstance, db: MagisterDB): Pr
     },
   );
 
-  // GET /magister/dm/campaigns/:id/log
+  // GET /nusika/dm/campaigns/:id/log
   app.get<{ Params: { id: string }; Querystring: { limit?: string } }>(
-    "/magister/dm/campaigns/:id/log",
+    "/nusika/dm/campaigns/:id/log",
     async (req, reply) => {
       const campaign = db.getDmCampaign(req.params.id);
       if (!campaign) return reply.status(404).send({ ok: false, error: "Campaign not found" });
@@ -668,7 +668,7 @@ interface HpResult { targetId: string; hp_current: number; hp_temp: number }
 interface IntentError { error: string; status: number }
 
 function applyHpDelta(
-  db: MagisterDB,
+  db: NusikaDB,
   campaign: DmCampaign,
   character: DmCharacter | null,
   targetId: string | undefined,
@@ -712,7 +712,7 @@ function applyHpDelta(
 interface ConditionResult { targetId: string; conditions: string[] }
 
 function applyConditionDelta(
-  db: MagisterDB,
+  db: NusikaDB,
   campaign: DmCampaign,
   character: DmCharacter | null,
   targetId: string | undefined,

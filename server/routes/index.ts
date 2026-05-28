@@ -1,5 +1,5 @@
 import type { FastifyInstance } from "fastify";
-import type { MagisterDB } from "../db.js";
+import type { NusikaDB } from "../db.js";
 
 import { registerHealthRoutes } from "./health.js";
 import { registerModuleRoutes } from "./modules.js";
@@ -22,7 +22,7 @@ import { registerVoicesRoute } from "./voices.js";
  * Mirrors the squidley-v2 routes/index.ts pattern: every mount happens here,
  * nowhere else. Add a new route file? Add an import + a call below.
  */
-export async function registerAllRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
+export async function registerAllRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
   await registerHealthRoutes(app, db);
   await registerModuleRoutes(app, db);
   await registerSessionRoutes(app, db);

@@ -1,6 +1,6 @@
 /**
  * Shared types, constants, helpers, and inline-style factories used across
- * the root Magister screens (Hall, Session, Map, Advanced, Inkwell).
+ * the root Nusika screens (Hall, Session, Map, Advanced, Inkwell).
  *
  * Lifted out of the original 2,537-line `page.tsx` during the structural
  * refactor on 2026-05-22. Nothing here is new — every export was already
@@ -18,8 +18,12 @@ export const API_BASE = "/api/proxy";
 // ── Theme constants ──────────────────────────────────────────────────────────
 
 export const ACCENT = "#a78bfa";
-export const ACCENT_DIM = "rgba(167,139,250,0.08)";
-export const ACCENT_GLOW = "rgba(167,139,250,0.20)";
+export const ACCENT_DIM = "rgba(139,92,246,0.08)";
+export const ACCENT_GLOW = "rgba(139,92,246,0.20)";
+export const CYAN = "#22d3ee";
+export const VIOLET = "#8b5cf6";
+export const MAGENTA = "#ec4899";
+export const GRADIENT_ACCENT = "linear-gradient(135deg, #8b5cf6, rgba(139,92,246,0.7))";
 
 // OpenDyslexic CDN URL — loaded dynamically by the accessibility effect when
 // the dyslexic-font toggle is on.
@@ -28,7 +32,7 @@ export const OPEN_DYSLEXIC_CDN =
 
 // ── Domain types ─────────────────────────────────────────────────────────────
 
-export interface MagisterModule {
+export interface NusikaModule {
   id: string;
   name: string;
   subject: string;
@@ -48,7 +52,7 @@ export interface MagisterModule {
   installed: boolean;
 }
 
-export interface MagisterSession {
+export interface NusikaSession {
   id: string;
   module_id: string;
   module_name: string;
@@ -80,7 +84,7 @@ export interface ModuleProgress {
   exam_readiness: number | null;
 }
 
-// The server's GET /magister/config returns
+// The server's GET /nusika/config returns
 //   { ok, config: AccessibilitySettings, narrator: NarratorIdentity }.
 // Provider/mode/safety/visibility envelopes are not yet exposed — when they
 // are, widen this type to match.
@@ -106,7 +110,7 @@ export interface NarratorIdentity {
 export const DEFAULT_NARRATOR: NarratorIdentity = {
   id: "varros",
   name: "Varros",
-  role: "Magister Narrator & Guide",
+  role: "Nusika Narrator & Guide",
   personality: "",
   speech_pattern: "",
   greeting_idle:
@@ -278,104 +282,106 @@ export function applyTelex(text: string): string {
 // component state.
 
 export const panelStyle: CSSProperties = {
-  background: "var(--bg-surface)",
-  border: "1px solid var(--border)",
-  borderRadius: "var(--radius-md)",
+  background: "rgba(22,18,52,0.78)",
+  border: "1px solid rgba(139,92,246,0.15)",
+  borderRadius: "20px",
   padding: "16px",
-  backdropFilter: "blur(12px)",
+  backdropFilter: "blur(16px)",
+  WebkitBackdropFilter: "blur(16px)",
+  boxShadow: "0 8px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(139,92,246,0.15)",
 };
 
 export const cardStyle: CSSProperties = {
   ...panelStyle,
   cursor: "pointer",
-  transition: "border-color 0.2s, background 0.2s",
+  transition: "border-color 0.18s, background 0.18s",
 };
 
 export const btnPrimary: CSSProperties = {
-  background: ACCENT,
-  color: "#060810",
-  border: "none",
-  borderRadius: "var(--radius-sm)",
-  padding: "10px 20px",
+  background: GRADIENT_ACCENT,
+  color: "#fff",
+  border: "1px solid rgba(139,92,246,0.4)",
+  borderRadius: 999,
+  padding: "10px 22px",
   fontFamily: "var(--font-body)",
-  fontSize: "14px",
+  fontSize: "13px",
   fontWeight: 600,
   cursor: "pointer",
   minHeight: 44,
   minWidth: 44,
-  transition: "opacity 0.2s",
+  transition: "all 0.16s ease",
+  letterSpacing: "0.03em",
 };
 
 export const btnSecondary: CSSProperties = {
-  background: "transparent",
-  color: ACCENT,
-  border: `1px solid ${ACCENT}`,
-  borderRadius: "var(--radius-sm)",
-  padding: "10px 20px",
+  background: "rgba(139,92,246,0.06)",
+  color: "var(--text-primary)",
+  border: "1px solid rgba(139,92,246,0.25)",
+  borderRadius: 999,
+  padding: "10px 22px",
   fontFamily: "var(--font-body)",
-  fontSize: "14px",
-  fontWeight: 500,
+  fontSize: "13px",
+  fontWeight: 600,
   cursor: "pointer",
   minHeight: 44,
-  minWidth: 44,
-  transition: "opacity 0.2s, background 0.2s",
+  transition: "all 0.16s ease",
+  letterSpacing: "0.03em",
 };
 
 export const btnGhost: CSSProperties = {
   background: "transparent",
-  color: "var(--text-secondary)",
-  border: "1px solid var(--border)",
-  borderRadius: "var(--radius-sm)",
+  color: "var(--text-muted)",
+  border: "1px solid rgba(139,92,246,0.15)",
+  borderRadius: 999,
   padding: "8px 16px",
   fontFamily: "var(--font-body)",
-  fontSize: "13px",
+  fontSize: "12px",
   cursor: "pointer",
-  minHeight: 44,
-  minWidth: 44,
-  transition: "background 0.2s",
+  transition: "all 0.16s ease",
 };
 
 export const pillStyle = (active: boolean): CSSProperties => ({
-  background: active ? ACCENT_DIM : "transparent",
-  color: active ? ACCENT : "var(--text-muted)",
-  border: `1px solid ${active ? ACCENT : "var(--border)"}`,
-  borderRadius: 20,
+  background: active ? "rgba(139,92,246,0.12)" : "transparent",
+  color: active ? "#fff" : "var(--text-muted)",
+  border: `1px solid ${active ? "rgba(139,92,246,0.4)" : "rgba(139,92,246,0.15)"}`,
+  borderRadius: 999,
   padding: "6px 16px",
   fontFamily: "var(--font-body)",
-  fontSize: "13px",
+  fontSize: "12px",
+  fontWeight: active ? 600 : 500,
   cursor: "pointer",
   minHeight: 44,
   display: "inline-flex",
   alignItems: "center",
-  transition: "all 0.2s",
+  transition: "all 0.16s ease",
   whiteSpace: "nowrap",
+  letterSpacing: "0.03em",
 });
 
 export const tabBarStyle: CSSProperties = {
   display: "flex",
-  gap: 4,
-  padding: "8px 16px",
-  overflowX: "auto",
-  WebkitOverflowScrolling: "touch",
-  background: "var(--bg-deep)",
-  borderBottom: "1px solid var(--border)",
-  position: "sticky",
-  top: 0,
-  zIndex: 20,
+  flexWrap: "wrap",
+  gap: 6,
+  padding: "4px",
+  borderRadius: 16,
+  background: "rgba(139,92,246,0.04)",
+  border: "1px solid rgba(139,92,246,0.15)",
 };
 
 export const tabStyle = (active: boolean): CSSProperties => ({
-  background: active ? ACCENT_DIM : "transparent",
-  color: active ? ACCENT : "var(--text-muted)",
-  border: `1px solid ${active ? ACCENT : "transparent"}`,
-  borderRadius: "var(--radius-sm)",
-  padding: "8px 18px",
+  flex: "1 1 auto",
+  border: `1px solid ${active ? "rgba(139,92,246,0.4)" : "transparent"}`,
+  borderRadius: 10,
+  background: active
+    ? "linear-gradient(135deg, rgba(139,92,246,0.35), rgba(139,92,246,0.2))"
+    : "transparent",
+  color: active ? "#fff" : "var(--text-muted)",
+  padding: "12px 16px",
   fontFamily: "var(--font-body)",
-  fontSize: "14px",
-  fontWeight: active ? 600 : 400,
+  fontSize: "13px",
+  fontWeight: 600,
   cursor: "pointer",
-  minHeight: 44,
+  transition: "all 0.16s ease",
   whiteSpace: "nowrap",
-  transition: "all 0.2s",
-  flexShrink: 0,
+  boxShadow: active ? "0 0 16px rgba(139,92,246,0.2), inset 0 1px 0 rgba(255,255,255,0.08)" : "none",
 });

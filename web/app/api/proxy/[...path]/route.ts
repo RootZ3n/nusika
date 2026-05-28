@@ -1,17 +1,17 @@
 /**
- * Magister Web — API Proxy
+ * Nusika Web — API Proxy
  *
- * Server-side proxy so the browser never directly hits the Magister API
+ * Server-side proxy so the browser never directly hits the Nusika API
  * (cleaner CORS story, plus consistent with how the original squidley
  * webapp shipped). All non-hop-by-hop headers are forwarded; binary +
  * multipart bodies pass through unmodified.
  *
- * Forwards to MAGISTER_API_URL (default http://127.0.0.1:18793).
+ * Forwards to NUSIKA_API_URL (default http://127.0.0.1:18793).
  */
 
 import { NextRequest } from "next/server";
 
-const API_BASE = process.env.MAGISTER_API_URL ?? `http://127.0.0.1:${process.env.MAGISTER_PORT ?? "18793"}`;
+const API_BASE = process.env.NUSIKA_API_URL ?? process.env.MAGISTER_API_URL ?? `http://127.0.0.1:${process.env.NUSIKA_PORT ?? process.env.MAGISTER_PORT ?? "18793"}`;
 
 const HOP_BY_HOP = new Set([
   "connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
@@ -58,10 +58,10 @@ async function handler(
   } catch (err) {
     const isTimeout = err instanceof DOMException && err.name === "TimeoutError";
     const detail = isTimeout
-      ? `Magister API timed out after ${(timeoutMs ?? 0) / 1000}s — ${pathStr}`
+      ? `Nusika API timed out after ${(timeoutMs ?? 0) / 1000}s — ${pathStr}`
       : String(err);
-    console.error(`[magister-proxy] upstream fetch failed — ${url}:`, detail);
-    return new Response(JSON.stringify({ error: isTimeout ? "API timeout" : "Magister API unreachable", detail, url }), {
+    console.error(`[nusika-proxy] upstream fetch failed — ${url}:`, detail);
+    return new Response(JSON.stringify({ error: isTimeout ? "API timeout" : "Nusika API unreachable", detail, url }), {
       status: 502,
       headers: { "Content-Type": "application/json" },
     });

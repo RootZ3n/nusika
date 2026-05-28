@@ -1,7 +1,7 @@
 /**
  * Slice 6B — voice registry tests.
  *
- * Asserts the GET /magister/voices contract:
+ * Asserts the GET /nusika/voices contract:
  *   - Always returns ok:true (no crash even when binaries are missing).
  *   - Includes Varros narrator + every companion id from registered modules.
  *   - Voice ids are globally unique.
@@ -20,7 +20,7 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Fastify from "fastify";
-import { MagisterDB } from "../server/db.js";
+import { NusikaDB } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 import { buildVoiceRegistry, type VoiceRegistry } from "../server/lib/voice-registry.js";
 import { __setKokoroFetchForTesting, __resetKokoroFetchForTesting } from "../server/lib/voices/kokoro.js";
@@ -40,7 +40,7 @@ function stubKokoroUnreachable(): void {
 
 async function bootApp() {
   const dir = mkdtempSync(join(tmpdir(), "magister-6b-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   // Register a representative slice of modules with companions.
   db.registerModule({ id: "linux", name: "Linux Fundamentals", companions: ["cronk", "wrrrakk"] });
   db.registerModule({ id: "latin", name: "Latin", companions: ["marcus"] });
@@ -207,11 +207,11 @@ test("buildVoiceRegistry handles missing PIPER_BIN without crashing", async () =
 
 // ── Route-level ────────────────────────────────────────────────────────────
 
-test("GET /magister/voices returns ok:true with Varros, companions, engine status", async () => {
+test("GET /nusika/voices returns ok:true with Varros, companions, engine status", async () => {
   stubKokoroUnreachable();
   const { app, cleanup } = await bootApp();
   try {
-    const res = await app.inject({ method: "GET", url: "/magister/voices" });
+    const res = await app.inject({ method: "GET", url: "/nusika/voices" });
     assert.equal(res.statusCode, 200);
     const body = res.json() as { ok: boolean } & VoiceRegistry;
     assert.equal(body.ok, true);
@@ -222,7 +222,7 @@ test("GET /magister/voices returns ok:true with Varros, companions, engine statu
       assert.ok(ids.includes(`${cid}-default`), `expected ${cid}-default`);
     }
 
-    // /magister/voices probes Kokoro on every call; with no service running
+    // /nusika/voices probes Kokoro on every call; with no service running
     // in tests, the result must be configured:false with a "not reachable" detail.
     assert.equal(body.engines.kokoro.configured, false);
     assert.match(body.engines.kokoro.detail ?? "", /not reachable/i);
@@ -233,14 +233,14 @@ test("GET /magister/voices returns ok:true with Varros, companions, engine statu
   }
 });
 
-test("GET /magister/voices stays 200 even with no curriculum modules registered", async () => {
+test("GET /nusika/voices stays 200 even with no curriculum modules registered", async () => {
   stubKokoroUnreachable();
   const dir = mkdtempSync(join(tmpdir(), "magister-6b-empty-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   const app = Fastify({ logger: false });
   await registerAllRoutes(app, db);
   try {
-    const res = await app.inject({ method: "GET", url: "/magister/voices" });
+    const res = await app.inject({ method: "GET", url: "/nusika/voices" });
     assert.equal(res.statusCode, 200);
     const body = res.json() as { ok: boolean } & VoiceRegistry;
     assert.equal(body.ok, true);
@@ -255,13 +255,13 @@ test("GET /magister/voices stays 200 even with no curriculum modules registered"
   }
 });
 
-test("GET /magister/voices stays 200 when PIPER_BIN points at a non-existent path", async () => {
+test("GET /nusika/voices stays 200 when PIPER_BIN points at a non-existent path", async () => {
   stubKokoroUnreachable();
   const prev = process.env["PIPER_BIN"];
   process.env["PIPER_BIN"] = "/tmp/no-such-piper-magister-test";
   const { app, cleanup } = await bootApp();
   try {
-    const res = await app.inject({ method: "GET", url: "/magister/voices" });
+    const res = await app.inject({ method: "GET", url: "/nusika/voices" });
     assert.equal(res.statusCode, 200);
     const body = res.json() as { ok: boolean } & VoiceRegistry;
     assert.equal(body.ok, true);

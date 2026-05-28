@@ -5,13 +5,13 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { setTimeout as delay } from "node:timers/promises";
 import Fastify from "fastify";
-import { MagisterDB } from "../server/db.js";
+import { NusikaDB } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 import { __setCompleteForTesting, __resetCompleteForTesting } from "../server/lib/llm.js";
 
 async function bootApp() {
   const dir = mkdtempSync(join(tmpdir(), "magister-lessons-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   const app = Fastify({ logger: false });
   await registerAllRoutes(app, db);
   return {
@@ -26,11 +26,11 @@ async function bootApp() {
 
 // ── Lesson lifecycle ────────────────────────────────────────────────────────
 
-test("POST /magister/lessons creates a lesson with normalized topic", async () => {
+test("POST /nusika/lessons creates a lesson with normalized topic", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/magister/lessons",
+      method: "POST", url: "/nusika/lessons",
       payload: { title: "How does compound interest work" },
     });
     assert.equal(res.statusCode, 201);
@@ -46,11 +46,11 @@ test("POST /magister/lessons creates a lesson with normalized topic", async () =
   }
 });
 
-test("POST /magister/lessons rejects empty title with 400", async () => {
+test("POST /nusika/lessons rejects empty title with 400", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/magister/lessons",
+      method: "POST", url: "/nusika/lessons",
       payload: { title: "   " },
     });
     assert.equal(res.statusCode, 400);
@@ -60,11 +60,11 @@ test("POST /magister/lessons rejects empty title with 400", async () => {
   }
 });
 
-test("POST /magister/lessons rejects invalid depth with 400", async () => {
+test("POST /nusika/lessons rejects invalid depth with 400", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/magister/lessons",
+      method: "POST", url: "/nusika/lessons",
       payload: { title: "x", depth: "wizard" },
     });
     assert.equal(res.statusCode, 400);
@@ -74,14 +74,14 @@ test("POST /magister/lessons rejects invalid depth with 400", async () => {
   }
 });
 
-test("GET /magister/lessons lists in updated_at desc", async () => {
+test("GET /nusika/lessons lists in updated_at desc", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    await app.inject({ method: "POST", url: "/magister/lessons", payload: { title: "first" } });
+    await app.inject({ method: "POST", url: "/nusika/lessons", payload: { title: "first" } });
     // updated_at has millisecond resolution; insert a small gap so ordering is deterministic
     await delay(5);
-    await app.inject({ method: "POST", url: "/magister/lessons", payload: { title: "second" } });
-    const res = await app.inject({ method: "GET", url: "/magister/lessons" });
+    await app.inject({ method: "POST", url: "/nusika/lessons", payload: { title: "second" } });
+    const res = await app.inject({ method: "GET", url: "/nusika/lessons" });
     assert.equal(res.statusCode, 200);
     const lessons = res.json().lessons as Array<{ title: string }>;
     assert.equal(lessons.length, 2);
@@ -92,32 +92,32 @@ test("GET /magister/lessons lists in updated_at desc", async () => {
   }
 });
 
-test("GET /magister/lessons/:id returns lesson + turns; 404 for unknown id", async () => {
+test("GET /nusika/lessons/:id returns lesson + turns; 404 for unknown id", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const create = await app.inject({ method: "POST", url: "/magister/lessons", payload: { title: "x" } });
+    const create = await app.inject({ method: "POST", url: "/nusika/lessons", payload: { title: "x" } });
     const id = create.json().lesson.id as string;
 
-    const got = await app.inject({ method: "GET", url: `/magister/lessons/${id}` });
+    const got = await app.inject({ method: "GET", url: `/nusika/lessons/${id}` });
     assert.equal(got.statusCode, 200);
     assert.equal(got.json().lesson.id, id);
     assert.deepEqual(got.json().turns, []);
 
-    const missing = await app.inject({ method: "GET", url: "/magister/lessons/does-not-exist" });
+    const missing = await app.inject({ method: "GET", url: "/nusika/lessons/does-not-exist" });
     assert.equal(missing.statusCode, 404);
   } finally {
     await cleanup();
   }
 });
 
-test("PATCH /magister/lessons/:id updates depth/status; sets completed_at on complete", async () => {
+test("PATCH /nusika/lessons/:id updates depth/status; sets completed_at on complete", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const create = await app.inject({ method: "POST", url: "/magister/lessons", payload: { title: "x" } });
+    const create = await app.inject({ method: "POST", url: "/nusika/lessons", payload: { title: "x" } });
     const id = create.json().lesson.id as string;
 
     const patch = await app.inject({
-      method: "PATCH", url: `/magister/lessons/${id}`,
+      method: "PATCH", url: `/nusika/lessons/${id}`,
       payload: { depth: "deeper", status: "complete" },
     });
     assert.equal(patch.statusCode, 200);
@@ -130,19 +130,19 @@ test("PATCH /magister/lessons/:id updates depth/status; sets completed_at on com
   }
 });
 
-test("PATCH /magister/lessons/:id rejects invalid depth and invalid status with 400", async () => {
+test("PATCH /nusika/lessons/:id rejects invalid depth and invalid status with 400", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const create = await app.inject({ method: "POST", url: "/magister/lessons", payload: { title: "x" } });
+    const create = await app.inject({ method: "POST", url: "/nusika/lessons", payload: { title: "x" } });
     const id = create.json().lesson.id as string;
 
     const badDepth = await app.inject({
-      method: "PATCH", url: `/magister/lessons/${id}`, payload: { depth: "expert" },
+      method: "PATCH", url: `/nusika/lessons/${id}`, payload: { depth: "expert" },
     });
     assert.equal(badDepth.statusCode, 400);
 
     const badStatus = await app.inject({
-      method: "PATCH", url: `/magister/lessons/${id}`, payload: { status: "abandoned" },
+      method: "PATCH", url: `/nusika/lessons/${id}`, payload: { status: "abandoned" },
     });
     assert.equal(badStatus.statusCode, 400);
   } finally {
@@ -161,12 +161,12 @@ test("chat persists user + assistant turns and returns model/provider", async ()
   }));
   try {
     const create = await harness.app.inject({
-      method: "POST", url: "/magister/lessons", payload: { title: "What is gravity?" },
+      method: "POST", url: "/nusika/lessons", payload: { title: "What is gravity?" },
     });
     const id = create.json().lesson.id as string;
 
     const chat = await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/chat`,
+      method: "POST", url: `/nusika/lessons/${id}/chat`,
       payload: { message: "Start with the basics please" },
     });
     assert.equal(chat.statusCode, 200);
@@ -176,7 +176,7 @@ test("chat persists user + assistant turns and returns model/provider", async ()
     assert.equal(body.model, "test-model");
     assert.equal(body.provider, "openrouter");
 
-    const detail = await harness.app.inject({ method: "GET", url: `/magister/lessons/${id}` });
+    const detail = await harness.app.inject({ method: "GET", url: `/nusika/lessons/${id}` });
     const turns = detail.json().turns as Array<{ role: string; content: string; model: string | null }>;
     assert.equal(turns.length, 2, "user + assistant should be persisted");
     assert.equal(turns[0]!.role, "user");
@@ -199,16 +199,16 @@ test("chat depth override is persisted on the lesson and on the user turn", asyn
   }));
   try {
     const create = await harness.app.inject({
-      method: "POST", url: "/magister/lessons", payload: { title: "x" },
+      method: "POST", url: "/nusika/lessons", payload: { title: "x" },
     });
     const id = create.json().lesson.id as string;
 
     await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/chat`,
+      method: "POST", url: `/nusika/lessons/${id}/chat`,
       payload: { message: "give me an example", depth: "example" },
     });
 
-    const detail = await harness.app.inject({ method: "GET", url: `/magister/lessons/${id}` });
+    const detail = await harness.app.inject({ method: "GET", url: `/nusika/lessons/${id}` });
     assert.equal(detail.json().lesson.depth, "example");
     const userTurn = detail.json().turns.find((t: { role: string }) => t.role === "user");
     assert.equal(userTurn.depth_at, "example");
@@ -223,19 +223,19 @@ test("chat returns 502 when LLM unavailable; user turn persisted, NO assistant t
   __setCompleteForTesting(async () => { throw new Error("simulated upstream failure"); });
   try {
     const create = await harness.app.inject({
-      method: "POST", url: "/magister/lessons", payload: { title: "x" },
+      method: "POST", url: "/nusika/lessons", payload: { title: "x" },
     });
     const id = create.json().lesson.id as string;
 
     const chat = await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/chat`,
+      method: "POST", url: `/nusika/lessons/${id}/chat`,
       payload: { message: "hello" },
     });
     assert.equal(chat.statusCode, 502);
     assert.equal(chat.json().ok, false);
     assert.match(chat.json().error, /unavailable/i);
 
-    const detail = await harness.app.inject({ method: "GET", url: `/magister/lessons/${id}` });
+    const detail = await harness.app.inject({ method: "GET", url: `/nusika/lessons/${id}` });
     const turns = detail.json().turns as Array<{ role: string }>;
     // The user turn is intentionally persisted so the question stays visible;
     // no fake assistant turn should exist.
@@ -251,17 +251,17 @@ test("chat rejects empty message with 400 and unknown lesson with 404", async ()
   const harness = await bootApp();
   try {
     const create = await harness.app.inject({
-      method: "POST", url: "/magister/lessons", payload: { title: "x" },
+      method: "POST", url: "/nusika/lessons", payload: { title: "x" },
     });
     const id = create.json().lesson.id as string;
 
     const empty = await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/chat`, payload: { message: "" },
+      method: "POST", url: `/nusika/lessons/${id}/chat`, payload: { message: "" },
     });
     assert.equal(empty.statusCode, 400);
 
     const missing = await harness.app.inject({
-      method: "POST", url: "/magister/lessons/no-such-id/chat", payload: { message: "hi" },
+      method: "POST", url: "/nusika/lessons/no-such-id/chat", payload: { message: "hi" },
     });
     assert.equal(missing.statusCode, 404);
   } finally {
@@ -280,11 +280,11 @@ test("recap success path updates summary + knowledge", async () => {
   }));
   try {
     const create = await harness.app.inject({
-      method: "POST", url: "/magister/lessons", payload: { title: "Gravity" },
+      method: "POST", url: "/nusika/lessons", payload: { title: "Gravity" },
     });
     const id = create.json().lesson.id as string;
     await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/chat`, payload: { message: "explain it" },
+      method: "POST", url: `/nusika/lessons/${id}/chat`, payload: { message: "explain it" },
     });
 
     // Now switch to a recap-fixture completer.
@@ -298,7 +298,7 @@ test("recap success path updates summary + knowledge", async () => {
     }));
 
     const recap = await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/recap`, payload: {},
+      method: "POST", url: `/nusika/lessons/${id}/recap`, payload: {},
     });
     assert.equal(recap.statusCode, 200);
     const body = recap.json();
@@ -307,7 +307,7 @@ test("recap success path updates summary + knowledge", async () => {
     assert.deepEqual(body.knowledge.covered, ["gravity-basics"]);
 
     // Persistence
-    const detail = await harness.app.inject({ method: "GET", url: `/magister/lessons/${id}` });
+    const detail = await harness.app.inject({ method: "GET", url: `/nusika/lessons/${id}` });
     assert.match(detail.json().lesson.summary, /spacetime curvature/);
     const stored = JSON.parse(detail.json().lesson.knowledge);
     assert.deepEqual(stored.covered, ["gravity-basics"]);
@@ -325,11 +325,11 @@ test("recap returns 502 when LLM returns invalid JSON; lesson summary unchanged"
   }));
   try {
     const create = await harness.app.inject({
-      method: "POST", url: "/magister/lessons", payload: { title: "x" },
+      method: "POST", url: "/nusika/lessons", payload: { title: "x" },
     });
     const id = create.json().lesson.id as string;
     await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/chat`, payload: { message: "hi" },
+      method: "POST", url: `/nusika/lessons/${id}/chat`, payload: { message: "hi" },
     });
 
     __setCompleteForTesting(async () => ({
@@ -339,12 +339,12 @@ test("recap returns 502 when LLM returns invalid JSON; lesson summary unchanged"
     }));
 
     const recap = await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/recap`, payload: {},
+      method: "POST", url: `/nusika/lessons/${id}/recap`, payload: {},
     });
     assert.equal(recap.statusCode, 502);
     assert.match(recap.json().error, /valid JSON/i);
 
-    const detail = await harness.app.inject({ method: "GET", url: `/magister/lessons/${id}` });
+    const detail = await harness.app.inject({ method: "GET", url: `/nusika/lessons/${id}` });
     assert.equal(detail.json().lesson.summary, null, "summary must remain unset");
   } finally {
     __resetCompleteForTesting();
@@ -360,11 +360,11 @@ test("recap returns 422 when JSON parses but fails schema; nothing persisted", a
   }));
   try {
     const create = await harness.app.inject({
-      method: "POST", url: "/magister/lessons", payload: { title: "x" },
+      method: "POST", url: "/nusika/lessons", payload: { title: "x" },
     });
     const id = create.json().lesson.id as string;
     await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/chat`, payload: { message: "hi" },
+      method: "POST", url: `/nusika/lessons/${id}/chat`, payload: { message: "hi" },
     });
 
     // Missing knowledge.stuck array → schema must reject.
@@ -375,12 +375,12 @@ test("recap returns 422 when JSON parses but fails schema; nothing persisted", a
     }));
 
     const recap = await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/recap`, payload: {},
+      method: "POST", url: `/nusika/lessons/${id}/recap`, payload: {},
     });
     assert.equal(recap.statusCode, 422);
     assert.match(recap.json().error, /schema/i);
 
-    const detail = await harness.app.inject({ method: "GET", url: `/magister/lessons/${id}` });
+    const detail = await harness.app.inject({ method: "GET", url: `/nusika/lessons/${id}` });
     assert.equal(detail.json().lesson.summary, null);
   } finally {
     __resetCompleteForTesting();
@@ -392,11 +392,11 @@ test("recap with no turns yet returns 400", async () => {
   const harness = await bootApp();
   try {
     const create = await harness.app.inject({
-      method: "POST", url: "/magister/lessons", payload: { title: "x" },
+      method: "POST", url: "/nusika/lessons", payload: { title: "x" },
     });
     const id = create.json().lesson.id as string;
     const recap = await harness.app.inject({
-      method: "POST", url: `/magister/lessons/${id}/recap`, payload: {},
+      method: "POST", url: `/nusika/lessons/${id}/recap`, payload: {},
     });
     assert.equal(recap.statusCode, 400);
   } finally {
@@ -406,11 +406,11 @@ test("recap with no turns yet returns 400", async () => {
 
 // ── Lookup placeholder ───────────────────────────────────────────────────────
 
-test("POST /magister/lookup returns supported:false placeholder", async () => {
+test("POST /nusika/lookup returns supported:false placeholder", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const res = await app.inject({
-      method: "POST", url: "/magister/lookup",
+      method: "POST", url: "/nusika/lookup",
       payload: { query: "What is the price of tea today?" },
     });
     assert.equal(res.statusCode, 200);

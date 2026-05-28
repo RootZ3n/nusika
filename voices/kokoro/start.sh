@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Magister Kokoro voice service — Slice 6C
+# Nusika Kokoro voice service — Slice 6C
 #
 # Usage:
 #   ./start.sh
 #
 # Env overrides (also honored by server.py at request time):
-#   MAGISTER_KOKORO_HOST   default 127.0.0.1
-#   MAGISTER_KOKORO_PORT   default 18794
-#   MAGISTER_KOKORO_LOG_LEVEL  default INFO
+#   NUSIKA_KOKORO_HOST   default 127.0.0.1
+#   NUSIKA_KOKORO_PORT   default 18794
+#   NUSIKA_KOKORO_LOG_LEVEL  default INFO
 
 set -euo pipefail
 
@@ -41,8 +41,8 @@ if ! command -v espeak-ng >/dev/null 2>&1; then
 WARN
 fi
 
-HOST="${MAGISTER_KOKORO_HOST:-127.0.0.1}"
-PORT="${MAGISTER_KOKORO_PORT:-18794}"
+HOST="${NUSIKA_KOKORO_HOST:-${MAGISTER_KOKORO_HOST:-127.0.0.1}}"
+PORT="${NUSIKA_KOKORO_PORT:-${MAGISTER_KOKORO_PORT:-18794}}"
 
 echo "[kokoro] starting on ${HOST}:${PORT}"
 exec "${UVICORN}" server:app --host "${HOST}" --port "${PORT}" --log-level info

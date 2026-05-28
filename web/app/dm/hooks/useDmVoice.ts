@@ -43,7 +43,7 @@ export function useDmVoice(): DmVoice {
 
   const fetchVoices = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/magister/voices`);
+      const res = await fetch(`${API_BASE}/nusika/voices`);
       if (!res.ok) return;
       const data = (await res.json()) as { voices?: VoiceOption[] };
       const list = sortVoiceOptions(data.voices ?? []);
@@ -56,7 +56,7 @@ export function useDmVoice(): DmVoice {
 
   const fetchVoiceCache = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/magister/voices/cache`);
+      const res = await fetch(`${API_BASE}/nusika/voices/cache`);
       if (!res.ok) return;
       const data = (await res.json()) as { bytes: number; mb: number; maxMb: number };
       setVoiceCache({ bytes: data.bytes, mb: data.mb, maxMb: data.maxMb });
@@ -77,9 +77,9 @@ export function useDmVoice(): DmVoice {
     setVoiceMsg(null);
     const speakerName = selectedVoice.display_name.replace(/\s*\(default voice\)\s*$/i, "").trim()
       || selectedVoice.companion_id
-      || "a Magister voice";
+      || "a Nusika voice";
     try {
-      const url = `${API_BASE}/magister/voices/preview/${encodeURIComponent(selectedVoice.engine)}/${encodeURIComponent(selectedVoice.voice_ref)}?name=${encodeURIComponent(speakerName)}`;
+      const url = `${API_BASE}/nusika/voices/preview/${encodeURIComponent(selectedVoice.engine)}/${encodeURIComponent(selectedVoice.voice_ref)}?name=${encodeURIComponent(speakerName)}`;
       const res = await fetch(url);
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
@@ -105,7 +105,7 @@ export function useDmVoice(): DmVoice {
   const clearVoiceCache = useCallback(async (onStatus: (msg: string) => void) => {
     if (typeof window !== "undefined" && !window.confirm("Clear the voice cache? Generated voice WAVs will be removed.")) return;
     try {
-      const res = await fetch(`${API_BASE}/magister/voices/cache`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/nusika/voices/cache`, { method: "DELETE" });
       if (res.ok) {
         onStatus("Voice cache cleared.");
       } else {

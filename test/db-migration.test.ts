@@ -4,17 +4,17 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Database from "better-sqlite3";
-import { MagisterDB } from "../server/db.js";
+import { NusikaDB } from "../server/db.js";
 
 /**
  * Regression tests for the age_track CHECK-constraint upgrade in db.ts.
  *
  * History: before this fix, the migration that rebuilt magister_modules to
  * widen the age_track CHECK constraint left `tier` and `lab_only` out of
- * both the recreated CREATE TABLE and the INSERT … SELECT. The result was
- * that any DB constructed by `new MagisterDB(...)` against a path whose
+ * both the recreated CREATE TABLE and the INSERT ... SELECT. The result was
+ * that any DB constructed by `new NusikaDB(...)` against a path whose
  * initial CREATE TABLE used the old narrow CHECK would lose those columns
- * — and every later `registerModule({ tier, labOnly })` would throw
+ * -- and every later `registerModule({ tier, labOnly })` would throw
  * `SQLITE_ERROR: table magister_modules has no column named tier`,
  * cascading into 58 unrelated test failures.
  *
@@ -47,7 +47,7 @@ test("fresh DB has tier + lab_only columns and registerModule can write them", (
   const { dir, cleanup } = freshDir();
   const dbFile = join(dir, "fresh.db");
   try {
-    const db = new MagisterDB(dbFile);
+    const db = new NusikaDB(dbFile);
     try {
       db.registerModule({
         id: "linux",
@@ -99,13 +99,13 @@ test("age_track CHECK migration preserves tier and lab_only data", () => {
     `);
     seed.close();
 
-    // Boot MagisterDB on this legacy file. The constructor will:
+    // Boot NusikaDB on this legacy file. The constructor will:
     //   1. CREATE TABLE IF NOT EXISTS — no-op (table exists).
     //   2. ALTER TABLE ADD COLUMN mastery_spine / tier / lab_only.
     //   3. Probe with age_track='kids' — old CHECK rejects → needsMigration.
     //   4. Rebuild magister_modules with the wider CHECK and the full
     //      column set, copying every old column verbatim.
-    const db = new MagisterDB(dbFile);
+    const db = new NusikaDB(dbFile);
     try {
       const cols = columnNames(dbFile, "magister_modules");
       assert.ok(cols.includes("tier"), `tier must survive migration; got [${cols.join(", ")}]`);
@@ -159,7 +159,7 @@ test("re-opening a migrated DB is a no-op (idempotency)", () => {
   const dbFile = join(dir, "twice.db");
   try {
     // First open: any CHECK widening happens here.
-    const first = new MagisterDB(dbFile);
+    const first = new NusikaDB(dbFile);
     try {
       first.registerModule({
         id: "twice",
@@ -174,7 +174,7 @@ test("re-opening a migrated DB is a no-op (idempotency)", () => {
     const colsAfterFirst = columnNames(dbFile, "magister_modules");
 
     // Second open: probe should pass without recreating the table.
-    const second = new MagisterDB(dbFile);
+    const second = new NusikaDB(dbFile);
     try {
       const mod = second.getModule("twice");
       assert.ok(mod, "row must survive a second boot");

@@ -10,7 +10,7 @@
  *
  * The prompt also encodes the lookup contract: Varros may say a lookup is
  * needed, but must not invent results. The route layer exposes a lookup
- * placeholder (POST /magister/lookup) that returns supported:false until
+ * placeholder (POST /nusika/lookup) that returns supported:false until
  * a real backend is wired.
  */
 
@@ -54,7 +54,7 @@ export function buildVarrosTeachPrompt(input: VarrosTeachPromptInput): string {
   const depth = DEPTH_INSTRUCTIONS[input.depth];
 
   const sections: string[] = [
-    `IDENTITY: You are ${narrator.name}, the Magister narrator and tutor. ` +
+    `IDENTITY: You are ${narrator.name}, the Nusika narrator and tutor. ` +
       "You are not an AI assistant; you are a patient, well-read teacher who " +
       "treats every learner as an adult capable of more than they think. " +
       "Plain language first. Concrete examples before abstractions. One focused " +

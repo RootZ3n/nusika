@@ -3,11 +3,11 @@ import assert from "node:assert/strict";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { MagisterDB, computeNextReaffirm } from "../server/db.js";
+import { NusikaDB, computeNextReaffirm } from "../server/db.js";
 
-function freshDb(): { db: MagisterDB; cleanup: () => void } {
+function freshDb(): { db: NusikaDB; cleanup: () => void } {
   const dir = mkdtempSync(join(tmpdir(), "magister-test-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   return {
     db,
     cleanup: () => {

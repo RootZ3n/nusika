@@ -1,7 +1,7 @@
 """
-Magister Kokoro voice service — local, loopback-only, preset voices only.
+Nusika Kokoro voice service — local, loopback-only, preset voices only.
 
-Slice 6C scope: standalone Python service. Magister itself does NOT call
+Slice 6C scope: standalone Python service. Nusika itself does NOT call
 this service yet; the wiring lands in Slice 6D. Until then, this is a
 side-car you can curl by hand or smoke with voices/kokoro/smoke.sh.
 
@@ -12,7 +12,7 @@ Endpoints:
 
 Design rules:
     - No GPU assumptions. CPU-only is fine.
-    - Bind 127.0.0.1 by default. Override via MAGISTER_KOKORO_HOST/PORT.
+    - Bind 127.0.0.1 by default. Override via NUSIKA_KOKORO_HOST/PORT.
     - Lazy-load the Kokoro pipeline on first /generate call.
     - On any model/generation failure, return 503 with a short, safe detail.
       Never expose Python tracebacks to clients; log the full traceback
@@ -44,7 +44,7 @@ from pydantic import BaseModel, Field
 # ── Logging ───────────────────────────────────────────────────────────────────
 
 logging.basicConfig(
-    level=os.environ.get("MAGISTER_KOKORO_LOG_LEVEL", "INFO"),
+    level=os.environ.get("NUSIKA_KOKORO_LOG_LEVEL", os.environ.get("MAGISTER_KOKORO_LOG_LEVEL", "INFO")),
     format="%(asctime)s %(levelname)s [kokoro] %(message)s",
 )
 log = logging.getLogger("kokoro")
@@ -53,7 +53,7 @@ log = logging.getLogger("kokoro")
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 # Conservative documented preset list. The Kokoro package ships ~50 voices;
-# this subset is enough to map every Magister companion plus Varros.
+# this subset is enough to map every Nusika companion plus Varros.
 # Slice 6E will pick one per companion. Add to this list as needed.
 #
 # Naming convention from upstream Kokoro:
@@ -186,9 +186,9 @@ class GenerateBody(BaseModel):
 # ── App ───────────────────────────────────────────────────────────────────────
 
 app = FastAPI(
-    title="Magister Kokoro voice service",
+    title="Nusika Kokoro voice service",
     version="0.1.0",
-    description="Loopback-only local TTS for Magister. Slice 6C — service skeleton.",
+    description="Loopback-only local TTS for Nusika. Slice 6C — service skeleton.",
 )
 
 
@@ -348,7 +348,7 @@ def generate(body: GenerateBody, request: Request) -> Response:
             "X-Voice-Engine": "kokoro",
             "X-Voice-Id": voice_id,
             "X-Sample-Rate": str(SAMPLE_RATE),
-            "X-Voice-Service": "magister-kokoro/0.1.0",
+            "X-Voice-Service": "nusika-kokoro/0.1.0",
         },
     )
 
@@ -384,9 +384,9 @@ def _short(msg: str, limit: int = 200) -> str:
 
 
 def _resolve_addr() -> tuple[str, int]:
-    host = os.environ.get("MAGISTER_KOKORO_HOST", "127.0.0.1")
+    host = os.environ.get("NUSIKA_KOKORO_HOST", os.environ.get("MAGISTER_KOKORO_HOST", "127.0.0.1"))
     try:
-        port = int(os.environ.get("MAGISTER_KOKORO_PORT", "18794"))
+        port = int(os.environ.get("NUSIKA_KOKORO_PORT", os.environ.get("MAGISTER_KOKORO_PORT", "18794")))
     except ValueError:
         port = 18794
     return host, port
@@ -396,5 +396,5 @@ if __name__ == "__main__":
     import uvicorn
 
     host, port = _resolve_addr()
-    log.info("starting Magister Kokoro service on %s:%d", host, port)
+    log.info("starting Nusika Kokoro service on %s:%d", host, port)
     uvicorn.run(app, host=host, port=port, log_level="info")

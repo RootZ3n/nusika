@@ -3,7 +3,7 @@ import "./globals.css";
 import { ServiceHealthBanner } from "./components/ServiceHealthBanner";
 
 export const metadata: Metadata = {
-  title: "Magister",
+  title: "Nusika",
   description: "Adaptive learning engine — companion-driven teaching, spaced repetition, mastery spine.",
 };
 

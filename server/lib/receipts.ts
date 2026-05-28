@@ -19,12 +19,12 @@ export interface Receipt {
 }
 
 /**
- * Append-only JSONL receipt writer. One file per UTC day under MAGISTER_RECEIPTS_DIR
+ * Append-only JSONL receipt writer. One file per UTC day under NUSIKA_RECEIPTS_DIR
  * (default <state>/receipts). Failures log but never throw — receipt writes
  * must not break the request path.
  *
  * Mirrors the squidley-v2 receipt shape so logs are interchangeable when
- * magister calls are aggregated alongside squidley calls.
+ * nusika calls are aggregated alongside squidley calls.
  */
 export async function writeReceipt(input: Receipt): Promise<string | null> {
   const id = randomUUID();

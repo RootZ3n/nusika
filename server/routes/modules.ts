@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { readFile } from "node:fs/promises";
-import type { MagisterDB, MagisterModuleRecord } from "../db.js";
+import type { NusikaDB, NusikaModuleRecord } from "../db.js";
 import { TEACHING_MODES, SESSION_DURATIONS, AGE_TRACKS } from "../db.js";
 
 /**
@@ -17,11 +17,11 @@ interface CompanionRich {
 }
 
 /**
- * The shape `/magister/modules` returns to the UI: every public field of
- * MagisterModuleRecord, but with the bare `companions: string[]` replaced
+ * The shape `/nusika/modules` returns to the UI: every public field of
+ * NusikaModuleRecord, but with the bare `companions: string[]` replaced
  * by the enriched objects loaded from the on-disk config.
  */
-interface EnrichedModule extends Omit<MagisterModuleRecord, "companions"> {
+interface EnrichedModule extends Omit<NusikaModuleRecord, "companions"> {
   companions: CompanionRich[];
 }
 
@@ -51,14 +51,14 @@ async function loadConfigCompanions(configPath: string | null): Promise<Companio
  * Enrich a session row with module + companion display data and
  * a derived progress percentage. The web UI reads these fields directly.
  */
-export function enrichSession(db: MagisterDB, s: Record<string, unknown>): Record<string, unknown> {
+export function enrichSession(db: NusikaDB, s: Record<string, unknown>): Record<string, unknown> {
   const mod = db.getModule(s.module_id as string);
   let companion: CompanionRich | null = null;
   let companionsRich: CompanionRich[] = [];
 
   if (mod) {
     // For display, fall back to using the id as the name if the rich
-    // curriculum config isn't loaded here. The /magister/modules route
+    // curriculum config isn't loaded here. The /nusika/modules route
     // does the full rich enrichment; this helper stays cheap.
     companionsRich = mod.companions.map(id => ({ id, name: id }));
   }
@@ -79,9 +79,9 @@ export function enrichSession(db: MagisterDB, s: Record<string, unknown>): Recor
   };
 }
 
-export async function registerModuleRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
-  // GET /magister/modules — list all known subject modules + UI constants
-  app.get("/magister/modules", async (_req, reply) => {
+export async function registerModuleRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
+  // GET /nusika/modules — list all known subject modules + UI constants
+  app.get("/nusika/modules", async (_req, reply) => {
     const modules = db.listModules();
     // Enrich each module's bare companion-id list with the rich objects
     // sitting in its on-disk curriculum config. Unknown ids fall back to
@@ -107,8 +107,8 @@ export async function registerModuleRoutes(app: FastifyInstance, db: MagisterDB)
     });
   });
 
-  // GET /magister/modules/:id — full module record incl. mastery spine
-  app.get<{ Params: { id: string } }>("/magister/modules/:id", async (req, reply) => {
+  // GET /nusika/modules/:id — full module record incl. mastery spine
+  app.get<{ Params: { id: string } }>("/nusika/modules/:id", async (req, reply) => {
     const mod = db.getModule(req.params.id);
     if (!mod) return reply.status(404).send({ ok: false, error: "Module not found" });
 
@@ -127,8 +127,8 @@ export async function registerModuleRoutes(app: FastifyInstance, db: MagisterDB)
     return reply.send({ ok: true, module: mod, config });
   });
 
-  // POST /magister/modules/:id/install — flip the installed flag
-  app.post<{ Params: { id: string } }>("/magister/modules/:id/install", async (req, reply) => {
+  // POST /nusika/modules/:id/install — flip the installed flag
+  app.post<{ Params: { id: string } }>("/nusika/modules/:id/install", async (req, reply) => {
     const ok = db.installModule(req.params.id);
     if (!ok) return reply.status(404).send({ ok: false, error: "Module not found" });
     return reply.send({ ok: true, module: db.getModule(req.params.id) });

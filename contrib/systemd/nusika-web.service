@@ -1,14 +1,14 @@
 [Unit]
-# Magister Web — Next.js production server, exposed on 0.0.0.0:3003.
+# Nusika Web — Next.js production server, exposed on 0.0.0.0:3003.
 #
-# This is the only Magister surface intended for LAN/Tailscale access.
-# It proxies to the loopback API via MAGISTER_API_URL. Don't expose this
+# This is the only Nusika surface intended for LAN/Tailscale access.
+# It proxies to the loopback API via NUSIKA_API_URL. Don't expose this
 # beyond a trusted network without adding auth in front (e.g. Tailscale
 # ACLs, a reverse proxy with auth, etc.).
-Description=Magister Web (Next.js, LAN/Tailscale exposed)
+Description=Nusika Web (Next.js, LAN/Tailscale exposed)
 Documentation=https://github.com/anthropics/claude-code
-After=network-online.target magister-api.service
-Wants=network-online.target magister-api.service
+After=network-online.target nusika-api.service
+Wants=network-online.target nusika-api.service
 
 [Service]
 Type=simple
@@ -19,7 +19,7 @@ ExecStart=/usr/local/bin/npx next start -H 0.0.0.0 -p 3003
 Environment=NODE_ENV=production
 Environment=PORT=3003
 Environment=HOSTNAME=0.0.0.0
-Environment=MAGISTER_API_URL=http://127.0.0.1:18793
+Environment=NUSIKA_API_URL=http://127.0.0.1:18793
 Environment=NEXT_TELEMETRY_DISABLED=1
 Restart=on-failure
 RestartSec=3

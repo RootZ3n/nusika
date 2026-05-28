@@ -58,7 +58,7 @@ export function useTeachVoice(): TeachVoice {
 
   const fetchVoices = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/magister/voices`);
+      const res = await fetch(`${API_BASE}/nusika/voices`);
       if (!res.ok) return;
       const data = (await res.json()) as { voices?: VoiceOption[] };
       const list = sortVoiceOptions(data.voices ?? []);
@@ -71,7 +71,7 @@ export function useTeachVoice(): TeachVoice {
 
   const fetchVoiceCache = useCallback(async () => {
     try {
-      const res = await fetch(`${API_BASE}/magister/voices/cache`);
+      const res = await fetch(`${API_BASE}/nusika/voices/cache`);
       if (!res.ok) return;
       const data = (await res.json()) as VoiceCacheStatus & { ok?: boolean };
       setVoiceCache({ bytes: data.bytes, maxBytes: data.maxBytes, mb: data.mb, maxMb: data.maxMb });
@@ -101,9 +101,9 @@ export function useTeachVoice(): TeachVoice {
     setVoiceMsg(null);
     const speakerName = selectedVoice.display_name.replace(/\s*\(default voice\)\s*$/i, "").trim()
       || selectedVoice.companion_id
-      || "a Magister voice";
+      || "a Nusika voice";
     try {
-      const url = `${API_BASE}/magister/voices/preview/${encodeURIComponent(selectedVoice.engine)}/${encodeURIComponent(selectedVoice.voice_ref)}?name=${encodeURIComponent(speakerName)}`;
+      const url = `${API_BASE}/nusika/voices/preview/${encodeURIComponent(selectedVoice.engine)}/${encodeURIComponent(selectedVoice.voice_ref)}?name=${encodeURIComponent(speakerName)}`;
       const res = await fetch(url);
       if (!res.ok) {
         const data = (await res.json().catch(() => ({}))) as { error?: string };
@@ -147,7 +147,7 @@ export function useTeachVoice(): TeachVoice {
 
     let createdUrl: string | null = null;
     try {
-      const res = await fetch(`${API_BASE}/magister/tts`, {
+      const res = await fetch(`${API_BASE}/nusika/tts`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: clean, voice: voiceId }),
@@ -199,7 +199,7 @@ export function useTeachVoice(): TeachVoice {
   const clearVoiceCache = useCallback(async () => {
     if (typeof window !== "undefined" && !window.confirm("Clear the voice cache? Generated voice WAVs will be removed.")) return;
     try {
-      const res = await fetch(`${API_BASE}/magister/voices/cache`, { method: "DELETE" });
+      const res = await fetch(`${API_BASE}/nusika/voices/cache`, { method: "DELETE" });
       if (res.ok) {
         setVoiceMsg("Voice cache cleared.");
         setTimeout(() => setVoiceMsg(null), 2500);

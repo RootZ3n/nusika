@@ -6,7 +6,7 @@ import { complete } from "../lib/llm.js";
 import { writeReceipt } from "../lib/receipts.js";
 import { getProductNarrator } from "../lib/narrator.js";
 
-export interface MagisterAccessibilitySettings {
+export interface NusikaAccessibilitySettings {
   dyslexic_font: boolean;
   wide_spacing: boolean;
   narration_enabled: boolean;
@@ -15,7 +15,7 @@ export interface MagisterAccessibilitySettings {
   comfort_mode: boolean;
 }
 
-const DEFAULT_SETTINGS: MagisterAccessibilitySettings = {
+const DEFAULT_SETTINGS: NusikaAccessibilitySettings = {
   dyslexic_font: false,
   wide_spacing: false,
   narration_enabled: true,
@@ -27,18 +27,18 @@ const DEFAULT_SETTINGS: MagisterAccessibilitySettings = {
 const productDir = () => join(stateDir(), "magister-product");
 const settingsPath = () => join(productDir(), "session-settings.json");
 
-async function loadSettings(): Promise<MagisterAccessibilitySettings> {
+async function loadSettings(): Promise<NusikaAccessibilitySettings> {
   await mkdir(productDir(), { recursive: true });
   try {
     const raw = await readFile(settingsPath(), "utf-8");
-    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<MagisterAccessibilitySettings>) };
+    return { ...DEFAULT_SETTINGS, ...(JSON.parse(raw) as Partial<NusikaAccessibilitySettings>) };
   } catch {
     await writeFile(settingsPath(), JSON.stringify(DEFAULT_SETTINGS, null, 2) + "\n", "utf-8");
     return DEFAULT_SETTINGS;
   }
 }
 
-async function saveSettings(patch: Partial<MagisterAccessibilitySettings>): Promise<MagisterAccessibilitySettings> {
+async function saveSettings(patch: Partial<NusikaAccessibilitySettings>): Promise<NusikaAccessibilitySettings> {
   const current = await loadSettings();
   const merged = { ...current, ...patch };
   await writeFile(settingsPath(), JSON.stringify(merged, null, 2) + "\n", "utf-8");
@@ -54,25 +54,25 @@ interface TranslateBody {
 }
 
 export async function registerConfigRoutes(app: FastifyInstance): Promise<void> {
-  // GET /magister/config — accessibility settings + product narrator identity.
-  // The narrator block exposes Varros (the central Magister persona) so the
+  // GET /nusika/config — accessibility settings + product narrator identity.
+  // The narrator block exposes Varros (the central Nusika persona) so the
   // web doesn't have to hardcode landing copy.
-  app.get("/magister/config", async (_req, reply) => {
+  app.get("/nusika/config", async (_req, reply) => {
     const settings = await loadSettings();
     return reply.send({ ok: true, config: settings, narrator: getProductNarrator() });
   });
 
-  // POST /magister/settings/accessibility — partial update
-  app.post<{ Body: Partial<MagisterAccessibilitySettings> }>(
-    "/magister/settings/accessibility",
+  // POST /nusika/settings/accessibility — partial update
+  app.post<{ Body: Partial<NusikaAccessibilitySettings> }>(
+    "/nusika/settings/accessibility",
     async (req, reply) => {
       const next = await saveSettings(req.body ?? {});
       return reply.send({ ok: true, config: next });
     },
   );
 
-  // POST /magister/translate — companion-friendly translation via LLM
-  app.post<{ Body: TranslateBody }>("/magister/translate", async (req, reply) => {
+  // POST /nusika/translate — companion-friendly translation via LLM
+  app.post<{ Body: TranslateBody }>("/nusika/translate", async (req, reply) => {
     const { text, source_lang, target_lang, model: modelOverride } = req.body ?? ({} as TranslateBody);
     if (!text) return reply.status(400).send({ ok: false, error: "text required" });
     if (!target_lang) return reply.status(400).send({ ok: false, error: "target_lang required" });

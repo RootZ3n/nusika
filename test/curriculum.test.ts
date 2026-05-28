@@ -4,7 +4,7 @@ import { mkdtempSync, mkdirSync, rmSync, writeFileSync, readdirSync, readFileSyn
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { MagisterDB } from "../server/db.js";
+import { NusikaDB } from "../server/db.js";
 import { scanCurriculum } from "../server/curriculum.js";
 
 const REPO_ROOT = resolve(fileURLToPath(import.meta.url), "../..");
@@ -14,9 +14,9 @@ function silentLogger() {
   return { info: () => {}, warn: () => {}, error: () => {}, debug: () => {} };
 }
 
-function withFixture(): { dir: string; db: MagisterDB; cleanup: () => void } {
+function withFixture(): { dir: string; db: NusikaDB; cleanup: () => void } {
   const root = mkdtempSync(join(tmpdir(), "magister-curr-"));
-  const db = new MagisterDB(join(root, "test.db"));
+  const db = new NusikaDB(join(root, "test.db"));
   return {
     dir: root,
     db,

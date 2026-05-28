@@ -1,0 +1,42 @@
+[Unit]
+# Nusika Web — Next.js production server, exposed on 0.0.0.0:3003.
+#
+# SYSTEM-LEVEL SERVICE (installed to /etc/systemd/system/).
+# Runs as user zen. Not session-bound — survives logouts and reboots.
+#
+# This is the only Nusika surface intended for LAN/Tailscale access.
+# It proxies to the loopback API via NUSIKA_API_URL. Don't expose this
+# beyond a trusted network without adding auth in front (e.g. Tailscale
+# ACLs, a reverse proxy with auth, etc.).
+Description=Nusika Web (Next.js, LAN/Tailscale exposed)
+Documentation=https://github.com/anthropics/claude-code
+After=network-online.target nusika-api.service
+Wants=network-online.target nusika-api.service
+
+[Service]
+Type=simple
+User=zen
+Group=zen
+WorkingDirectory=/mnt/ai/magister/web
+# `next start` reads HOSTNAME + PORT. `cd web && npm run build` must
+# have been run first.
+ExecStart=/usr/local/bin/npx next start -H 0.0.0.0 -p 3003
+# Kill any leftover process on our port before starting — prevents
+# port collision with stale dev servers.
+ExecStartPre=/bin/sh -c 'fuser -k 3003/tcp 2>/dev/null; exit 0'
+Environment=NODE_ENV=production
+Environment=PORT=3003
+Environment=HOSTNAME=0.0.0.0
+Environment=NUSIKA_API_URL=http://127.0.0.1:18793
+Environment=NEXT_TELEMETRY_DISABLED=1
+Restart=on-failure
+RestartSec=3
+# Hardening — next writes to .next cache dir.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/mnt/ai/magister/web/.next
+
+[Install]
+WantedBy=multi-user.target

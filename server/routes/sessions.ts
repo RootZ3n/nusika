@@ -1,6 +1,6 @@
 import type { FastifyInstance } from "fastify";
 import { readFile } from "node:fs/promises";
-import type { MagisterDB, TeachingMode, HintLevel } from "../db.js";
+import type { NusikaDB, TeachingMode, HintLevel } from "../db.js";
 import { enrichSession } from "./modules.js";
 
 interface CreateSessionBody {
@@ -24,7 +24,7 @@ interface DefaultAtom {
  * Derive a sensible default atom for a module when the caller didn't pick a
  * concept. Reads the curriculum config's first domain.
  */
-async function resolveDefaultAtom(db: MagisterDB, moduleId: string, override: Partial<DefaultAtom>): Promise<DefaultAtom> {
+async function resolveDefaultAtom(db: NusikaDB, moduleId: string, override: Partial<DefaultAtom>): Promise<DefaultAtom> {
   let defaults: DefaultAtom = {
     concept_id: "introduction",
     objective: "Explore the fundamentals",
@@ -64,17 +64,17 @@ async function resolveDefaultAtom(db: MagisterDB, moduleId: string, override: Pa
   };
 }
 
-export async function registerSessionRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
-  // GET /magister/sessions — all sessions, enriched with module + companion display data
-  app.get("/magister/sessions", async (_req, reply) => {
+export async function registerSessionRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
+  // GET /nusika/sessions — all sessions, enriched with module + companion display data
+  app.get("/nusika/sessions", async (_req, reply) => {
     return reply.send({
       ok: true,
       sessions: db.listSessions().map(s => enrichSession(db, s as unknown as Record<string, unknown>)),
     });
   });
 
-  // POST /magister/sessions — start a new session; auto-derives atom if not provided
-  app.post<{ Body: CreateSessionBody }>("/magister/sessions", async (req, reply) => {
+  // POST /nusika/sessions — start a new session; auto-derives atom if not provided
+  app.post<{ Body: CreateSessionBody }>("/nusika/sessions", async (req, reply) => {
     const { module_id, companion_id, duration_target = 600, teaching_mode = "narrative", concept_id, objective, mastery_signal, adult_mode } = req.body ?? {};
     if (!module_id) return reply.status(400).send({ ok: false, error: "module_id required" });
 
@@ -98,38 +98,45 @@ export async function registerSessionRoutes(app: FastifyInstance, db: MagisterDB
     }
   });
 
-  // GET /magister/sessions/:id
-  app.get<{ Params: { id: string } }>("/magister/sessions/:id", async (req, reply) => {
+  // GET /nusika/sessions/:id
+  app.get<{ Params: { id: string } }>("/nusika/sessions/:id", async (req, reply) => {
     const session = db.getSession(req.params.id);
     if (!session) return reply.status(404).send({ ok: false, error: "Session not found" });
     return reply.send({ ok: true, session: enrichSession(db, session as unknown as Record<string, unknown>) });
   });
 
-  // PATCH /magister/sessions/:id — update mutable fields
-  app.patch<{ Params: { id: string }; Body: Record<string, unknown> }>("/magister/sessions/:id", async (req, reply) => {
+  // PATCH /nusika/sessions/:id — update mutable fields
+  app.patch<{ Params: { id: string }; Body: Record<string, unknown> }>("/nusika/sessions/:id", async (req, reply) => {
     const updated = db.updateSession(req.params.id, req.body ?? {});
     if (!updated) return reply.status(404).send({ ok: false, error: "Session not found" });
     return reply.send({ ok: true });
   });
 
-  // POST /magister/sessions/:id/end — mark session complete
-  app.post<{ Params: { id: string }; Body: { summary?: string } }>("/magister/sessions/:id/end", async (req, reply) => {
+  // POST /nusika/sessions/:id/end — mark session complete
+  app.post<{ Params: { id: string }; Body: { summary?: string } }>("/nusika/sessions/:id/end", async (req, reply) => {
     const ok = db.endSession(req.params.id, req.body?.summary);
     if (!ok) return reply.status(404).send({ ok: false, error: "Session not found" });
     return reply.send({ ok: true });
   });
 
-  // POST /magister/sessions/:id/hint — record a hint at a given level
-  app.post<{ Params: { id: string }; Body: { level: number } }>("/magister/sessions/:id/hint", async (req, reply) => {
+  // POST /nusika/sessions/:id/hint — record a hint at a given level
+  app.post<{ Params: { id: string }; Body: { level: number } }>("/nusika/sessions/:id/hint", async (req, reply) => {
     const level = (req.body?.level ?? 1) as HintLevel;
     const session = db.recordHint(req.params.id, level);
     if (!session) return reply.status(404).send({ ok: false, error: "Session not found" });
     return reply.send({ ok: true, session });
   });
 
-  // POST /magister/sessions/:id/tick — advance the session timer
-  app.post<{ Params: { id: string }; Body: { seconds: number } }>("/magister/sessions/:id/tick", async (req, reply) => {
+  // POST /nusika/sessions/:id/tick — advance the session timer
+  app.post<{ Params: { id: string }; Body: { seconds: number } }>("/nusika/sessions/:id/tick", async (req, reply) => {
     const result = db.tickSession(req.params.id, req.body?.seconds ?? 1);
     return reply.send({ ok: true, ...(result ?? {}) });
+  });
+
+  // DELETE /nusika/sessions/:id — permanently remove a session
+  app.delete<{ Params: { id: string } }>("/nusika/sessions/:id", async (req, reply) => {
+    const ok = db.deleteSession(req.params.id);
+    if (!ok) return reply.status(404).send({ ok: false, error: "Session not found" });
+    return reply.send({ ok: true });
   });
 }

@@ -151,7 +151,7 @@ export function buildDmNarrationPrompt(input: DmNarrationPromptInput): string {
   const sections: string[] = [];
 
   sections.push(
-    `IDENTITY: You are ${narrator.name}, the Magister narrator and Dungeon Master. ` +
+    `IDENTITY: You are ${narrator.name}, the Nusika narrator and Dungeon Master. ` +
       "Your job is to describe what just happened — nothing more, nothing less.",
   );
 

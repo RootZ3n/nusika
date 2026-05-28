@@ -25,8 +25,8 @@ import {
   companionInitial,
   panelStyle,
   pillStyle,
-  type MagisterModule,
-  type MagisterSession,
+  type NusikaModule,
+  type NusikaSession,
   type NarratorIdentity,
   type Screen,
 } from "../types";
@@ -37,13 +37,14 @@ export interface HallViewProps {
   useDyslexicFont: boolean;
   wideLetterSpacing: boolean;
   streak: number;
-  activeSessions: MagisterSession[];
-  campaignModules: MagisterModule[];
-  modules: MagisterModule[];
+  activeSessions: NusikaSession[];
+  campaignModules: NusikaModule[];
+  modules: NusikaModule[];
   loading: boolean;
   onStartSession: (sessionId: string) => void;
   onSetScreen: (s: Screen) => void;
   onStartPractice: (moduleId: string) => void;
+  onStopSession: (sessionId: string) => void;
 
   // New-campaign modal state (lifted so AdvancedView can pre-fill+open it).
   showNewCampaign: boolean;
@@ -63,7 +64,7 @@ export function HallView(props: HallViewProps) {
   const {
     recapStatus, narrator, useDyslexicFont, wideLetterSpacing, streak,
     activeSessions, campaignModules, modules, loading,
-    onStartSession, onSetScreen, onStartPractice,
+    onStartSession, onSetScreen, onStartPractice, onStopSession,
     showNewCampaign, setShowNewCampaign,
     selectedModuleId, setSelectedModuleId,
     selectedCompanionId, setSelectedCompanionId,
@@ -192,14 +193,23 @@ export function HallView(props: HallViewProps) {
                   <span style={{ fontFamily: "var(--font-mono)", fontSize: "11px", color: "var(--text-muted)" }}>
                     {Math.round(s.progress)}% complete
                   </span>
-                  <button
-                    style={btnPrimary}
-                    onClick={(e) => { e.stopPropagation(); onStartSession(s.id); }}
-                    onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
-                  >
-                    Continue
-                  </button>
+                  <div style={{ display: "flex", gap: 6 }}>
+                    <button
+                      style={{ ...btnGhost, padding: "6px 10px", fontSize: "11px", color: "var(--text-muted)" }}
+                      onClick={(e) => { e.stopPropagation(); onStopSession(s.id); }}
+                      title="Stop and remove this campaign"
+                    >
+                      × Stop
+                    </button>
+                    <button
+                      style={btnPrimary}
+                      onClick={(e) => { e.stopPropagation(); onStartSession(s.id); }}
+                      onMouseEnter={(e) => { e.currentTarget.style.opacity = "0.85"; }}
+                      onMouseLeave={(e) => { e.currentTarget.style.opacity = "1"; }}
+                    >
+                      Continue
+                    </button>
+                  </div>
                 </div>
               </div>
             ))}

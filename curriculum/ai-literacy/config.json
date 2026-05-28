@@ -8,6 +8,7 @@
   "age_track": "all",
   "difficulty": "beginner",
   "estimated_hours": 8,
+  "tier": "advanced",
   "companions": [
     {
       "id": "iris",

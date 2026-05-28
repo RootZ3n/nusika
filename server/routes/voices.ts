@@ -1,10 +1,10 @@
 /**
  * Voice registry + management routes.
  *
- *   GET    /magister/voices                              — registry (Slice 6B)
- *   GET    /magister/voices/preview/:engine/:voice_id    — preview clip (6F)
- *   GET    /magister/voices/cache                        — cache size + cap (6F)
- *   DELETE /magister/voices/cache                        — clear cached WAVs (6F)
+ *   GET    /nusika/voices                              — registry (Slice 6B)
+ *   GET    /nusika/voices/preview/:engine/:voice_id    — preview clip (6F)
+ *   GET    /nusika/voices/cache                        — cache size + cap (6F)
+ *   DELETE /nusika/voices/cache                        — clear cached WAVs (6F)
  *
  * The preview route shares the audio cache with the dispatch path: same
  * `(engine, voice_id, text)` → same key → same WAV. Clicking "Preview"
@@ -18,7 +18,7 @@ import { existsSync, readdirSync, statSync } from "node:fs";
 import { unlink } from "node:fs/promises";
 import { join } from "node:path";
 import type { FastifyInstance, FastifyReply } from "fastify";
-import type { MagisterDB } from "../db.js";
+import type { NusikaDB } from "../db.js";
 import { buildVoiceRegistry } from "../lib/voice-registry.js";
 import {
   voiceCacheDir,
@@ -48,7 +48,7 @@ const PREVIEW_ENGINES = new Set(["kokoro", "piper"]);
  */
 function previewText(name: string | undefined): string {
   const safe = (name ?? "").trim().slice(0, 60);
-  return safe ? `Hello, I am ${safe}.` : "Hello, I am a Magister voice.";
+  return safe ? `Hello, I am ${safe}.` : "Hello, I am a Nusika voice.";
 }
 
 async function previewKokoro(
@@ -79,7 +79,7 @@ async function previewKokoro(
   } catch (err) {
     const e = err as KokoroGenerateError;
     const detail = e.detail ?? (err instanceof Error ? err.message : String(err));
-    app.log.warn(`magister:voices:preview: Kokoro failed: ${detail}`);
+    app.log.warn(`nusika:voices:preview: Kokoro failed: ${detail}`);
     void writeReceipt({
       componentType: "module-event", componentName: "magister-voice-preview",
       reason: "magister:voices:preview:kokoro", status: "failure",
@@ -141,7 +141,7 @@ async function previewPiper(
       .send(result.audio);
   } catch (err) {
     const fullDetail = err instanceof Error ? err.message : String(err);
-    app.log.warn(`magister:voices:preview: Piper failed: ${fullDetail}`);
+    app.log.warn(`nusika:voices:preview: Piper failed: ${fullDetail}`);
     return reply.status(503).send({
       ok: false,
       error: "Piper preview failed.",
@@ -152,14 +152,14 @@ async function previewPiper(
   }
 }
 
-export async function registerVoicesRoute(app: FastifyInstance, db: MagisterDB): Promise<void> {
-  // ── GET /magister/voices ──────────────────────────────────────────────────
-  app.get("/magister/voices", async (_req, reply) => {
+export async function registerVoicesRoute(app: FastifyInstance, db: NusikaDB): Promise<void> {
+  // ── GET /nusika/voices ──────────────────────────────────────────────────
+  app.get("/nusika/voices", async (_req, reply) => {
     try {
       const registry = await buildVoiceRegistry(db, { probeKokoro: true });
       return reply.send({ ok: true, ...registry });
     } catch (err) {
-      app.log.error(`magister:voices: registry failed: ${err}`);
+      app.log.error(`nusika:voices: registry failed: ${err}`);
       return reply.status(200).send({
         ok: true,
         voices: [],
@@ -173,14 +173,14 @@ export async function registerVoicesRoute(app: FastifyInstance, db: MagisterDB):
     }
   });
 
-  // ── GET /magister/voices/preview/:engine/:voice_id ────────────────────────
+  // ── GET /nusika/voices/preview/:engine/:voice_id ────────────────────────
   // Generates a short sample phrase using the requested voice. Shares the
-  // audio cache with /magister/tts: identical (engine, voice_id, text)
+  // audio cache with /nusika/tts: identical (engine, voice_id, text)
   // returns the same bytes without an upstream call.
   app.get<{
     Params: { engine: string; voice_id: string };
     Querystring: { name?: string };
-  }>("/magister/voices/preview/:engine/:voice_id", async (req, reply) => {
+  }>("/nusika/voices/preview/:engine/:voice_id", async (req, reply) => {
     const engine = (req.params.engine ?? "").toLowerCase();
     const voiceId = (req.params.voice_id ?? "").trim();
 
@@ -198,7 +198,7 @@ export async function registerVoicesRoute(app: FastifyInstance, db: MagisterDB):
       return reply.status(400).send({
         ok: false,
         error: `Unknown Kokoro voice id '${voiceId}'.`,
-        detail: "GET /magister/voices for the supported list.",
+        detail: "GET /nusika/voices for the supported list.",
       });
     }
 
@@ -207,8 +207,8 @@ export async function registerVoicesRoute(app: FastifyInstance, db: MagisterDB):
     return previewPiper(app, reply, voiceId, text);
   });
 
-  // ── GET /magister/voices/cache — current size + cap ──────────────────────
-  app.get("/magister/voices/cache", async (_req, reply) => {
+  // ── GET /nusika/voices/cache — current size + cap ──────────────────────
+  app.get("/nusika/voices/cache", async (_req, reply) => {
     const bytes = voiceCacheSizeBytes();
     const maxBytes = voiceCacheMaxBytes();
     const round1 = (n: number): number => Math.round(n * 10) / 10;
@@ -221,10 +221,10 @@ export async function registerVoicesRoute(app: FastifyInstance, db: MagisterDB):
     });
   });
 
-  // ── DELETE /magister/voices/cache — remove cached *.wav files ────────────
+  // ── DELETE /nusika/voices/cache — remove cached *.wav files ────────────
   // Only touches files in `state/voices/cache/` matching `*.wav`. Errors
   // on individual files are logged but don't abort the operation.
-  app.delete("/magister/voices/cache", async (_req, reply) => {
+  app.delete("/nusika/voices/cache", async (_req, reply) => {
     const dir = voiceCacheDir();
     let deletedFiles = 0;
     let deletedBytes = 0;
@@ -236,7 +236,7 @@ export async function registerVoicesRoute(app: FastifyInstance, db: MagisterDB):
     try {
       entries = readdirSync(dir);
     } catch (err) {
-      app.log.error(`magister:voices:cache:clear: readdir failed: ${err}`);
+      app.log.error(`nusika:voices:cache:clear: readdir failed: ${err}`);
       return reply.status(500).send({
         ok: false,
         error: "Could not read voice cache directory.",
@@ -261,7 +261,7 @@ export async function registerVoicesRoute(app: FastifyInstance, db: MagisterDB):
         deletedFiles += 1;
         deletedBytes += size;
       } catch (err) {
-        app.log.warn(`magister:voices:cache:clear: failed to unlink ${path}: ${err}`);
+        app.log.warn(`nusika:voices:cache:clear: failed to unlink ${path}: ${err}`);
       }
     }
 

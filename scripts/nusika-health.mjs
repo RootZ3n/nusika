@@ -1,13 +1,13 @@
 #!/usr/bin/env node
 /**
- * Magister service health probe.
+ * Nusika service health probe.
  *
- * Hits each Magister surface in turn:
+ * Hits each Nusika surface in turn:
  *   - API           http://127.0.0.1:18793/health          (required)
  *   - Web           http://127.0.0.1:3003/                 (required)
  *   - Web→API proxy http://127.0.0.1:3003/api/proxy/...    (required)
  *   - Kokoro        http://127.0.0.1:18794/health          (optional)
- *   - Squidley      http://127.0.0.1:18791/magister/modules (optional, only
+ *   - Squidley      http://127.0.0.1:18791/nusika/modules (optional, only
  *                   probed if Squidley API is actually listening)
  *
  * Then, if `tailscale` is on the PATH, prints the Tailscale URL
@@ -18,7 +18,7 @@
  * script doubles as a CI/cron smoke and a "what's missing locally" tool.
  *
  * The Web→API proxy check matters: API + Web can both be up while the
- * proxy fails because of MAGISTER_API_URL drift. The 2026-05-21 audit
+ * proxy fails because of NUSIKA_API_URL drift. The 2026-05-21 audit
  * called this out as a top operational risk.
  *
  * Run with: `npm run service:health`.
@@ -36,7 +36,7 @@ const targets = [
   { name: "Web",     url: "http://127.0.0.1:3003/",                        required: true,  validate: null },
   // Critical: prove the web's proxy can actually reach the API. This is
   // what the browser experiences.
-  { name: "Proxy",   url: "http://127.0.0.1:3003/api/proxy/magister/health", required: true, validate: (data) => data?.ok === true },
+  { name: "Proxy",   url: "http://127.0.0.1:3003/api/proxy/nusika/health", required: true, validate: (data) => data?.ok === true },
   { name: "Kokoro",  url: "http://127.0.0.1:18794/health",                  required: false, validate: null },
 ];
 
@@ -119,7 +119,7 @@ async function probeSquidley() {
     console.log("[health] INFO Squidley API not listening on 127.0.0.1:18791 — skipping bridge probe.");
     return;
   }
-  const url = "http://127.0.0.1:18791/magister/modules";
+  const url = "http://127.0.0.1:18791/nusika/modules";
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (!res.ok) {
@@ -128,7 +128,7 @@ async function probeSquidley() {
     }
     const data = await res.json().catch(() => null);
     if (data && data.ok === true) {
-      console.log(`[health] PASS Squidley ${url} (bridge to Magister works)`);
+      console.log(`[health] PASS Squidley ${url} (bridge to Nusika works)`);
     } else {
       console.log(`[health] FAIL Squidley ${url} — payload not ok (informational)`);
     }

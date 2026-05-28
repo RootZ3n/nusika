@@ -26,16 +26,16 @@ function bytesResponse(status: number, bytes: Uint8Array, contentType = "audio/w
 
 // ── kokoroBaseUrl ────────────────────────────────────────────────────────────
 
-test("kokoroBaseUrl reads MAGISTER_KOKORO_URL with default fallback", () => {
-  const prev = process.env["MAGISTER_KOKORO_URL"];
+test("kokoroBaseUrl reads NUSIKA_KOKORO_URL with default fallback", () => {
+  const prev = process.env["NUSIKA_KOKORO_URL"];
   try {
-    delete process.env["MAGISTER_KOKORO_URL"];
+    delete process.env["NUSIKA_KOKORO_URL"];
     assert.equal(kokoroBaseUrl(), "http://127.0.0.1:18794");
-    process.env["MAGISTER_KOKORO_URL"] = "http://kokoro.example:9000/";
+    process.env["NUSIKA_KOKORO_URL"] = "http://kokoro.example:9000/";
     assert.equal(kokoroBaseUrl(), "http://kokoro.example:9000", "trailing slash trimmed");
   } finally {
-    if (prev === undefined) delete process.env["MAGISTER_KOKORO_URL"];
-    else process.env["MAGISTER_KOKORO_URL"] = prev;
+    if (prev === undefined) delete process.env["NUSIKA_KOKORO_URL"];
+    else process.env["NUSIKA_KOKORO_URL"] = prev;
   }
 });
 
@@ -101,7 +101,7 @@ test("kokoroHealth rejects an ok:true response that is not Kokoro (opencode-side
     assert.equal(h.reachable, false, "must not accept a non-Kokoro service as Kokoro");
     assert.match(h.detail ?? "", /not Kokoro/i);
     assert.match(h.detail ?? "", /opencode-sidecar/);
-    assert.match(h.detail ?? "", /MAGISTER_KOKORO_URL/);
+    assert.match(h.detail ?? "", /NUSIKA_KOKORO_URL/);
   } finally {
     __resetKokoroFetchForTesting();
   }

@@ -1,0 +1,46 @@
+[Unit]
+# Nusika API — Fastify server, loopback only.
+#
+# SYSTEM-LEVEL SERVICE (installed to /etc/systemd/system/).
+# Runs as user zen. Not session-bound — survives logouts and reboots.
+#
+# Bound to 127.0.0.1:18793 by design. The public surface is the web app
+# (nusika-web.service) which proxies through NUSIKA_API_URL. Do not
+# flip the bind to 0.0.0.0 without first adding auth/rate-limiting/CORS
+# hardening — see README "Running Nusika as a service".
+Description=Nusika API (Fastify, loopback, system service)
+Documentation=https://github.com/anthropics/claude-code
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=zen
+Group=zen
+WorkingDirectory=/mnt/ai/magister
+# Load env vars from project .env
+EnvironmentFile=/mnt/ai/magister/.env
+# Production build. `npm run build` must have been run first.
+ExecStart=/usr/local/bin/node dist/server/index.js
+# Kill any leftover process on our port before starting — prevents
+# EADDRINUSE crash loops when `tsx dev` or a stale instance left
+# the port bound.
+ExecStartPre=/bin/sh -c 'fuser -k 18793/tcp 2>/dev/null; exit 0'
+Environment=NODE_ENV=production
+# Restart=always — nusika-api is the load-bearing piece of the stack;
+# if it exits for ANY reason (clean SIGTERM from a stray `systemctl stop`,
+# a fatal exception, OOM, etc.) we want it back up immediately. `systemctl
+# stop` still honours the stop request without thrashing because systemd
+# tracks an explicit stop flag distinct from Restart=.
+Restart=always
+RestartSec=3
+# Hardening — nusika only writes inside its own state dir.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=/mnt/ai/magister/state
+ReadWritePaths=/mnt/ai/magister/voices
+
+[Install]
+WantedBy=multi-user.target

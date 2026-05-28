@@ -1,5 +1,5 @@
 /**
- * Magister voice cache (Slice 6D).
+ * Nusika voice cache (Slice 6D).
  *
  * Content-addressed WAV cache for synthesised audio. Same engine + voice
  * + text → same key → same file. The dispatch path checks the cache
@@ -19,6 +19,7 @@ import { mkdir, readFile, readdir, stat, unlink, utimes, writeFile } from "node:
 import { join } from "node:path";
 import { stateDir } from "./paths.js";
 import { consoleLogger } from "./log.js";
+import { nenv } from "./env.js";
 
 export interface VoiceCacheKeyInput {
   engine: string;
@@ -41,7 +42,7 @@ export function voiceCacheDir(): string {
 
 /** Default cap, configurable via env in MB. */
 export function voiceCacheMaxBytes(): number {
-  const raw = process.env["MAGISTER_VOICE_CACHE_MAX_MB"];
+  const raw = nenv("VOICE_CACHE_MAX_MB");
   const parsed = raw ? Number.parseFloat(raw) : NaN;
   const mb = Number.isFinite(parsed) && parsed > 0 ? parsed : 500;
   return Math.floor(mb * 1024 * 1024);

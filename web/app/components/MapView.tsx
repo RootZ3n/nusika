@@ -18,15 +18,15 @@ import {
   panelStyle,
   timeAgo,
   type CompanionMemory,
-  type MagisterModule,
-  type MagisterSession,
+  type NusikaModule,
+  type NusikaSession,
   type ModuleProgress,
   type Screen,
 } from "../types";
 
 export interface MapViewProps {
-  modules: MagisterModule[];
-  sessions: MagisterSession[];
+  modules: NusikaModule[];
+  sessions: NusikaSession[];
   mapModuleId: string | null;
   setMapModuleId: (id: string | null) => void;
   mapCompanionId: string | null;

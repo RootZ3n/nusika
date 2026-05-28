@@ -15,13 +15,13 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Fastify from "fastify";
-import { MagisterDB, type DmEvent } from "../server/db.js";
+import { NusikaDB, type DmEvent } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 import { __setCompleteForTesting, __resetCompleteForTesting } from "../server/lib/llm.js";
 
 async function bootApp() {
   const dir = mkdtempSync(join(tmpdir(), "magister-5b-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   db.registerModule({ id: "inkwell", name: "The Inkwell" });
   db.registerModule({ id: "linux", name: "Linux Fundamentals" });
 
@@ -39,46 +39,46 @@ async function bootApp() {
 
 // ── Inkwell delete ──────────────────────────────────────────────────────────
 
-test("DELETE /magister/inkwell/drafts/:id removes the draft and the list reflects it", async () => {
+test("DELETE /nusika/inkwell/drafts/:id removes the draft and the list reflects it", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const create = await app.inject({
-      method: "POST", url: "/magister/inkwell/drafts",
+      method: "POST", url: "/nusika/inkwell/drafts",
       payload: { title: "Soon to be erased", content: "A first sentence." },
     });
     const id = create.json().draft.id as string;
 
-    const beforeList = await app.inject({ method: "GET", url: "/magister/inkwell/drafts" });
+    const beforeList = await app.inject({ method: "GET", url: "/nusika/inkwell/drafts" });
     assert.equal(beforeList.json().drafts.length, 1);
 
-    const del = await app.inject({ method: "DELETE", url: `/magister/inkwell/drafts/${id}` });
+    const del = await app.inject({ method: "DELETE", url: `/nusika/inkwell/drafts/${id}` });
     assert.equal(del.statusCode, 200);
     const body = del.json();
     assert.equal(body.ok, true);
     assert.equal(body.deleted, true);
     assert.equal(body.id, id);
 
-    const afterList = await app.inject({ method: "GET", url: "/magister/inkwell/drafts" });
+    const afterList = await app.inject({ method: "GET", url: "/nusika/inkwell/drafts" });
     assert.deepEqual(afterList.json().drafts, []);
 
-    const single = await app.inject({ method: "GET", url: `/magister/inkwell/drafts/${id}` });
+    const single = await app.inject({ method: "GET", url: `/nusika/inkwell/drafts/${id}` });
     assert.equal(single.statusCode, 404);
   } finally {
     await cleanup();
   }
 });
 
-test("DELETE /magister/inkwell/drafts/:id returns 404 for unknown id", async () => {
+test("DELETE /nusika/inkwell/drafts/:id returns 404 for unknown id", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const res = await app.inject({ method: "DELETE", url: "/magister/inkwell/drafts/no-such-id" });
+    const res = await app.inject({ method: "DELETE", url: "/nusika/inkwell/drafts/no-such-id" });
     assert.equal(res.statusCode, 404);
   } finally {
     await cleanup();
   }
 });
 
-test("DELETE /magister/inkwell/drafts/:id refuses to delete a creative row from another module", async () => {
+test("DELETE /nusika/inkwell/drafts/:id refuses to delete a creative row from another module", async () => {
   const { app, db, cleanup } = await bootApp();
   try {
     // Create a creative work owned by a different module via the DB.
@@ -87,7 +87,7 @@ test("DELETE /magister/inkwell/drafts/:id refuses to delete a creative row from 
     // Delete attempt via the Inkwell route must fail with 404 — the row
     // is real but doesn't belong to the inkwell module.
     const del = await app.inject({
-      method: "DELETE", url: `/magister/inkwell/drafts/${otherWork.id}`,
+      method: "DELETE", url: `/nusika/inkwell/drafts/${otherWork.id}`,
     });
     assert.equal(del.statusCode, 404);
 
@@ -102,7 +102,7 @@ test("DELETE /magister/inkwell/drafts/:id refuses to delete a creative row from 
 
 // ── Lesson delete ───────────────────────────────────────────────────────────
 
-test("DELETE /magister/lessons/:id removes the lesson and cascades turns", async () => {
+test("DELETE /nusika/lessons/:id removes the lesson and cascades turns", async () => {
   const { app, db, cleanup } = await bootApp();
   __setCompleteForTesting(async () => ({
     text: "ok.", model: "m", provider: "openrouter",
@@ -110,25 +110,25 @@ test("DELETE /magister/lessons/:id removes the lesson and cascades turns", async
   }));
   try {
     const create = await app.inject({
-      method: "POST", url: "/magister/lessons",
+      method: "POST", url: "/nusika/lessons",
       payload: { title: "What is gravity?" },
     });
     const id = create.json().lesson.id as string;
 
     // Add a turn so we can verify the cascade fires.
     await app.inject({
-      method: "POST", url: `/magister/lessons/${id}/chat`,
+      method: "POST", url: `/nusika/lessons/${id}/chat`,
       payload: { message: "explain it" },
     });
     const beforeTurns = db.getLessonTurns(id);
     assert.ok(beforeTurns.length >= 2, "expected user + assistant turn");
 
-    const del = await app.inject({ method: "DELETE", url: `/magister/lessons/${id}` });
+    const del = await app.inject({ method: "DELETE", url: `/nusika/lessons/${id}` });
     assert.equal(del.statusCode, 200);
     assert.equal(del.json().deleted, true);
     assert.equal(del.json().id, id);
 
-    const afterList = await app.inject({ method: "GET", url: "/magister/lessons" });
+    const afterList = await app.inject({ method: "GET", url: "/nusika/lessons" });
     assert.deepEqual(afterList.json().lessons, []);
     assert.deepEqual(db.getLessonTurns(id), [], "turns must cascade with the lesson");
     assert.equal(db.getLesson(id), null);
@@ -138,10 +138,10 @@ test("DELETE /magister/lessons/:id removes the lesson and cascades turns", async
   }
 });
 
-test("DELETE /magister/lessons/:id returns 404 for unknown id", async () => {
+test("DELETE /nusika/lessons/:id returns 404 for unknown id", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const res = await app.inject({ method: "DELETE", url: "/magister/lessons/no-such-lesson" });
+    const res = await app.inject({ method: "DELETE", url: "/nusika/lessons/no-such-lesson" });
     assert.equal(res.statusCode, 404);
   } finally {
     await cleanup();
@@ -150,30 +150,30 @@ test("DELETE /magister/lessons/:id returns 404 for unknown id", async () => {
 
 // ── DM campaign delete ─────────────────────────────────────────────────────
 
-test("DELETE /magister/dm/campaigns/:id removes the campaign and cascades character + events", async () => {
+test("DELETE /nusika/dm/campaigns/:id removes the campaign and cascades character + events", async () => {
   const { app, db, cleanup } = await bootApp();
   try {
     const create = await app.inject({
-      method: "POST", url: "/magister/dm/campaigns",
+      method: "POST", url: "/nusika/dm/campaigns",
       payload: { title: "to be deleted" },
     });
     const cid = create.json().campaign.id as string;
 
     // Add a character (1 event) and a roll (1 more event) so we can test cascade.
     await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${cid}/character`,
+      method: "POST", url: `/nusika/dm/campaigns/${cid}/character`,
       payload: { name: "Korr", ancestry: "human", class_name: "fighter" },
     });
     await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${cid}/roll`,
+      method: "POST", url: `/nusika/dm/campaigns/${cid}/roll`,
       payload: { formula: "1d20", label: "perception" },
     });
 
-    const beforeLog = await app.inject({ method: "GET", url: `/magister/dm/campaigns/${cid}/log` });
+    const beforeLog = await app.inject({ method: "GET", url: `/nusika/dm/campaigns/${cid}/log` });
     assert.ok((beforeLog.json().events as DmEvent[]).length >= 3);
     assert.ok(db.getDmCharacter(cid), "character should exist before delete");
 
-    const del = await app.inject({ method: "DELETE", url: `/magister/dm/campaigns/${cid}` });
+    const del = await app.inject({ method: "DELETE", url: `/nusika/dm/campaigns/${cid}` });
     assert.equal(del.statusCode, 200);
     assert.equal(del.json().deleted, true);
 
@@ -181,40 +181,40 @@ test("DELETE /magister/dm/campaigns/:id removes the campaign and cascades charac
     assert.equal(db.getDmCharacter(cid), null, "character must cascade");
     assert.deepEqual(db.listDmEvents(cid), [], "events must cascade");
 
-    const list = await app.inject({ method: "GET", url: "/magister/dm/campaigns" });
+    const list = await app.inject({ method: "GET", url: "/nusika/dm/campaigns" });
     assert.deepEqual(list.json().campaigns, []);
   } finally {
     await cleanup();
   }
 });
 
-test("DELETE /magister/dm/campaigns/:id returns 404 for unknown id", async () => {
+test("DELETE /nusika/dm/campaigns/:id returns 404 for unknown id", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const res = await app.inject({ method: "DELETE", url: "/magister/dm/campaigns/no-such-campaign" });
+    const res = await app.inject({ method: "DELETE", url: "/nusika/dm/campaigns/no-such-campaign" });
     assert.equal(res.statusCode, 404);
   } finally {
     await cleanup();
   }
 });
 
-test("PATCH /magister/dm/campaigns/:id with status='complete' is the lossless archive path", async () => {
+test("PATCH /nusika/dm/campaigns/:id with status='complete' is the lossless archive path", async () => {
   // This locks in the archive contract used by the /dm UI's Archive button:
   // status flips, completed_at lands, but events + character remain.
   const { app, db, cleanup } = await bootApp();
   try {
     const create = await app.inject({
-      method: "POST", url: "/magister/dm/campaigns",
+      method: "POST", url: "/nusika/dm/campaigns",
       payload: { title: "to be archived" },
     });
     const cid = create.json().campaign.id as string;
     await app.inject({
-      method: "POST", url: `/magister/dm/campaigns/${cid}/character`,
+      method: "POST", url: `/nusika/dm/campaigns/${cid}/character`,
       payload: { name: "Mira", ancestry: "human", class_name: "wizard" },
     });
 
     const patch = await app.inject({
-      method: "PATCH", url: `/magister/dm/campaigns/${cid}`,
+      method: "PATCH", url: `/nusika/dm/campaigns/${cid}`,
       payload: { status: "complete" },
     });
     assert.equal(patch.statusCode, 200);

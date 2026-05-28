@@ -1,18 +1,18 @@
 import type { FastifyInstance } from "fastify";
-import type { MagisterDB, CompanionMemoryWriteback } from "../db.js";
+import type { NusikaDB, CompanionMemoryWriteback } from "../db.js";
 
-export async function registerMemoryRoutes(app: FastifyInstance, db: MagisterDB): Promise<void> {
-  // GET /magister/memory/:companionId — list a companion's memories of a learner
+export async function registerMemoryRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
+  // GET /nusika/memory/:companionId — list a companion's memories of a learner
   app.get<{ Params: { companionId: string } }>(
-    "/magister/memory/:companionId",
+    "/nusika/memory/:companionId",
     async (req, reply) => {
       return reply.send({ ok: true, memories: db.getCompanionMemories(req.params.companionId) });
     },
   );
 
-  // POST /magister/memory/:companionId — schema-validated companion writeback
+  // POST /nusika/memory/:companionId — schema-validated companion writeback
   app.post<{ Params: { companionId: string }; Body: CompanionMemoryWriteback }>(
-    "/magister/memory/:companionId",
+    "/nusika/memory/:companionId",
     async (req, reply) => {
       try {
         const memories = db.saveCompanionMemory(req.params.companionId, req.body);

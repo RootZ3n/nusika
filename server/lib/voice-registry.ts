@@ -1,12 +1,12 @@
 /**
- * Magister voice registry.
+ * Nusika voice registry.
  *
  * Slice 6B: registry-only. Reads companion voice configs (none today;
  * Slice 6E will add them), generates fallback Piper-default profiles
  * for every companion across all 17 curriculum modules plus Varros,
  * and reports per-engine availability.
  *
- * No engine dispatch here. The actual `POST /magister/tts` route still
+ * No engine dispatch here. The actual `POST /nusika/tts` route still
  * routes everything through Piper. Slice 6D adds Kokoro routing.
  *
  * Failure mode: this module never throws on missing binaries / missing
@@ -16,7 +16,7 @@
 
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
-import type { MagisterDB } from "../db.js";
+import type { NusikaDB } from "../db.js";
 import { getProductNarrator } from "./narrator.js";
 import {
   piperBin,
@@ -83,7 +83,7 @@ function piperEngineStatus(): EngineStatus {
  *
  * The probe is async (default 750ms timeout) and is only run when the
  * caller asks for it — `buildVoiceRegistry({ probeKokoro: true })`.
- * The dispatch path skips the probe to keep `/magister/tts` snappy.
+ * The dispatch path skips the probe to keep `/nusika/tts` snappy.
  */
 async function kokoroEngineStatus(probe: boolean): Promise<EngineStatus> {
   const url = kokoroBaseUrl();
@@ -364,7 +364,7 @@ function varrosProfile(defaults: RegistryDefaults): VoiceProfile {
  * `config_path` directly.
  */
 export async function buildVoiceRegistry(
-  db: MagisterDB,
+  db: NusikaDB,
   opts: {
     loader?: (configPath: string | null) => Promise<ModuleConfig | null>;
     /** When true, probes the Kokoro service /health (default 750 ms timeout). */
@@ -424,7 +424,7 @@ export async function buildVoiceRegistry(
 
 /**
  * Resolve a single voice profile by id-or-companion-id, without probing
- * the Kokoro service. Used by `POST /magister/tts` to look up the dispatch
+ * the Kokoro service. Used by `POST /nusika/tts` to look up the dispatch
  * target without slowing the route.
  *
  * Returns null when the query matches neither a profile id nor a companion
@@ -432,7 +432,7 @@ export async function buildVoiceRegistry(
  * Piper voice basename).
  */
 export async function resolveVoiceProfile(
-  db: MagisterDB,
+  db: NusikaDB,
   query: string,
   opts: { loader?: (configPath: string | null) => Promise<ModuleConfig | null> } = {},
 ): Promise<VoiceProfile | null> {

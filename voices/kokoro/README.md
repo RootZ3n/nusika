@@ -1,17 +1,17 @@
-# Magister Kokoro voice service
+# Nusika Kokoro voice service
 
 Local, loopback-only Python sub-service that runs the
-[Kokoro 82M](https://github.com/hexgrad/kokoro) TTS engine for Magister.
+[Kokoro 82M](https://github.com/hexgrad/kokoro) TTS engine for Nusika.
 
-> **Slice 6C scope:** standalone service skeleton. Magister itself does
+> **Slice 6C scope:** standalone service skeleton. Nusika itself does
 > NOT call this service yet — wiring lands in **Slice 6D**. Until then,
 > this is a side-car you start and curl by hand. The voice registry
-> (`GET /magister/voices`) continues to report Kokoro as
+> (`GET /nusika/voices`) continues to report Kokoro as
 > `configured: false` until 6D flips that switch.
 
 ## Why this exists
 
-Magister's voice path is currently Piper (local) or ElevenLabs (cloud,
+Nusika's voice path is currently Piper (local) or ElevenLabs (cloud,
 deprecated). Kokoro is a small (82M parameters), Apache-2.0, CPU-friendly
 local TTS engine with ~50 baked-in preset voices. Adding it gives every
 companion a stable local voice without a subscription, GPU, or cloning
@@ -54,11 +54,15 @@ warns if `espeak-ng` is missing, and starts uvicorn on `127.0.0.1:18794`.
 Override the bind address with environment variables (also honored by
 `server.py` itself):
 
-| Variable                    | Default       | Notes                          |
-|-----------------------------|---------------|--------------------------------|
-| `MAGISTER_KOKORO_HOST`      | `127.0.0.1`   | Loopback only by default.      |
-| `MAGISTER_KOKORO_PORT`      | `18794`       | Magister API uses 18793.       |
-| `MAGISTER_KOKORO_LOG_LEVEL` | `INFO`        | Standard logging level string. |
+| Variable                   | Default       | Notes                          |
+|----------------------------|---------------|--------------------------------|
+| `NUSIKA_KOKORO_HOST`       | `127.0.0.1`   | Loopback only by default.      |
+| `NUSIKA_KOKORO_PORT`       | `18794`       | Nusika API uses 18793.         |
+| `NUSIKA_KOKORO_LOG_LEVEL`  | `INFO`        | Standard logging level string. |
+
+> **Legacy compatibility:** The `MAGISTER_KOKORO_HOST`, `MAGISTER_KOKORO_PORT`,
+> and `MAGISTER_KOKORO_LOG_LEVEL` env vars are still accepted as fallbacks
+> if the `NUSIKA_` equivalents are not set.
 
 ## Endpoints
 
@@ -78,7 +82,7 @@ Liveness probe. Never touches the model.
 ### `GET /voices`
 
 Static documented preset list. Never touches the model. Returns 28
-American + British voices today; Slice 6E will pick one per Magister
+American + British voices today; Slice 6E will pick one per Nusika
 companion.
 
 ```json
@@ -129,7 +133,7 @@ Hits `/health` + `/voices` + `/generate` and verifies a WAV came back.
 ## Voice cloning
 
 **Not supported in Slice 6C.** Cloning requires user-supplied reference
-audio plus a consent flow that Magister doesn't have yet. Preset voices
+audio plus a consent flow that Nusika doesn't have yet. Preset voices
 are honest and shippable today; cloning lands in a separate slice when
 the consent UX is designed.
 
@@ -165,17 +169,17 @@ rm -rf ~/.cache/huggingface/hub/models--hexgrad--Kokoro-82M
 
 ## License
 
-- This service code: same as Magister.
+- This service code: same as Nusika.
 - Kokoro model: [Apache-2.0](https://github.com/hexgrad/kokoro/blob/main/LICENSE).
 - FastAPI / uvicorn / pydantic / soundfile / numpy: standard permissive
   open-source licenses.
 
 ## What's next (Slice 6D)
 
-A small Magister-side client (`server/lib/voices/kokoro.ts`) will:
+A small Nusika-side client (`server/lib/voices/kokoro.ts`) will:
 1. Probe this service's `/health` at registry-build time and flip
    `engines.kokoro.configured` to `true` when the service is reachable.
-2. Dispatch `POST /magister/tts` calls with a Kokoro-engine voice profile
+2. Dispatch `POST /nusika/tts` calls with a Kokoro-engine voice profile
    to this service's `/generate`.
 3. Cache returned WAVs under `state/voices/cache/<sha256>.wav`.
 4. Fall back to Piper on a 503 from this service.

@@ -4,7 +4,7 @@
  * Slice 6G: per-user picker that persists selection in localStorage.
  * No DB persistence; no server changes; no companion-default mutations.
  *
- * The voice list comes from `GET /magister/voices`. Each picker reads
+ * The voice list comes from `GET /nusika/voices`. Each picker reads
  * its own localStorage key so /teach and /dm selections don't collide.
  */
 
@@ -18,12 +18,19 @@ export interface VoiceOption {
 }
 
 /** localStorage keys (one per page so each picker stays independent). */
-export const TEACH_VOICE_KEY = "magister.teach.voiceProfileId";
-export const DM_VOICE_KEY = "magister.dm.voiceProfileId";
-export const HALL_VOICE_KEY = "magister.hall.voiceProfileId";
+export const TEACH_VOICE_KEY = "nusika.teach.voiceProfileId";
+export const DM_VOICE_KEY = "nusika.dm.voiceProfileId";
+export const HALL_VOICE_KEY = "nusika.hall.voiceProfileId";
+
+/** Legacy localStorage keys — read-fallback for backward compatibility. */
+const LEGACY_KEYS: Record<string, string> = {
+  [TEACH_VOICE_KEY]: "magister.teach.voiceProfileId",
+  [DM_VOICE_KEY]: "magister.dm.voiceProfileId",
+  [HALL_VOICE_KEY]: "magister.hall.voiceProfileId",
+};
 
 /**
- * Discrete Kokoro engine state, derived from /magister/voices's
+ * Discrete Kokoro engine state, derived from /nusika/voices's
  * `engines.kokoro` shape (configured + detail). The registry side
  * lives in server/lib/voice-registry.ts; the detail-string parser
  * here is intentionally a string match so a future status field on
@@ -111,7 +118,17 @@ export function sortVoiceOptions(voices: VoiceOption[]): VoiceOption[] {
 export function readStoredVoiceId(key: string): string | null {
   if (typeof window === "undefined") return null;
   try {
-    return window.localStorage.getItem(key);
+    const val = window.localStorage.getItem(key);
+    if (val !== null) return val;
+    const legacyKey = LEGACY_KEYS[key];
+    if (legacyKey) {
+      const legacy = window.localStorage.getItem(legacyKey);
+      if (legacy !== null) {
+        window.localStorage.setItem(key, legacy);
+        return legacy;
+      }
+    }
+    return null;
   } catch {
     return null;
   }

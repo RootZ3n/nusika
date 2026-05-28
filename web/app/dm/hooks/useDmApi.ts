@@ -116,14 +116,14 @@ export function useDmApi(): DmApi {
   const [lastRoll, setLastRoll] = useState<RollResult | null>(null);
 
   const fetchCampaigns = useCallback(async () => {
-    const r = await apiGet<{ campaigns: Campaign[] }>("/magister/dm/campaigns");
+    const r = await apiGet<{ campaigns: Campaign[] }>("/nusika/dm/campaigns");
     if (r.ok) setCampaigns(r.data.campaigns ?? []);
   }, []);
 
   const fetchDetail = useCallback(async (id: string) => {
     setLoading(true);
     const r = await apiGet<{ campaign: Campaign; character: Character | null; events: DmEvent[] }>(
-      `/magister/dm/campaigns/${id}?events=200`,
+      `/nusika/dm/campaigns/${id}?events=200`,
     );
     if (r.ok) {
       setCampaign(r.data.campaign);
@@ -145,7 +145,7 @@ export function useDmApi(): DmApi {
 
   const createCampaign = useCallback(async (title: string, blurb: string): Promise<Campaign | null> => {
     if (!title) { setError("Title is required."); return null; }
-    const r = await apiSend<{ campaign: Campaign }>("POST", "/magister/dm/campaigns", {
+    const r = await apiSend<{ campaign: Campaign }>("POST", "/nusika/dm/campaigns", {
       title,
       ...(blurb.trim() ? { setting_blurb: blurb.trim() } : {}),
     });
@@ -164,7 +164,7 @@ export function useDmApi(): DmApi {
     const name = input.name.trim();
     if (!name) { setError("Character name is required."); return false; }
     const r = await apiSend<{ character: Character }>(
-      "POST", `/magister/dm/campaigns/${activeId}/character`,
+      "POST", `/nusika/dm/campaigns/${activeId}/character`,
       {
         name,
         ancestry: input.ancestry.trim() || "human",
@@ -193,7 +193,7 @@ export function useDmApi(): DmApi {
     if (!activeId) return;
     const f = formula.trim() || "1d20";
     const r = await apiSend<{ result: RollResult }>(
-      "POST", `/magister/dm/campaigns/${activeId}/roll`,
+      "POST", `/nusika/dm/campaigns/${activeId}/roll`,
       { formula: f, ...(dlabel.trim() ? { label: dlabel.trim() } : {}) },
     );
     if (r.ok) {
@@ -240,7 +240,7 @@ export function useDmApi(): DmApi {
       case "end_turn":
         break;
     }
-    const r = await apiSend("POST", `/magister/dm/campaigns/${activeId}/turn`, {
+    const r = await apiSend("POST", `/nusika/dm/campaigns/${activeId}/turn`, {
       intent: t.intent, args,
     });
     if (r.ok) {
@@ -257,7 +257,7 @@ export function useDmApi(): DmApi {
     if (!activeId) return;
     const body: Record<string, unknown> = { kind };
     if (kind === "short" && spendDice > 0) body.spendHitDice = spendDice;
-    const r = await apiSend("POST", `/magister/dm/campaigns/${activeId}/rest`, body);
+    const r = await apiSend("POST", `/nusika/dm/campaigns/${activeId}/rest`, body);
     if (r.ok) {
       setError(null);
       setActionStatus(`${kind === "long" ? "Long" : "Short"} rest taken.`);
@@ -271,7 +271,7 @@ export function useDmApi(): DmApi {
   const archiveCampaign = useCallback(async () => {
     if (!activeId) return;
     if (typeof window !== "undefined" && !window.confirm("Archive this campaign? It stays in your list with status=complete.")) return;
-    const r = await apiSend("PATCH", `/magister/dm/campaigns/${activeId}`, { status: "complete" });
+    const r = await apiSend("PATCH", `/nusika/dm/campaigns/${activeId}`, { status: "complete" });
     if (r.ok) {
       setError(null);
       setActionStatus("Campaign archived.");
@@ -286,7 +286,7 @@ export function useDmApi(): DmApi {
   const deleteCampaign = useCallback(async () => {
     if (!activeId) return;
     if (typeof window !== "undefined" && !window.confirm("Delete this campaign permanently? Character and event log will be lost.")) return;
-    const r = await apiSend("DELETE", `/magister/dm/campaigns/${activeId}`, null);
+    const r = await apiSend("DELETE", `/nusika/dm/campaigns/${activeId}`, null);
     if (r.ok) {
       setError(null);
       setActionStatus("Campaign deleted.");
@@ -305,7 +305,7 @@ export function useDmApi(): DmApi {
   const narrate = useCallback(async (style: NarrationStyle, onSetNarrating: (b: boolean) => void) => {
     if (!activeId) return;
     onSetNarrating(true);
-    const r = await apiSend("POST", `/magister/dm/campaigns/${activeId}/narrate`, { style, limit: 8 });
+    const r = await apiSend("POST", `/nusika/dm/campaigns/${activeId}/narrate`, { style, limit: 8 });
     if (r.ok) {
       setError(null);
       setActionStatus("Narration added to log.");

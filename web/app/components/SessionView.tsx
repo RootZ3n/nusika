@@ -29,18 +29,18 @@ import {
   type AccessibilitySettings,
   type ChatReceipt,
   type LearnerProfile,
-  type MagisterModule,
-  type MagisterSession,
+  type NusikaModule,
+  type NusikaSession,
   type PracticeMessage,
 } from "../types";
 import { labelVoiceProfile, type HallVoice } from "../hooks/useHallVoice";
 
 export interface SessionViewProps {
   // Module catalogue (needed for Practice mode + companion lookup).
-  modules: MagisterModule[];
+  modules: NusikaModule[];
 
   // Active session (campaign) state.
-  activeSession: MagisterSession | null;
+  activeSession: NusikaSession | null;
   activeSessionId: string | null;
   sessionTimer: number;
   sessionRunning: boolean;
@@ -154,7 +154,7 @@ function previewBannerText(p: HallVoice["previewState"]): { text: string; isErro
 
 export function SessionView(props: SessionViewProps) {
   // ── Practice-mode send ───────────────────────────────────────────────────
-  // Pulled out unchanged. Wires through /magister/sessions for personality +
+  // Pulled out unchanged. Wires through /nusika/sessions for personality +
   // memory, so practice still benefits from the companion's full context.
   async function sendPractice() {
     const {
@@ -177,7 +177,7 @@ export function SessionView(props: SessionViewProps) {
         let sessionId = practiceSessionId;
         if (!sessionId) {
           try {
-            const sessRes = await fetch(`${API_BASE}/magister/sessions`, {
+            const sessRes = await fetch(`${API_BASE}/nusika/sessions`, {
               method: "POST",
               headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ module_id: practiceModuleId, companion_id: companionId, teaching_mode: "narrative" }),
@@ -191,7 +191,7 @@ export function SessionView(props: SessionViewProps) {
         }
 
         if (sessionId) {
-          res = await fetch(`${API_BASE}/magister/sessions/${sessionId}/chat`, {
+          res = await fetch(`${API_BASE}/nusika/sessions/${sessionId}/chat`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ message: msg, history: practiceHistory.slice(-10) }),
@@ -201,7 +201,7 @@ export function SessionView(props: SessionViewProps) {
       if (!res) {
         setPracticeHistory((prev) => [...prev, {
           role: "assistant",
-          content: "Practice is temporarily unavailable because Magister could not start a protected session. No unsafe fallback was used.",
+          content: "Practice is temporarily unavailable because Nusika could not start a protected session. No unsafe fallback was used.",
         }]);
       } else if (res.ok) {
         const data = (await res.json()) as {
@@ -235,7 +235,7 @@ export function SessionView(props: SessionViewProps) {
     setSendingMessage(true);
     setChatError(null);
     try {
-      const res = await fetch(`${API_BASE}/magister/sessions/${activeSessionId}/chat`, {
+      const res = await fetch(`${API_BASE}/nusika/sessions/${activeSessionId}/chat`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: editorText.trim(), history: [] }),
@@ -261,7 +261,7 @@ export function SessionView(props: SessionViewProps) {
         }
       }
     } catch (err) {
-      setChatError(`Chat request failed. Check whether the Magister API is running. ${err instanceof Error ? err.message : ""}`.trim());
+      setChatError(`Chat request failed. Check whether the Nusika API is running. ${err instanceof Error ? err.message : ""}`.trim());
     }
     props.setSendingMessage(false);
   }
@@ -294,11 +294,11 @@ export function SessionView(props: SessionViewProps) {
           <div style={{ fontFamily: "var(--font-mono)", fontSize: 14, fontWeight: 700, color: cColor, letterSpacing: "0.08em", textTransform: "uppercase" }}>Practice Mode</div>
           <div style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--text-muted)" }}>{mod?.name ?? props.practiceModuleId}</div>
           <button onClick={() => {
-            // TODO(magister-standalone): Practice transcripts used to be saved to
+            // TODO(nusika-standalone): Practice transcripts used to be saved to
             // squidley's Archivum (POST /archivum/paste) on session end. The
-            // standalone has /magister/creative for module-scoped works but no
+            // standalone has /nusika/creative for module-scoped works but no
             // generalized Archivum yet. For now the transcript is dropped on exit
-            // — wire to /magister/creative/<moduleId> once we agree on schema.
+            // — wire to /nusika/creative/<moduleId> once we agree on schema.
             props.setPracticeModuleId(null);
             props.setPracticeHistory([]);
             props.setPracticeSessionId(null);
@@ -333,7 +333,7 @@ export function SessionView(props: SessionViewProps) {
                         const existing = btn.parentElement?.querySelector(".practice-translation");
                         if (existing) { existing.remove(); return; }
                         try {
-                          const res = await fetch(`${API_BASE}/magister/translate`, {
+                          const res = await fetch(`${API_BASE}/nusika/translate`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({ text: msg.content.slice(0, 1000), module_id: props.practiceModuleId }),
@@ -551,7 +551,7 @@ export function SessionView(props: SessionViewProps) {
           gap: 12,
           overflowY: "auto",
           background: "var(--bg-deep)",
-        }} className="magister-companion-panel">
+        }} className="nusika-companion-panel">
           {/* Portrait */}
           <div style={{
             width: 80, height: 80, borderRadius: "50%",
@@ -645,7 +645,7 @@ export function SessionView(props: SessionViewProps) {
                       props.setTranslating(true);
                       props.setTranslatedText(null);
                       try {
-                        const res = await fetch(`${API_BASE}/magister/translate`, {
+                        const res = await fetch(`${API_BASE}/nusika/translate`, {
                           method: "POST",
                           headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ text: props.contentText.slice(0, 1000), module_id: props.activeSession?.module_id }),
@@ -929,7 +929,7 @@ export function SessionView(props: SessionViewProps) {
       {/* Mobile companion panel — inline style media query handled via className */}
       <style>{`
         @media (max-width: 768px) {
-          .magister-companion-panel {
+          .nusika-companion-panel {
             display: none !important;
           }
         }

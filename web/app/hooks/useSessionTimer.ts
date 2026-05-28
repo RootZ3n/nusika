@@ -20,12 +20,12 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { API_BASE, type AudioState, type MagisterModule, type MagisterSession } from "../types";
+import { API_BASE, type AudioState, type NusikaModule, type NusikaSession } from "../types";
 
 export interface SessionTimerOptions {
   sessionRunning: boolean;
-  activeSession: MagisterSession | null;
-  modules: MagisterModule[];
+  activeSession: NusikaSession | null;
+  modules: NusikaModule[];
   ambientVolume: number;
   /** Reset to 0 whenever the caller starts a new session. */
   resetSignal: unknown;
@@ -77,7 +77,7 @@ export function useSessionTimer(opts: SessionTimerOptions): SessionTimerHook {
   const playAmbient = useCallback((cue: string, volume = 0.15) => {
     if (!cue) return;
     try {
-      const src = `${API_BASE}/magister/audio/${cue}.mp3`;
+      const src = `${API_BASE}/nusika/audio/${cue}.mp3`;
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current.src = src;

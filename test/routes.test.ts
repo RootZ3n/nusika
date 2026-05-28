@@ -4,12 +4,12 @@ import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import Fastify from "fastify";
-import { MagisterDB } from "../server/db.js";
+import { NusikaDB } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 
 async function bootApp() {
   const dir = mkdtempSync(join(tmpdir(), "magister-route-"));
-  const db = new MagisterDB(join(dir, "test.db"));
+  const db = new NusikaDB(join(dir, "test.db"));
   db.registerModule({ id: "linux", name: "Linux Fundamentals" });
 
   const app = Fastify({ logger: false });
@@ -37,10 +37,10 @@ test("GET /health returns ok=true", async () => {
   }
 });
 
-test("GET /magister/modules lists registered modules", async () => {
+test("GET /nusika/modules lists registered modules", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const res = await app.inject({ method: "GET", url: "/magister/modules" });
+    const res = await app.inject({ method: "GET", url: "/nusika/modules" });
     assert.equal(res.statusCode, 200);
     const body = res.json();
     assert.equal(body.ok, true);
@@ -55,7 +55,7 @@ test("session create → get → hint → tick → end", async () => {
   const { app, cleanup } = await bootApp();
   try {
     const create = await app.inject({
-      method: "POST", url: "/magister/sessions",
+      method: "POST", url: "/nusika/sessions",
       payload: {
         module_id: "linux",
         teaching_mode: "narrative",
@@ -68,26 +68,26 @@ test("session create → get → hint → tick → end", async () => {
     const sessionId = create.json().session.id as string;
     assert.ok(sessionId);
 
-    const got = await app.inject({ method: "GET", url: `/magister/sessions/${sessionId}` });
+    const got = await app.inject({ method: "GET", url: `/nusika/sessions/${sessionId}` });
     assert.equal(got.statusCode, 200);
     assert.equal(got.json().session.id, sessionId);
 
     const hint = await app.inject({
-      method: "POST", url: `/magister/sessions/${sessionId}/hint`,
+      method: "POST", url: `/nusika/sessions/${sessionId}/hint`,
       payload: { level: 1 },
     });
     assert.equal(hint.statusCode, 200);
     assert.equal(hint.json().session.hint_count_l1, 1);
 
     const tick = await app.inject({
-      method: "POST", url: `/magister/sessions/${sessionId}/tick`,
+      method: "POST", url: `/nusika/sessions/${sessionId}/tick`,
       payload: { seconds: 45 },
     });
     assert.equal(tick.statusCode, 200);
     assert.equal(tick.json().elapsed, 45);
 
     const end = await app.inject({
-      method: "POST", url: `/magister/sessions/${sessionId}/end`,
+      method: "POST", url: `/nusika/sessions/${sessionId}/end`,
       payload: { summary: "wrap" },
     });
     assert.equal(end.statusCode, 200);
@@ -97,10 +97,10 @@ test("session create → get → hint → tick → end", async () => {
   }
 });
 
-test("GET /magister/sessions/:id returns 404 for unknown id", async () => {
+test("GET /nusika/sessions/:id returns 404 for unknown id", async () => {
   const { app, cleanup } = await bootApp();
   try {
-    const res = await app.inject({ method: "GET", url: "/magister/sessions/does-not-exist" });
+    const res = await app.inject({ method: "GET", url: "/nusika/sessions/does-not-exist" });
     assert.equal(res.statusCode, 404);
     assert.equal(res.json().ok, false);
   } finally {

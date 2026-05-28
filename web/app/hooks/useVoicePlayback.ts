@@ -2,11 +2,11 @@
 
 /**
  * useVoicePlayback — owns TTS (companion voice) playback and STT (mic
- * capture -> /magister/stt) for the Hall's Session screen.
+ * capture -> /nusika/stt) for the Hall's Session screen.
  *
  * Pulled out of page.tsx during the 2026-05-22 refactor.
  *
- * Voice contract: the server route `POST /magister/tts` accepts
+ * Voice contract: the server route `POST /nusika/tts` accepts
  *   { text, voice?, scope? }
  * where `voice` / `scope` may be a voice-profile id (e.g.
  * "varros-default"), a companion id (e.g. "marcus", "cronk"), a legacy
@@ -63,7 +63,7 @@ export function useVoicePlayback(opts: VoicePlaybackOptions): VoicePlayback {
     async (text: string, companionId?: string | null) => {
       const clean = stripForTTS(text);
       if (!clean || !narrationEnabled) return;
-      // Route through the standard /magister/tts dispatch. When a
+      // Route through the standard /nusika/tts dispatch. When a
       // companion id is in hand we pass it as `scope` — the contract
       // resolves it through the voice registry (kokoro/piper/elevenlabs
       // per profile). Omitting the field means "use the server default
@@ -71,7 +71,7 @@ export function useVoicePlayback(opts: VoicePlaybackOptions): VoicePlayback {
       // speaking.
       const trimmedId = typeof companionId === "string" ? companionId.trim() : "";
       try {
-        const ttsRes = await fetch(`${API_BASE}/magister/tts`, {
+        const ttsRes = await fetch(`${API_BASE}/nusika/tts`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -108,11 +108,11 @@ export function useVoicePlayback(opts: VoicePlaybackOptions): VoicePlayback {
         const lang = modId === "vietnamese" ? "vi" : modId === "mandarin" ? "zh" : "en";
 
         const formData = new FormData();
-        formData.append("audio", blob, `magister-${Date.now()}.webm`);
+        formData.append("audio", blob, `nusika-${Date.now()}.webm`);
         formData.append("language", lang);
 
         try {
-          const res = await fetch(`${API_BASE}/magister/stt`, { method: "POST", body: formData });
+          const res = await fetch(`${API_BASE}/nusika/stt`, { method: "POST", body: formData });
           const data = (await res.json()) as { ok?: boolean; transcript?: string };
           if (data.ok && data.transcript) {
             onTranscript(data.transcript);
