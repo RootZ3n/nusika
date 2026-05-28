@@ -34,7 +34,7 @@ export interface DmVoice {
 
 export function useDmVoice(): DmVoice {
   const [voices, setVoices] = useState<VoiceOption[]>([]);
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("varros-default");
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("peh-default");
   const [previewing, setPreviewing] = useState(false);
   const [voiceMsg, setVoiceMsg] = useState<string | null>(null);
   const [voiceCache, setVoiceCache] = useState<VoiceCacheStatus | null>(null);
@@ -49,7 +49,7 @@ export function useDmVoice(): DmVoice {
       const list = sortVoiceOptions(data.voices ?? []);
       setVoices(list);
       const stored = readStoredVoiceId(DM_VOICE_KEY);
-      const initial = pickInitialVoice(list, stored, "varros-default");
+      const initial = pickInitialVoice(list, stored, "peh-default");
       if (initial) setSelectedVoiceId(initial.id);
     } catch { /* silent */ }
   }, []);

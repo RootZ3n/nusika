@@ -9,7 +9,7 @@
  * Voice contract: the server route `POST /nusika/tts` accepts
  *   { text, voice?, scope? }
  * where `voice` / `scope` may be a voice-profile id (e.g.
- * "varros-default"), a companion id (e.g. "marcus", "cronk"), a legacy
+ * "peh-default"), a companion id (e.g. "marcus", "cronk"), a legacy
  * Piper voice basename, or omitted (default voice). The Hall path
  * doesn't have a voice picker yet — it dispatches by companion id, so
  * it sends `scope: <companion_id>` and lets the server resolve the

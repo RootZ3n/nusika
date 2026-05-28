@@ -103,7 +103,7 @@ Synthesise a WAV. Lazy-loads the model on first call.
 ```bash
 curl -sS -X POST http://127.0.0.1:18794/generate \
   -H 'content-type: application/json' \
-  -d '{"voice":"af_heart","text":"Hello, I am Varros."}' \
+  -d '{"voice":"af_heart","text":"Hello, I am Peh."}' \
   --output sample.wav
 file sample.wav
 # → sample.wav: RIFF (little-endian) data, WAVE audio, ...

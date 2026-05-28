@@ -46,7 +46,7 @@ export interface TeachVoice {
 
 export function useTeachVoice(): TeachVoice {
   const [voices, setVoices] = useState<VoiceOption[]>([]);
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("varros-default");
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("peh-default");
   const [previewing, setPreviewing] = useState(false);
   const [voiceMsg, setVoiceMsg] = useState<string | null>(null);
   const [voiceCache, setVoiceCache] = useState<VoiceCacheStatus | null>(null);
@@ -64,7 +64,7 @@ export function useTeachVoice(): TeachVoice {
       const list = sortVoiceOptions(data.voices ?? []);
       setVoices(list);
       const stored = readStoredVoiceId(TEACH_VOICE_KEY);
-      const initial = pickInitialVoice(list, stored, "varros-default");
+      const initial = pickInitialVoice(list, stored, "peh-default");
       if (initial) setSelectedVoiceId(initial.id);
     } catch { /* silent */ }
   }, []);
@@ -141,7 +141,7 @@ export function useTeachVoice(): TeachVoice {
     if (!clean) return;
 
     stopReplyAudio();
-    const voiceId = voices.some((v) => v.id === selectedVoiceId) ? selectedVoiceId : "varros-default";
+    const voiceId = voices.some((v) => v.id === selectedVoiceId) ? selectedVoiceId : "peh-default";
     setVoiceMsg(null);
     setPlayingReply(true);
 

@@ -1,6 +1,6 @@
 # Nusika
 
-Adaptive learning engine — companion-driven teaching, spaced repetition, mastery spine, creative portfolio. Varros is the central narrator.
+Adaptive learning engine — companion-driven teaching, spaced repetition, mastery spine, creative portfolio. Peh is the central narrator.
 
 > Status: **0.1.0 standalone**. Extracted from squidley-v2 in May 2026 and now runs on its own. All listed routes are wired; voice TTS/STT need their local binaries installed to actually run, and any LLM-backed route returns 502 when no provider is configured.
 
@@ -8,7 +8,7 @@ Adaptive learning engine — companion-driven teaching, spaced repetition, maste
 
 Nusika teaches one concept per session through a chosen companion (a character with a defined personality, speech pattern, and teaching style) inside a campaign world. Sessions are atomic — one `concept_id`, one `objective`, one `mastery_signal`. Mastery accrues across `introduced -> practiced -> mastered -> reaffirmed` with spaced-repetition reaffirmation due-dates per concept. Hints are tiered (L1 nudge, L2 guided, L3 direct) and tracked. Companion memory is schema-enforced: only `mastered_concepts`, `struggled_concepts`, `hint_patterns`, `preferences`, `relationship_beat` are accepted, validated on every write.
 
-Above the subject companions sits **Varros**, the product narrator — the voice the learner hears at the Hall, between sessions, and in any future product-level mode that does not bind to a subject companion. Varros is defined in `server/lib/narrator.ts` and surfaced via `GET /nusika/config`. Subject companions (Marcus for Latin, Wei for Mandarin, etc.) are unchanged.
+Above the subject companions sits **Peh**, the product narrator — the voice the learner hears at the Hall, between sessions, and in any future product-level mode that does not bind to a subject companion. Peh is defined in `server/lib/narrator.ts` and surfaced via `GET /nusika/config`. Subject companions (Marcus for Latin, Wei for Mandarin, etc.) are unchanged.
 
 Curriculum lives in `./curriculum/<subject>/config.json` — each one declares the world, companions, domains, concepts, and (optionally) a mastery spine. 19 subjects ship today: latin, mandarin, vietnamese, spanish, french, history, history-through-story, science, mathematics, social-emotional, financial-basics, inkwell, linux, a-plus, network-plus, security-plus, prompt-engineering, **ai-literacy**, **ai-systems**.
 
@@ -92,15 +92,15 @@ The built server (`start:dist`) and the dev server both resolve the project root
 | GET  | `/nusika/inkwell/drafts/:id` | Single Inkwell draft |
 | POST | `/nusika/inkwell/drafts` | Upsert an Inkwell draft — `{ id?, title?, content, feedback? }` |
 | DELETE | `/nusika/inkwell/drafts/:id` | Hard-delete a draft. 404 if missing or if the row's `module_id` is not `inkwell` (cross-module-safe). |
-| POST | `/nusika/inkwell/feedback` | Varros editorial feedback on a draft — `{ content, title?, context? }`. Returns 502 if no LLM backend is reachable. |
+| POST | `/nusika/inkwell/feedback` | Peh editorial feedback on a draft — `{ content, title?, context? }`. Returns 502 if no LLM backend is reachable. |
 | GET  | `/nusika/lessons` | List Teach Me Anything lessons (most recent first) |
 | POST | `/nusika/lessons` | Create a new lesson — `{ title, topic?, depth? }` |
 | GET  | `/nusika/lessons/:id` | Lesson detail + recent turns |
 | PATCH | `/nusika/lessons/:id` | Update lesson `depth` (`intro\|deeper\|example\|practice\|review`), `status` (`active\|paused\|complete`), or `title` |
 | DELETE | `/nusika/lessons/:id` | Hard-delete a lesson. Turns cascade via FK ON DELETE CASCADE. |
-| POST | `/nusika/lessons/:id/chat` | Varros turn — persists user + assistant turns. Requires an LLM backend; returns 502 if none reachable (user turn is still persisted). |
+| POST | `/nusika/lessons/:id/chat` | Peh turn — persists user + assistant turns. Requires an LLM backend; returns 502 if none reachable (user turn is still persisted). |
 | POST | `/nusika/lessons/:id/recap` | Strict-JSON rolling summary update for a lesson. Requires an LLM backend; 502/422 on parse/schema failure with no persistence. |
-| POST | `/nusika/lookup` | Intentional placeholder. Returns `{ ok: true, supported: false, reason }` today — Nusika does not browse, search, or fetch external content. Plug a real backend into this route to enable lookups; the chat prompt instructs Varros to surface "I'd want to look this up" rather than fabricating results. |
+| POST | `/nusika/lookup` | Intentional placeholder. Returns `{ ok: true, supported: false, reason }` today — Nusika does not browse, search, or fetch external content. Plug a real backend into this route to enable lookups; the chat prompt instructs Peh to surface "I'd want to look this up" rather than fabricating results. |
 | POST | `/nusika/dm/campaigns` | Create a Dungeon Master campaign — `{ title, setting_blurb? }` |
 | GET  | `/nusika/dm/campaigns` | List campaigns (most recent first) |
 | GET  | `/nusika/dm/campaigns/:id` | Campaign detail with character (if any) and last N events |
@@ -115,10 +115,10 @@ The built server (`start:dist`) and the dev server both resolve the project root
 | POST | `/nusika/dm/campaigns/:id/rest` | `{ kind: "short"\|"long", spendHitDice? }`. Long rest restores HP / temp / death saves / hit dice. Short rest spends hit dice only when `spendHitDice` is supplied. |
 | GET  | `/nusika/dm/campaigns/:id/log` | Append-only event log (chronological) |
 | POST | `/nusika/dm/campaigns/:id/narrate` | Narrate a slice of confirmed events — `{ since_event_id?, event_ids?, limit?, style? }`. Style: `brief\|cinematic\|tactical`. Appends a `narration` event to the log. **Descriptive only** — does not mutate engine state. Returns 502 if no LLM, 422 on empty model output. |
-| GET  | `/nusika/config` | Accessibility settings + product narrator (Varros) identity |
+| GET  | `/nusika/config` | Accessibility settings + product narrator (Peh) identity |
 
 | POST | `/nusika/translate` | Companion-friendly translation via the configured LLM |
-| GET  | `/nusika/voices` | Voice registry: every companion + Varros + per-engine status (Piper / Kokoro / ElevenLabs). Always returns 200; missing binaries surface as `available:false` with a `reason`, not a crash. Probes Kokoro health live with a 750ms timeout. |
+| GET  | `/nusika/voices` | Voice registry: every companion + Peh + per-engine status (Piper / Kokoro / ElevenLabs). Always returns 200; missing binaries surface as `available:false` with a `reason`, not a crash. Probes Kokoro health live with a 750ms timeout. |
 | GET  | `/nusika/voices/preview/:engine/:voice_id` | Synthesises a short sample phrase (`"Hello, I am <name>."` when `?name=` is given) and returns `audio/wav`. Engine: `kokoro` or `piper`. Shares the `/nusika/tts` audio cache; identical previews return cached bytes with `X-TTS-Provider: kokoro-cached` / `X-TTS-Cache-Hit: true`. 400 on bad input; 503 on engine failure with a sanitised `detail`. |
 | GET  | `/nusika/voices/cache` | Returns `{ ok, bytes, mb, maxBytes, maxMb }` describing the voice cache state. |
 | DELETE | `/nusika/voices/cache` | Clears `*.wav` files inside `state/voices/cache/` only; never touches other state files. Returns `{ ok, deletedFiles, deletedBytes }`. |
@@ -144,7 +144,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > `engine: "kokoro"`. The near-term runtime posture (manual start
 > via `voices/kokoro/start.sh`, honest degradation when down,
 > optional systemd unit) is documented in
-> [`docs/MAGISTER_KOKORO_RUNTIME.md`](docs/MAGISTER_KOKORO_RUNTIME.md). **Slice 6E assigned Kokoro voices to Varros and
+> [`docs/MAGISTER_KOKORO_RUNTIME.md`](docs/MAGISTER_KOKORO_RUNTIME.md). **Slice 6E assigned Kokoro voices to Peh and
 > all 26 curriculum companions**, so any companion-targeted call now
 > reaches Kokoro by default (when the service is running). Piper is
 > retained as a fallback engine and as the default for legacy
@@ -163,7 +163,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > `nusika.dm.voiceProfileId`. The picker does not change the default
 > voice for any companion across users; it only affects which voice the
 > Preview button plays on this device. Clearing browser storage resets
-> the selection back to Varros.
+> the selection back to Peh.
 >
 > **Auto voice for `/teach` (Slice 6H).** `/teach` has an optional
 > "Auto voice" toggle next to the voice picker. When enabled, the page
@@ -182,7 +182,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > request whose resolved profile uses `engine: "elevenlabs"` returns
 > HTTP 409 from `/nusika/tts` with a pointer to the dedicated route.
 > The Inkwell companion (formerly Maren on an ElevenLabs voice) was
-> rebound to Varros on a local Kokoro voice in Slice 6E; the legacy
+> rebound to Peh on a local Kokoro voice in Slice 6E; the legacy
 > ElevenLabs path remains wired but no shipped companion uses it.
 >
 > Voice-related env vars:
@@ -211,7 +211,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > **Lookup is a placeholder.** `POST /nusika/lookup` exists so the
 > Teach Me Anything chat path can request lookups today, but the route returns
 > `supported: false` and Nusika does not browse the web or fetch external
-> content. Varros is prompted to say "I'd want to look this up" rather than
+> content. Peh is prompted to say "I'd want to look this up" rather than
 > invent sources, statistics, dates, or quotations.
 
 ## Architecture invariants
@@ -229,7 +229,7 @@ Magister is the extraction of `/mnt/ai/squidley-v2/modules/experiences/magister/
 - DB layer (sessions, modules, progress, memory, creative, lessons, DM campaigns/characters/events, curriculum scanner)
 - Module / session / progress / memory / creative / config / translate / chat routes
 - LLM client (OpenRouter + Ollama with fallback) plus a test seam for deterministic mocking
-- Inkwell drafts persistence + Varros editorial feedback (`/nusika/inkwell/*`)
+- Inkwell drafts persistence + Peh editorial feedback (`/nusika/inkwell/*`)
 - Session recap with companion memory writeback (`/nusika/sessions/:id/recap`)
 - Teach Me Anything mode (`/nusika/lessons/*`, `/teach` web UI)
 - Lookup placeholder that honestly returns `supported: false`
@@ -240,7 +240,7 @@ Magister is the extraction of `/mnt/ai/squidley-v2/modules/experiences/magister/
 - `/dm` standalone web UI
 - Voice routes (Piper TTS, ElevenLabs TTS, whisper.cpp STT — when local binaries are configured)
 - Curriculum scan of 19 subjects (now includes `ai-literacy` and `ai-systems`)
-- Product narrator (Varros) exposed via `/nusika/config`
+- Product narrator (Peh) exposed via `/nusika/config`
 - Smoke test (`npm run smoke`) and baseline node:test suite (`npm test` — 241 tests)
 
 Known limitations (not blockers, future polish):
@@ -262,7 +262,7 @@ npm run start      # serve the production build
 
 Routes:
 - `/` — The Hall (campaigns, sessions, modules, Inkwell)
-- `/teach` — Teach Me Anything (open-ended Varros lessons)
+- `/teach` — Teach Me Anything (open-ended Peh lessons)
 - `/dm` — Dungeon Master mode (campaigns, character, dice, turn intents, narration)
 
 The `postinstall` script (`scripts/patch-punycode.mjs`) adds

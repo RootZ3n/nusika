@@ -38,7 +38,7 @@ export function LessonSidebar(props: LessonSidebarProps) {
         <Link href="/" style={{ fontSize: 12, color: ACCENT, marginLeft: "auto", textDecoration: "none" }}>← Hall</Link>
       </div>
       <p style={{ fontSize: 12, color: "var(--text-muted, #888)", margin: 0, lineHeight: 1.5 }}>
-        Open-ended lessons with Varros. Pick a topic and start.
+        Open-ended lessons with Peh. Pick a topic and start.
       </p>
 
       <div style={{ display: "flex", gap: 6 }}>

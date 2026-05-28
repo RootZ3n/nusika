@@ -1,7 +1,7 @@
 /**
- * Lessons — Teach Me Anything mode (Varros).
+ * Lessons — Teach Me Anything mode (Peh).
  *
- * Lessons are open-ended Varros conversations that don't bind to any
+ * Lessons are open-ended Peh conversations that don't bind to any
  * curriculum module, concept, or companion. The route layer owns
  * validation; db.ts owns persistence.
  *
@@ -10,13 +10,13 @@
  *   GET    /nusika/lessons              list (most recent first)
  *   GET    /nusika/lessons/:id          detail with recent turns
  *   PATCH  /nusika/lessons/:id          update depth/status/title
- *   POST   /nusika/lessons/:id/chat     Varros turn — persists user + assistant
+ *   POST   /nusika/lessons/:id/chat     Peh turn — persists user + assistant
  *   POST   /nusika/lessons/:id/recap    rolling summary update (strict JSON)
  *
  * Plus the lookup placeholder:
  *   POST   /nusika/lookup               returns { supported: false } today
  *
- * The lookup placeholder is intentional: Varros may surface "I'd want to
+ * The lookup placeholder is intentional: Peh may surface "I'd want to
  * look this up" in chat, and a real lookup backend can be plugged into this
  * single route later. We do NOT fake browsing today.
  */
@@ -32,7 +32,7 @@ import {
 } from "../db.js";
 import { complete, type CompletionMessage } from "../lib/llm.js";
 import { writeReceipt } from "../lib/receipts.js";
-import { buildVarrosTeachPrompt, turnsToMessages } from "../lib/varros-prompt.js";
+import { buildPehTeachPrompt, turnsToMessages } from "../lib/peh-prompt.js";
 
 const DEPTH_SET = new Set<LessonDepth>(LESSON_DEPTHS);
 const STATUS_SET = new Set<LessonStatus>(LESSON_STATUSES);
@@ -163,7 +163,7 @@ export async function registerLessonRoutes(app: FastifyInstance, db: NusikaDB): 
     },
   );
 
-  // ── POST /nusika/lessons/:id/chat — Varros turn ────────────────────────
+  // ── POST /nusika/lessons/:id/chat — Peh turn ────────────────────────
   app.post<{ Params: { id: string }; Body: ChatBody }>(
     "/nusika/lessons/:id/chat",
     async (req, reply) => {
@@ -198,7 +198,7 @@ export async function registerLessonRoutes(app: FastifyInstance, db: NusikaDB): 
       const prior = db.getLessonTurns(lesson.id, { limit: 30 })
         .map(turnToMsg)
         .filter((m): m is CompletionMessage => m !== null);
-      const systemPrompt = buildVarrosTeachPrompt({
+      const systemPrompt = buildPehTeachPrompt({
         title: lesson.title,
         topic: lesson.topic,
         depth,
@@ -383,7 +383,7 @@ export async function registerLessonRoutes(app: FastifyInstance, db: NusikaDB): 
   );
 
   // ── POST /nusika/lookup — placeholder (intentional) ─────────────────────
-  // Varros may say "a lookup would help here" in chat. This route gives the
+  // Peh may say "a lookup would help here" in chat. This route gives the
   // architecture a single hook to plug a real research backend into later.
   // It does NOT browse, search, or fetch external content today.
   app.post<{ Body: LookupBody }>("/nusika/lookup", async (req, reply) => {

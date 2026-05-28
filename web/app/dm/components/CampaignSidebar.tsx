@@ -41,7 +41,7 @@ export function CampaignSidebar(props: CampaignSidebarProps) {
         <Link href="/" style={{ fontSize: 12, color: ACCENT, marginLeft: "auto", textDecoration: "none" }}>← Hall</Link>
       </div>
       <p style={{ fontSize: 12, color: "var(--text-muted, #888)", margin: 0, lineHeight: 1.5 }}>
-        A solo fantasy campaign with Varros as DM. The engine owns the rules; Varros narrates.
+        A solo fantasy campaign with Peh as DM. The engine owns the rules; Peh narrates.
       </p>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>

@@ -41,7 +41,7 @@ echo "[smoke] POST ${BASE}/generate -> ${OUT}"
 HTTP="$(curl -sS -o "${OUT}" -w '%{http_code}' \
   -X POST "${BASE}/generate" \
   -H 'content-type: application/json' \
-  -d '{"voice":"af_heart","text":"Hello, I am Varros."}')"
+  -d '{"voice":"af_heart","text":"Hello, I am Peh."}')"
 case "${HTTP}" in
   200)
     if [ ! -s "${OUT}" ]; then

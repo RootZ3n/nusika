@@ -141,7 +141,7 @@ async function checkProxy() {
 }
 
 async function checkVoicesRegistry() {
-  // Slice 6B contract: GET /nusika/voices is always 200, lists Varros and
+  // Slice 6B contract: GET /nusika/voices is always 200, lists Peh and
   // every companion, reports Kokoro as not wired, never crashes on missing
   // binaries. Probe through the proxy to verify the proxy + registry work.
   const url = `http://${HOST}:${WEB_PORT}/api/proxy/nusika/voices`;
@@ -162,8 +162,8 @@ async function checkVoicesRegistry() {
     return;
   }
   const ids = body.voices.map((v) => v.id);
-  if (!ids.includes("varros-default")) {
-    fail(`/nusika/voices missing varros-default: got ${ids.slice(0, 6).join(", ")}…`);
+  if (!ids.includes("peh-default")) {
+    fail(`/nusika/voices missing peh-default: got ${ids.slice(0, 6).join(", ")}…`);
     return;
   }
   // Slice 6D: the registry probes Kokoro live. Assert the field exists

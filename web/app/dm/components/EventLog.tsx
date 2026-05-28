@@ -56,7 +56,7 @@ function EventView({ event }: { event: DmEvent }) {
         fontSize: 14, lineHeight: 1.75, color: "var(--text-primary, #e7e5f0)",
         fontFamily: "Georgia, serif", whiteSpace: "pre-wrap",
       }}>
-        <div style={tag("narration", ACCENT)}>Varros narrates</div>
+        <div style={tag("narration", ACCENT)}>Peh narrates</div>
         {String(p.text ?? "")}
       </div>
     );

@@ -53,7 +53,7 @@ log = logging.getLogger("kokoro")
 # ── Constants ─────────────────────────────────────────────────────────────────
 
 # Conservative documented preset list. The Kokoro package ships ~50 voices;
-# this subset is enough to map every Nusika companion plus Varros.
+# this subset is enough to map every Nusika companion plus Peh.
 # Slice 6E will pick one per companion. Add to this list as needed.
 #
 # Naming convention from upstream Kokoro:

@@ -89,7 +89,7 @@ export function HallView(props: HallViewProps) {
           <h1 style={{ fontFamily: "var(--font-display)", fontSize: "24px", fontWeight: 700, color: "var(--text-primary)", margin: 0 }}>
             The Hall
           </h1>
-          {/* Product narrator greeting (Varros by default) */}
+          {/* Product narrator greeting (Peh by default) */}
           <div style={{
             display: "flex", alignItems: "flex-start", gap: 10, marginTop: 10,
             padding: "12px 16px", borderRadius: 12,

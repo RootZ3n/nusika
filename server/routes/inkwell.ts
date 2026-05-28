@@ -13,13 +13,13 @@
  *   draft.createdAt   ↔ magister_creative.created_at (ISO string)
  *   draft.updatedAt   ↔ magister_creative.updated_at (ISO string)
  *
- * Feedback calls go through lib/llm.ts complete() with a Varros-shaped
+ * Feedback calls go through lib/llm.ts complete() with a Peh-shaped
  * editor prompt. If no LLM backend is configured/reachable, the route
  * returns 502 with a clear error — never a fake "feedback received".
  *
  * Identity note: the Inkwell companion used to be Maren, with an
  * ElevenLabs voice. The 2026-05 rebind switched the Inkwell config to
- * Varros (the same persona that narrates the Hall, /teach, and /dm) on
+ * Peh (the same persona that narrates the Hall, /teach, and /dm) on
  * a local Kokoro voice. The system prompt below was rewritten to match.
  * Old companion-memory rows keyed by "maren" are left in place — the
  * registry no longer surfaces Maren as a companion so they are simply
@@ -34,7 +34,7 @@ import { writeReceipt } from "../lib/receipts.js";
 const INKWELL_MODULE = "inkwell";
 
 const EDITOR_SYSTEM_PROMPT =
-  "You are Varros, the Nusika narrator acting as senior editor and writing guide. " +
+  "You are Peh, the Nusika narrator acting as senior editor and writing guide. " +
   "Read carefully and respond as a thoughtful editor: what works, what doesn't, what " +
   "you want to know more about. Celebrate strong sentences specifically. Ask one " +
   "focused question. Direct, honest, no false encouragement. One piece of feedback at " +
@@ -137,7 +137,7 @@ export async function registerInkwellRoutes(app: FastifyInstance, db: NusikaDB):
     return reply.status(201).send({ ok: true, draft: toDraftDTO(created) });
   });
 
-  // POST /nusika/inkwell/feedback — Varros editorial feedback on a piece of writing.
+  // POST /nusika/inkwell/feedback — Peh editorial feedback on a piece of writing.
   // Calls the configured LLM. If no backend is configured/reachable, returns 502.
   app.post<{ Body: FeedbackBody }>("/nusika/inkwell/feedback", async (req, reply) => {
     const body = req.body ?? ({} as FeedbackBody);

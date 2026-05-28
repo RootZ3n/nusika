@@ -55,7 +55,7 @@ interface TranslateBody {
 
 export async function registerConfigRoutes(app: FastifyInstance): Promise<void> {
   // GET /nusika/config — accessibility settings + product narrator identity.
-  // The narrator block exposes Varros (the central Nusika persona) so the
+  // The narrator block exposes Peh (the central Nusika persona) so the
   // web doesn't have to hardcode landing copy.
   app.get("/nusika/config", async (_req, reply) => {
     const settings = await loadSettings();

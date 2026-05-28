@@ -1,9 +1,9 @@
 /**
  * Nusika product narrator identity.
  *
- * Varros is the central narrator/tutor/DM persona for Nusika. Subject
+ * Peh is the central narrator/tutor/DM persona for Nusika. Subject
  * companions (Marcus for Latin, Wei for Mandarin, etc.) still drive their
- * own modules and inherit their own personalities; Varros is the voice
+ * own modules and inherit their own personalities; Peh is the voice
  * the learner hears at the product layer — landing, between sessions,
  * and in any future mode that does not bind to a subject companion
  * (e.g. Teach Me Anything, Dungeon Master).
@@ -40,9 +40,9 @@ export interface NarratorIdentity {
   voice?: NarratorVoice;
 }
 
-export const VARROS: NarratorIdentity = {
-  id: "varros",
-  name: "Varros",
+export const PEH: NarratorIdentity = {
+  id: "peh",
+  name: "Peh",
   role: "Nusika Narrator & Guide",
   personality:
     "Calm, attentive, well-read. Treats every learner as capable of more than they think. " +
@@ -51,10 +51,10 @@ export const VARROS: NarratorIdentity = {
     "Plain language first, with measured warmth. Uses concrete examples before abstractions. " +
     "Asks one focused question rather than three. Never condescending. Never hurried.",
   greeting_idle:
-    "Welcome. I'm Varros. Take a look around — there's no rush. When something here calls to you, tell me and we'll begin.",
+    "Welcome. I'm Peh. Take a look around — there's no rush. When something here calls to you, tell me and we'll begin.",
   greeting_active:
     "You're back. The work doesn't disappear when you leave it; it just waits. Where would you like to pick up?",
-  // Slice 6E: Varros gets a stable Kokoro voice. American male "Michael"
+  // Slice 6E: Peh gets a stable Kokoro voice. American male "Michael"
   // — chosen for warm narrator quality. Substitutable via curriculum
   // configuration if a per-learner narrator override ships later.
   voice: {
@@ -67,5 +67,8 @@ export const VARROS: NarratorIdentity = {
 
 /** Resolve the active product narrator. Single-narrator world for now. */
 export function getProductNarrator(): NarratorIdentity {
-  return VARROS;
+  return PEH;
 }
+
+/** @deprecated Use PEH. Kept for backward compat with old imports. */
+export const VARROS = PEH;

@@ -3,7 +3,7 @@
  *
  * Asserts the GET /nusika/voices contract:
  *   - Always returns ok:true (no crash even when binaries are missing).
- *   - Includes Varros narrator + every companion id from registered modules.
+ *   - Includes Peh narrator + every companion id from registered modules.
  *   - Voice ids are globally unique.
  *   - Kokoro reported as configured:false (probe-skipped or not-reachable).
  *   - ElevenLabs reported as deprecated.
@@ -60,7 +60,7 @@ async function bootApp() {
 
 // ── Unit-level: buildVoiceRegistry directly ────────────────────────────────
 
-test("buildVoiceRegistry returns Varros + every companion when configs are absent", async () => {
+test("buildVoiceRegistry returns Peh + every companion when configs are absent", async () => {
   const { db, cleanup } = await bootApp();
   try {
     const reg = await buildVoiceRegistry(db, {
@@ -68,7 +68,7 @@ test("buildVoiceRegistry returns Varros + every companion when configs are absen
       loader: async () => null,
     });
     const ids = new Set(reg.voices.map(v => v.id));
-    assert.ok(ids.has("varros-default"), "Varros narrator profile must be present");
+    assert.ok(ids.has("peh-default"), "Peh narrator profile must be present");
     for (const cid of ["cronk", "wrrrakk", "marcus", "maren"]) {
       assert.ok(ids.has(`${cid}-default`), `expected ${cid}-default in registry`);
     }
@@ -207,7 +207,7 @@ test("buildVoiceRegistry handles missing PIPER_BIN without crashing", async () =
 
 // ── Route-level ────────────────────────────────────────────────────────────
 
-test("GET /nusika/voices returns ok:true with Varros, companions, engine status", async () => {
+test("GET /nusika/voices returns ok:true with Peh, companions, engine status", async () => {
   stubKokoroUnreachable();
   const { app, cleanup } = await bootApp();
   try {
@@ -217,7 +217,7 @@ test("GET /nusika/voices returns ok:true with Varros, companions, engine status"
     assert.equal(body.ok, true);
 
     const ids = body.voices.map(v => v.id);
-    assert.ok(ids.includes("varros-default"));
+    assert.ok(ids.includes("peh-default"));
     for (const cid of ["cronk", "marcus", "maren"]) {
       assert.ok(ids.includes(`${cid}-default`), `expected ${cid}-default`);
     }
@@ -244,9 +244,9 @@ test("GET /nusika/voices stays 200 even with no curriculum modules registered", 
     assert.equal(res.statusCode, 200);
     const body = res.json() as { ok: boolean } & VoiceRegistry;
     assert.equal(body.ok, true);
-    // With no modules, the registry has only Varros.
+    // With no modules, the registry has only Peh.
     assert.equal(body.voices.length, 1);
-    assert.equal(body.voices[0]!.id, "varros-default");
+    assert.equal(body.voices[0]!.id, "peh-default");
   } finally {
     __resetKokoroFetchForTesting();
     await app.close();

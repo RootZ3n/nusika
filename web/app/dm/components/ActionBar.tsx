@@ -195,7 +195,7 @@ export function ActionBar(props: ActionBarProps) {
         </div>
 
         <div style={{ ...panel, flex: 1, minWidth: 240 }}>
-          <div style={sectionTitle}>Varros narrates</div>
+          <div style={sectionTitle}>Peh narrates</div>
           <div style={{ display: "flex", gap: 8, alignItems: "flex-end", flexWrap: "wrap" }}>
             <div style={{ display: "flex", flexDirection: "column" }}>
               <span style={label}>Style</span>

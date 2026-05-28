@@ -162,7 +162,7 @@ export function useTeachApi(): TeachApi {
         chatOk = false;
         const data = (await res.json().catch(() => ({}))) as { error?: string };
         if (res.status === 502) {
-          setError(`Varros is unavailable: ${data.error ?? "no LLM backend reachable."}`);
+          setError(`Peh is unavailable: ${data.error ?? "no LLM backend reachable."}`);
         } else {
           setError(data.error ?? `HTTP ${res.status}`);
         }

@@ -50,11 +50,11 @@ export type AgeTrack = (typeof AGE_TRACKS)[number];
  */
 export const SHARED_PROGRESS_MODES = ["campaign", "study"] as const;
 
-// ── Teach Me Anything (Varros lessons) ───────────────────────────────────────
+// ── Teach Me Anything (Peh lessons) ──────────────────────────────────────────
 //
 // Open-ended lessons NOT bound to any module/concept/companion. The product
-// narrator (Varros) is implicit; lessons have a topic, a current "depth",
-// and a turn log. See server/routes/lessons.ts and server/lib/varros-prompt.ts.
+// narrator (Peh) is implicit; lessons have a topic, a current "depth",
+// and a turn log. See server/routes/lessons.ts and server/lib/peh-prompt.ts.
 
 export const LESSON_DEPTHS = ["intro", "deeper", "example", "practice", "review"] as const;
 export type LessonDepth = (typeof LESSON_DEPTHS)[number];
@@ -509,7 +509,7 @@ export class NusikaDB {
       CREATE INDEX IF NOT EXISTS idx_sessions_module ON magister_sessions(module_id);
       CREATE INDEX IF NOT EXISTS idx_creative_module ON magister_creative(module_id);
 
-      -- Teach Me Anything (Varros) — open-ended lessons + turn log.
+      -- Teach Me Anything (Peh) — open-ended lessons + turn log.
       -- Additive only; no FK back into existing tables.
       CREATE TABLE IF NOT EXISTS magister_lessons (
         id            TEXT PRIMARY KEY,
@@ -1326,7 +1326,7 @@ export class NusikaDB {
 
   // ── Lessons (Teach Me Anything) ──────────────────────────────────────────
   //
-  // Lessons are open-ended Varros conversations that don't bind to a curriculum
+  // Lessons are open-ended Peh conversations that don't bind to a curriculum
   // module/concept/companion. The DB layer is intentionally dumb — validation
   // of depth/status/role lives in the route layer; the SQL CHECK constraints
   // are belt-and-suspenders.

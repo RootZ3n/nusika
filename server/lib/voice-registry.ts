@@ -3,7 +3,7 @@
  *
  * Slice 6B: registry-only. Reads companion voice configs (none today;
  * Slice 6E will add them), generates fallback Piper-default profiles
- * for every companion across all 17 curriculum modules plus Varros,
+ * for every companion across all 17 curriculum modules plus Peh,
  * and reports per-engine availability.
  *
  * No engine dispatch here. The actual `POST /nusika/tts` route still
@@ -256,7 +256,7 @@ function profileFromCompanion(
 
   if (legacyElevenLabs && !override) {
     // Any companion shipped with a top-level ElevenLabs voice_id (the
-    // Inkwell companion used to, before the Maren → Varros rebind) is
+    // Inkwell companion used to, before the Maren → Peh rebind) is
     // surfaced honestly: engine reported as elevenlabs, available reflects
     // whether the key is set.
     const hasKey = !!process.env["ELEVENLABS_API_KEY"];
@@ -299,10 +299,10 @@ interface RegistryDefaults {
 }
 
 /**
- * Build the Varros narrator profile. Honors `narrator.voice` when set
+ * Build the Peh narrator profile. Honors `narrator.voice` when set
  * (Slice 6E onwards); otherwise falls back to the configured Piper voice.
  */
-function varrosProfile(defaults: RegistryDefaults): VoiceProfile {
+function pehProfile(defaults: RegistryDefaults): VoiceProfile {
   const narrator = getProductNarrator();
   const id = `${narrator.id}-default`;
   const display_name = `${narrator.name} (default voice)`;
@@ -382,7 +382,7 @@ export async function buildVoiceRegistry(
   const load = opts.loader ?? loadModuleConfig;
 
   const voices: VoiceProfile[] = [];
-  voices.push(varrosProfile(defaults));
+  voices.push(pehProfile(defaults));
 
   const seen = new Set<string>();
   for (const mod of db.listModules()) {
@@ -444,5 +444,10 @@ export async function resolveVoiceProfile(
   if (byId) return byId;
   const byCompanion = reg.voices.find(v => v.companion_id === query);
   if (byCompanion) return byCompanion;
+  // Legacy alias: old saves may reference "varros" or "varros-default"
+  if (query === "varros" || query === "varros-default") {
+    const pehProfile = reg.voices.find(v => v.companion_id === "peh" || v.id === "peh-default");
+    if (pehProfile) return pehProfile;
+  }
   return null;
 }

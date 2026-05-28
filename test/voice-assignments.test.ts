@@ -6,10 +6,10 @@
  *   - Every voice block uses engine:"kokoro" with a known voice_ref.
  *   - No companion uses engine:"elevenlabs" any longer (Maren migrated).
  *   - Voice ids reference the canonical KOKORO_VOICE_IDS set.
- *   - Varros has a Kokoro voice override.
+ *   - Peh has a Kokoro voice override.
  *   - When the Kokoro service is reachable, Kokoro-bound voices flip
  *     available:true through the registry.
- *   - GET /nusika/voices yields one profile per companion plus Varros.
+ *   - GET /nusika/voices yields one profile per companion plus Peh.
  */
 
 import { test } from "node:test";
@@ -22,7 +22,7 @@ import Fastify from "fastify";
 import { NusikaDB } from "../server/db.js";
 import { registerAllRoutes } from "../server/routes/index.js";
 import { buildVoiceRegistry, type VoiceRegistry } from "../server/lib/voice-registry.js";
-import { VARROS } from "../server/lib/narrator.js";
+import { PEH } from "../server/lib/narrator.js";
 import {
   KOKORO_VOICE_IDS,
   __setKokoroFetchForTesting,
@@ -107,10 +107,10 @@ test("no companion still carries the legacy ElevenLabs voice_id field", () => {
   assert.deepEqual(offenders, [], `legacy voice_id remains on: ${offenders.join(", ")}`);
 });
 
-test("VARROS has a Kokoro voice override with a known voice_ref", () => {
-  assert.ok(VARROS.voice, "Varros must have a voice block");
-  assert.equal(VARROS.voice!.engine, "kokoro");
-  assert.ok(KOKORO_VOICE_IDS.has(VARROS.voice!.voice_ref), `${VARROS.voice!.voice_ref} not in KOKORO_VOICE_IDS`);
+test("PEH has a Kokoro voice override with a known voice_ref", () => {
+  assert.ok(PEH.voice, "Peh must have a voice block");
+  assert.equal(PEH.voice!.engine, "kokoro");
+  assert.ok(KOKORO_VOICE_IDS.has(PEH.voice!.voice_ref), `${PEH.voice!.voice_ref} not in KOKORO_VOICE_IDS`);
 });
 
 // ── Registry round-trip ────────────────────────────────────────────────────
@@ -138,7 +138,7 @@ async function bootRegistryHarness(): Promise<{ db: NusikaDB; cleanup: () => Pro
   };
 }
 
-test("buildVoiceRegistry surfaces 31 profiles (Varros + 30 companions) when probing live disk", async () => {
+test("buildVoiceRegistry surfaces 31 profiles (Peh + 30 companions) when probing live disk", async () => {
   // Count expectation tracks the curriculum on disk. Adding/removing a
   // companion in any module/*/config.json should bump this number — the
   // test exists to catch silent loss of a voice, not to enforce a
@@ -150,10 +150,10 @@ test("buildVoiceRegistry surfaces 31 profiles (Varros + 30 companions) when prob
     const reg = await buildVoiceRegistry(db, { probeKokoro: true });
     assert.equal(reg.voices.length, 31, `expected 31 voices, got ${reg.voices.length}`);
     const ids = new Set(reg.voices.map(v => v.id));
-    assert.ok(ids.has("varros-default"));
+    assert.ok(ids.has("peh-default"));
     // Spot-check a few companions across different modules. Maren used to
     // sit on this list as the Inkwell companion; the Inkwell rebind to
-    // Varros (2026-05) removed her from the curriculum entirely. We add
+    // Peh (2026-05) removed her from the curriculum entirely. We add
     // Vermilion (history) so coverage still spans an extra module —
     // dropping Maren without a replacement would weaken the spread.
     for (const cid of ["vermilion", "cronk", "marcus", "tessera", "sol", "iris", "atlas"]) {

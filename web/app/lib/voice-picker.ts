@@ -87,25 +87,25 @@ export function parseKokoroEngine(
 /**
  * Build a short, picker-friendly label for a voice profile.
  *
- *   "Varros Default — am_michael"
+ *   "Peh Default — am_michael"
  *   "Vermilion — bm_george"
  *
  * Strips the registry's `(default voice)` suffix because the picker
  * already implies "default" for any companion.
  */
 export function labelVoiceProfile(p: VoiceOption): string {
-  if (p.id === "varros-default") return `Varros Default — ${p.voice_ref}`;
+  if (p.id === "peh-default") return `Peh Default — ${p.voice_ref}`;
   const cleanName = p.display_name.replace(/\s*\(default voice\)\s*$/i, "").trim();
   const displayed = cleanName.length > 0 ? cleanName : p.id;
   return `${displayed} — ${p.voice_ref}`;
 }
 
-/** Sort order for the dropdown: Varros first, then alphabetic by display name. */
+/** Sort order for the dropdown: Peh first, then alphabetic by display name. */
 export function sortVoiceOptions(voices: VoiceOption[]): VoiceOption[] {
   const copy = [...voices];
   copy.sort((a, b) => {
-    if (a.id === "varros-default") return -1;
-    if (b.id === "varros-default") return 1;
+    if (a.id === "peh-default") return -1;
+    if (b.id === "peh-default") return 1;
     return labelVoiceProfile(a).localeCompare(labelVoiceProfile(b));
   });
   return copy;
@@ -147,7 +147,7 @@ export function writeStoredVoiceId(key: string, id: string): void {
 /**
  * Pick the initial voice for a picker:
  *   1. Stored id, if it still resolves to a known voice.
- *   2. The configured fallback id (typically "varros-default").
+ *   2. The configured fallback id (typically "peh-default").
  *   3. The first voice in the list.
  *   4. null if the list is empty.
  */
@@ -158,6 +158,11 @@ export function pickInitialVoice(
 ): VoiceOption | null {
   if (storedId) {
     const found = voices.find(v => v.id === storedId);
+    if (found) return found;
+  }
+  // Legacy alias: old stored values may reference "varros-default"
+  if (storedId === "varros-default") {
+    const found = voices.find(v => v.id === "peh-default");
     if (found) return found;
   }
   const fallback = voices.find(v => v.id === fallbackId);

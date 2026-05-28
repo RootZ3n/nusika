@@ -45,7 +45,7 @@ export function LessonComposer(props: LessonComposerProps) {
               send();
             }
           }}
-          placeholder={`Ask Varros (${depth})…  ⌃Enter for newline`}
+          placeholder={`Ask Peh (${depth})…  ⌃Enter for newline`}
           rows={2}
           style={{
             flex: 1, padding: 10, borderRadius: 8,

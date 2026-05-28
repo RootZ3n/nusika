@@ -61,7 +61,7 @@ const VOICE_UNAVAILABLE_MSG =
 
 export function useHallVoice(): HallVoice {
   const [voices, setVoices] = useState<VoiceOption[]>([]);
-  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("varros-default");
+  const [selectedVoiceId, setSelectedVoiceId] = useState<string>("peh-default");
   const [engine, setEngine] = useState<KokoroEngineInfo>({
     state: "unknown",
     detail: "Kokoro status unknown.",
@@ -81,7 +81,7 @@ export function useHallVoice(): HallVoice {
       const list = sortVoiceOptions(data.voices ?? []);
       setVoices(list);
       const stored = readStoredVoiceId(HALL_VOICE_KEY);
-      const initial = pickInitialVoice(list, stored, "varros-default");
+      const initial = pickInitialVoice(list, stored, "peh-default");
       if (initial) setSelectedVoiceId(initial.id);
       setEngine(parseKokoroEngine(data.engines?.kokoro ?? null));
     } catch {

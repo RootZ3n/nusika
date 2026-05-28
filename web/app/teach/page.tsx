@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * Teach Me Anything (Varros) — orchestration shell.
+ * Teach Me Anything (Peh) — orchestration shell.
  *
  * Lives outside the main Hall/Session monolith. The original 764-line
  * file lives across:
@@ -66,7 +66,7 @@ export default function TeachPage() {
       <main style={main}>
         {!api.active && (
           <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--text-muted, #888)", padding: 32, textAlign: "center" }}>
-            Pick a lesson on the left, or start a new one. Varros will meet you here.
+            Pick a lesson on the left, or start a new one. Peh will meet you here.
           </div>
         )}
 

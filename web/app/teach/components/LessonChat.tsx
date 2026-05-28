@@ -2,7 +2,7 @@
 
 /**
  * LessonChat — scrolling turn list with assistant markdown + receipt line,
- * the "Varros is thinking…" affordance, and the error banner. Extracted
+ * the "Peh is thinking…" affordance, and the error banner. Extracted
  * from teach/page.tsx on 2026-05-22.
  */
 
@@ -21,7 +21,7 @@ export function LessonChat({ active, turns, sending, error }: LessonChatProps) {
     <section style={{ flex: 1, overflowY: "auto", padding: "16px 20px", display: "flex", flexDirection: "column", gap: 12 }}>
       {turns.length === 0 && (
         <div style={{ color: "var(--text-muted, #888)", fontStyle: "italic", fontSize: 14 }}>
-          Ask Varros anything about <strong>{active.title}</strong>.
+          Ask Peh anything about <strong>{active.title}</strong>.
         </div>
       )}
       {turns.map((t) => (
@@ -45,7 +45,7 @@ export function LessonChat({ active, turns, sending, error }: LessonChatProps) {
         </div>
       ))}
       {sending && (
-        <div style={{ color: ACCENT, fontStyle: "italic", fontSize: 14 }}>Varros is thinking…</div>
+        <div style={{ color: ACCENT, fontStyle: "italic", fontSize: 14 }}>Peh is thinking…</div>
       )}
       {error && (
         <div style={{

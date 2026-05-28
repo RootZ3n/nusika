@@ -90,7 +90,7 @@ test("preview Kokoro returns WAV with X-TTS-Provider:kokoro on cache miss", asyn
   try {
     const res = await h.app.inject({
       method: "GET",
-      url: "/nusika/voices/preview/kokoro/am_michael?name=Varros",
+      url: "/nusika/voices/preview/kokoro/am_michael?name=Peh",
     });
     assert.equal(res.statusCode, 200);
     assert.equal(res.headers["content-type"], "audio/wav");
@@ -114,14 +114,14 @@ test("preview second identical request hits cache; Kokoro client not called twic
   const h = await bootApp();
   try {
     const a = await h.app.inject({
-      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Varros",
+      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Peh",
     });
     assert.equal(a.statusCode, 200);
     assert.equal(a.headers["x-tts-cache-hit"], "false");
     assert.equal(calls, 1);
 
     const b = await h.app.inject({
-      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Varros",
+      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Peh",
     });
     assert.equal(b.statusCode, 200);
     assert.equal(b.headers["x-tts-provider"], "kokoro-cached");
@@ -139,7 +139,7 @@ test("preview Kokoro unavailable returns 503 friendly error; no cache write", as
   const h = await bootApp();
   try {
     const res = await h.app.inject({
-      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Varros",
+      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Peh",
     });
     assert.equal(res.statusCode, 503);
     const body = res.json();
@@ -206,7 +206,7 @@ test("GET /nusika/voices/cache reports bytes after a preview is cached", async (
   const h = await bootApp();
   try {
     await h.app.inject({
-      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Varros",
+      method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Peh",
     });
     const res = await h.app.inject({ method: "GET", url: "/nusika/voices/cache" });
     const body = res.json();
@@ -240,7 +240,7 @@ test("DELETE /nusika/voices/cache removes cached preview WAVs", async () => {
   const h = await bootApp();
   try {
     // Generate two distinct previews so we have two cache entries.
-    await h.app.inject({ method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Varros" });
+    await h.app.inject({ method: "GET", url: "/nusika/voices/preview/kokoro/am_michael?name=Peh" });
     await h.app.inject({ method: "GET", url: "/nusika/voices/preview/kokoro/af_heart?name=Nova" });
     const before = (await h.app.inject({ method: "GET", url: "/nusika/voices/cache" })).json();
     assert.ok(before.bytes > 0);

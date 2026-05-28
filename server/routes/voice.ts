@@ -243,8 +243,8 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
   //   { text, voice?, scope? }
   //
   // Where `voice`/`scope` may be:
-  //   - a VoiceProfile id (e.g. "varros-default")
-  //   - a companion id    (e.g. "varros", "cronk", "vermilion")
+  //   - a VoiceProfile id (e.g. "peh-default")
+  //   - a companion id    (e.g. "peh", "cronk", "vermilion")
   //   - a Piper voice basename (legacy callers; e.g. "en_US-lessac-medium")
   //   - omitted          (uses ttsDefaultVoice() Piper voice)
   //

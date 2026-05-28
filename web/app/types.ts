@@ -108,13 +108,13 @@ export interface NarratorIdentity {
 }
 
 export const DEFAULT_NARRATOR: NarratorIdentity = {
-  id: "varros",
-  name: "Varros",
+  id: "peh",
+  name: "Peh",
   role: "Nusika Narrator & Guide",
   personality: "",
   speech_pattern: "",
   greeting_idle:
-    "Welcome. I'm Varros. Take a look around — when something here calls to you, tell me and we'll begin.",
+    "Welcome. I'm Peh. Take a look around — when something here calls to you, tell me and we'll begin.",
   greeting_active: "You're back. Where would you like to pick up?",
 };
 

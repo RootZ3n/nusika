@@ -1,14 +1,14 @@
 /**
- * Varros — Teach Me Anything system prompt.
+ * Peh — Teach Me Anything system prompt.
  *
  * Distinct from server/lib/companion-prompt.ts (which builds prompts for
  * subject companions like Marcus, Wei, etc.). This builder is used only
- * by the open-ended Varros lessons: no module, no concept, no spine.
+ * by the open-ended Peh lessons: no module, no concept, no spine.
  *
  * The prompt is depth-aware: the same lesson can shift between intro /
- * deeper / example / practice / review without changing the Varros voice.
+ * deeper / example / practice / review without changing the Peh voice.
  *
- * The prompt also encodes the lookup contract: Varros may say a lookup is
+ * The prompt also encodes the lookup contract: Peh may say a lookup is
  * needed, but must not invent results. The route layer exposes a lookup
  * placeholder (POST /nusika/lookup) that returns supported:false until
  * a real backend is wired.
@@ -17,7 +17,7 @@
 import type { LessonDepth } from "../db.js";
 import { getProductNarrator } from "./narrator.js";
 
-export interface VarrosTeachPromptInput {
+export interface PehTeachPromptInput {
   title: string;
   topic: string;
   depth: LessonDepth;
@@ -49,7 +49,7 @@ const DEPTH_INSTRUCTIONS: Record<LessonDepth, string> = {
     "that probes the weakest point in the summary.",
 };
 
-export function buildVarrosTeachPrompt(input: VarrosTeachPromptInput): string {
+export function buildPehTeachPrompt(input: PehTeachPromptInput): string {
   const narrator = getProductNarrator();
   const depth = DEPTH_INSTRUCTIONS[input.depth];
 
@@ -93,7 +93,7 @@ export function buildVarrosTeachPrompt(input: VarrosTeachPromptInput): string {
 
 /** Convert recent turns into the message-array shape the LLM client expects. */
 export function turnsToMessages(
-  recentTurns: VarrosTeachPromptInput["recentTurns"],
+  recentTurns: PehTeachPromptInput["recentTurns"],
 ): Array<{ role: "user" | "assistant"; content: string }> {
   // Cap the included history at the last 12 turns. The route trims further;
   // this is a defensive ceiling so a runaway lesson cannot blow the context.
