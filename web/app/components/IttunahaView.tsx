@@ -92,9 +92,17 @@ export function IttunahaView(props: IttunahaViewProps) {
             padding: "12px 16px", borderRadius: 12,
             background: "rgba(167,139,250,0.06)", border: "1px solid rgba(167,139,250,0.12)",
           }}>
-            <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#a78bfa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "#060810", flexShrink: 0 }}>
-              {narrator.name.charAt(0)}
-            </div>
+            {narrator.portrait ? (
+              <img
+                src={narrator.portrait}
+                alt={narrator.name}
+                style={{ width: 44, height: 44, borderRadius: "50%", objectFit: "cover", objectPosition: "60% 30%", flexShrink: 0, border: "1.5px solid rgba(245,200,120,0.55)", boxShadow: "0 0 14px rgba(245,180,90,0.35)" }}
+              />
+            ) : (
+              <div style={{ width: 32, height: 32, borderRadius: "50%", background: "#a78bfa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "var(--font-display)", fontSize: 16, fontWeight: 700, color: "#060810", flexShrink: 0 }}>
+                {narrator.name.charAt(0)}
+              </div>
+            )}
             <div style={{
               fontFamily: useDyslexicFont ? "'OpenDyslexic', var(--font-body)" : "var(--font-body)",
               fontSize: "15px", color: "var(--text-secondary)", lineHeight: 1.8,

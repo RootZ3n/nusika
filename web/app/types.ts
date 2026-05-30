@@ -100,6 +100,10 @@ export interface AccessibilitySettings {
 export interface NarratorIdentity {
   id: string;
   name: string;
+  /** Formal name — shown only in the first greeting. "Peh" is used everywhere else. */
+  formal_name?: string;
+  /** Portrait asset path (served from web/public) used as the narrator's face. */
+  portrait?: string;
   role: string;
   personality: string;
   speech_pattern: string;
@@ -110,11 +114,13 @@ export interface NarratorIdentity {
 export const DEFAULT_NARRATOR: NarratorIdentity = {
   id: "peh",
   name: "Peh",
+  formal_name: "Pehlichi",
+  portrait: "/peh.png",
   role: "Nusika Narrator & Guide",
   personality: "",
   speech_pattern: "",
   greeting_idle:
-    "Welcome. I'm Peh. Take a look around — when something here calls to you, tell me and we'll begin.",
+    "Halito. I'm Pehlichi — your guide — though everyone just calls me Peh. Take a look around; when something here calls to you, tell me and we'll begin.",
   greeting_active: "You're back. Where would you like to pick up?",
 };
 
