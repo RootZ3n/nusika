@@ -122,28 +122,45 @@ export function sortVoiceOptions(voices: VoiceOption[]): VoiceOption[] {
 }
 
 /**
+ * Minimal localStorage shape, read off `globalThis.window`. Reaching `window`
+ * through `globalThis` (rather than the bare `window` global) keeps the module
+ * type-correct when a Node-side test imports it under the root tsconfig
+ * (lib: ES2022, no DOM) — without pulling the DOM lib into that program (which
+ * would re-type global fetch/Response) and without weakening type safety. The
+ * `window.localStorage` access contract (and SSR/locked-down safety) is unchanged.
+ */
+interface VoiceStorage {
+  getItem(key: string): string | null;
+  setItem(key: string, value: string): void;
+}
+function voiceStorage(): VoiceStorage | undefined {
+  return (globalThis as { window?: { localStorage?: VoiceStorage } }).window?.localStorage;
+}
+
+/**
  * Read a stored voice id. Safe across SSR and locked-down browsers
  * (returns null on any access failure).
  */
 export function readStoredVoiceId(key: string): string | null {
-  if (typeof window === "undefined") return null;
+  const ls = voiceStorage();
+  if (!ls) return null;
   try {
-    const val = window.localStorage.getItem(key);
+    const val = ls.getItem(key);
     if (val !== null) return val;
     const legacyKey = LEGACY_KEYS[key];
     if (legacyKey) {
-      const legacy = window.localStorage.getItem(legacyKey);
+      const legacy = ls.getItem(legacyKey);
       if (legacy !== null) {
-        window.localStorage.setItem(key, legacy);
+        ls.setItem(key, legacy);
         return legacy;
       }
     }
     const deepKeys = DEEP_LEGACY_KEYS[key];
     if (deepKeys) {
       for (const dk of deepKeys) {
-        const deep = window.localStorage.getItem(dk);
+        const deep = ls.getItem(dk);
         if (deep !== null) {
-          window.localStorage.setItem(key, deep);
+          ls.setItem(key, deep);
           return deep;
         }
       }
@@ -156,9 +173,10 @@ export function readStoredVoiceId(key: string): string | null {
 
 /** Persist a voice id. Safe across SSR and locked-down browsers (silent on failure). */
 export function writeStoredVoiceId(key: string, id: string): void {
-  if (typeof window === "undefined") return;
+  const ls = voiceStorage();
+  if (!ls) return;
   try {
-    window.localStorage.setItem(key, id);
+    ls.setItem(key, id);
   } catch {
     /* ignore quota/disabled-storage errors */
   }
