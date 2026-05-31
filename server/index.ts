@@ -4,8 +4,8 @@
  * Boots the SQLite layer, scans the curriculum directory to register every
  * subject module config, mounts all routes, and listens.
  *
- * Originally lived inside squidley-v2 as an experience module; extracted
- * to standalone in May 2026. Squidley calls this server over HTTP via
+ * Originally lived inside peh-v2 as an experience module; extracted
+ * to standalone in May 2026. Peh calls this server over HTTP via
  * NUSIKA_URL (default http://127.0.0.1:18793).
  */
 

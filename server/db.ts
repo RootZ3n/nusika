@@ -17,7 +17,7 @@
  *   - Adult mode is a tone context flag, not separate session logic
  * ============================================================
  *
- * Originally part of squidley-v2 at modules/experiences/magister/index.ts.
+ * Originally part of peh-v2 at modules/experiences/magister/index.ts.
  * Extracted to standalone in May 2026.
  */
 

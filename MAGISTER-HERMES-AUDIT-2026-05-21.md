@@ -9,7 +9,7 @@ Integration surfaces checked:
 - Standalone Magister API: `127.0.0.1:18793`
 - Kokoro voice service: `127.0.0.1:18794`
 - Magister web: `0.0.0.0:3003`
-- Squidley proxy bridge: `/mnt/ai/squidley-v2/apps/api/src/routes/magister.ts`
+- Peh proxy bridge: `/mnt/ai/peh-v2/apps/api/src/routes/magister.ts`
 - Systemd user units under `/home/zen/.config/systemd/user/`
 
 This audit did not intentionally mutate production Magister state. Runtime smoke used `MAGISTER_DB_PATH=/tmp/magister-audit-smoke.db`.
@@ -20,7 +20,7 @@ This audit did not intentionally mutate production Magister state. Runtime smoke
 
 Magister is much healthier than Cursus was at audit time. The codebase has real tests, real routes, a real SQLite persistence layer, a real standalone web UI, and a local-first voice direction that mostly matches your broader lab philosophy.
 
-But operationally, it is currently broken in the most user-visible way: the web frontend and Kokoro voice service are running, but the Magister API is dead. The web app loads; the brain behind it is unreachable. Squidley’s bridge also fails because it points to the dead API.
+But operationally, it is currently broken in the most user-visible way: the web frontend and Kokoro voice service are running, but the Magister API is dead. The web app loads; the brain behind it is unreachable. Peh’s bridge also fails because it points to the dead API.
 
 So the honest state is:
 
@@ -57,7 +57,7 @@ So the honest state is:
 - Web Teach page: `/mnt/ai/magister/web/app/teach/page.tsx`
 - Web DM page: `/mnt/ai/magister/web/app/dm/page.tsx`
 - Web proxy: `/mnt/ai/magister/web/app/api/proxy/[...path]/route.ts`
-- Squidley proxy: `/mnt/ai/squidley-v2/apps/api/src/routes/magister.ts`
+- Peh proxy: `/mnt/ai/peh-v2/apps/api/src/routes/magister.ts`
 
 ### Tests / builds
 
@@ -100,7 +100,7 @@ Ports checked:
 
 - `127.0.0.1:18794`: Kokoro running via uvicorn
 - `0.0.0.0:3003`: Next web running
-- `0.0.0.0:18791`: Squidley API running
+- `0.0.0.0:18791`: Peh API running
 - `127.0.0.1:18793`: **not listening**
 
 Systemd user status:
@@ -126,7 +126,7 @@ Web proxy result:
 {"error":"Magister API unreachable","detail":"TypeError: fetch failed","url":"http://127.0.0.1:18793/magister/health"}
 ```
 
-Squidley bridge result:
+Peh bridge result:
 
 ```json
 {
@@ -269,7 +269,7 @@ Evidence:
 - port `18793`: not listening
 - `/health`: connection refused
 - web proxy: API unreachable
-- Squidley proxy: `magister_unavailable`
+- Peh proxy: `magister_unavailable`
 - `npm run service:health`: fails required API check
 
 This means Magister currently presents a working-looking web page while its backend is offline.
@@ -302,11 +302,11 @@ For a user, that means:
 
 This is the classic “frontend shell, backend corpse” failure mode.
 
-### 4. Squidley bridge is not useful until API reliability is fixed
+### 4. Peh bridge is not useful until API reliability is fixed
 
-Squidley proxy code exists and returns structured failure, which is good. But operationally it is dead because Magister API is dead.
+Peh proxy code exists and returns structured failure, which is good. But operationally it is dead because Magister API is dead.
 
-Also the Squidley proxy message says:
+Also the Peh proxy message says:
 
 ```text
 Start it with: cd /mnt/ai/magister && pnpm start
@@ -627,7 +627,7 @@ PASS Kokoro
 ```
 
 3. Add a visible web health banner when API is unreachable.
-4. Fix stale Squidley bridge startup message from `pnpm start` to `npm start` or better: `systemctl --user start magister-api`.
+4. Fix stale Peh bridge startup message from `pnpm start` to `npm start` or better: `systemctl --user start magister-api`.
 
 ### P1 — Checkpoint repo state
 
@@ -726,7 +726,7 @@ Do not build analytics before real progress data exists.
 - Restart/fix API service.
 - Confirm `npm run service:health` passes.
 - Confirm web proxy can hit `/magister/health`.
-- Confirm Squidley bridge can hit `/magister/modules`.
+- Confirm Peh bridge can hit `/magister/modules`.
 - Add UI-visible API failure state.
 
 ### Must do before daily use

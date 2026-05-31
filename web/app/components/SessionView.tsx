@@ -295,7 +295,7 @@ export function SessionView(props: SessionViewProps) {
           <div style={{ fontFamily: "var(--font-body)", fontSize: 14, color: "var(--text-muted)" }}>{mod?.name ?? props.practiceModuleId}</div>
           <button onClick={() => {
             // TODO(nusika-standalone): Practice transcripts used to be saved to
-            // squidley's Archivum (POST /archivum/paste) on session end. The
+            // peh's Archivum (POST /archivum/paste) on session end. The
             // standalone has /nusika/creative for module-scoped works but no
             // generalized Archivum yet. For now the transcript is dropped on exit
             // — wire to /nusika/creative/<moduleId> once we agree on schema.

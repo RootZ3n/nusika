@@ -2,7 +2,7 @@
 
 Adaptive learning engine — companion-driven teaching, spaced repetition, mastery spine, creative portfolio. Peh is the central narrator.
 
-> Status: **0.1.0 standalone**. Extracted from squidley-v2 in May 2026 and now runs on its own. All listed routes are wired; voice TTS/STT need their local binaries installed to actually run, and any LLM-backed route returns 502 when no provider is configured.
+> Status: **0.1.0 standalone**. Extracted from peh-v2 in May 2026 and now runs on its own. All listed routes are wired; voice TTS/STT need their local binaries installed to actually run, and any LLM-backed route returns 502 when no provider is configured.
 
 ## What it is
 
@@ -228,7 +228,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 
 ## Status
 
-Magister is the extraction of `/mnt/ai/squidley-v2/modules/experiences/magister/`. Shipped in this standalone:
+Magister is the extraction of `/mnt/ai/peh-v2/modules/experiences/magister/`. Shipped in this standalone:
 
 - DB layer (sessions, modules, progress, memory, creative, lessons, DM campaigns/characters/events, curriculum scanner)
 - Module / session / progress / memory / creative / config / translate / chat routes

@@ -70,17 +70,17 @@
       "id": "vocabulary-roots",
       "name": "Vocabulary & English Derivatives",
       "weight": 0.25,
-      "teaching_rule": "Every Latin word must be connected to its English descendants AND to Squidley module names where applicable. Examples: archivum (archive, Archivum module), memoria (memory, Memoria module), cursus (course/path, Cursus module), legatus (delegate/ambassador, Legatus module), augur (diviner, Augury module), velum (veil/sail, Velum module), animus (mind/soul, Animus module), oculus (eye, Oculus module), nous (mind, Nous module), tabularium (records office, Tabularium module), fabrica (workshop, Fabrica module). This connection makes vocabulary stick because the learner already uses these words daily.",
+      "teaching_rule": "Every Latin word must be connected to its English descendants AND to Peh module names where applicable. Examples: archivum (archive, Archivum module), memoria (memory, Memoria module), cursus (course/path, Cursus module), legatus (delegate/ambassador, Legatus module), augur (diviner, Augury module), velum (veil/sail, Velum module), animus (mind/soul, Animus module), oculus (eye, Oculus module), nous (mind, Nous module), tabularium (records office, Tabularium module), fabrica (workshop, Fabrica module). This connection makes vocabulary stick because the learner already uses these words daily.",
       "concepts": [
         "High-frequency vocabulary — top 200 Latin words by text frequency",
         "Latin roots in English — how knowing Latin unlocks thousands of English words",
-        "Squidley module names as vocabulary anchors (archivum, memoria, cursus, legatus, augur, etc.)",
+        "Peh module names as vocabulary anchors (archivum, memoria, cursus, legatus, augur, etc.)",
         "Prefixes and suffixes — dis-, re-, -tion, -ment, -able and their Latin origins",
         "Semantic fields — military, legal, political, domestic, religious vocabulary",
         "False friends — Latin words that look like English words but mean something different",
         "Compounds and word formation — how Latin builds complex words from simple roots"
       ],
-      "mastery_signal": "Can encounter an unfamiliar English word, identify its Latin root, predict its meaning, and use the root to recall related Latin vocabulary — treating every Squidley module name as a known anchor"
+      "mastery_signal": "Can encounter an unfamiliar English word, identify its Latin root, predict its meaning, and use the root to recall related Latin vocabulary — treating every Peh module name as a known anchor"
     },
     {
       "id": "reading-comprehension",
@@ -97,7 +97,7 @@
       "mastery_signal": "Can read an adapted passage of Caesar or Cicero, parse the grammar without a dictionary for known vocabulary, and explain the meaning in natural English — not word-by-word translation"
     }
   ],
-  "real_world_application": "Read Latin inscriptions, legal phrases, and scientific terminology with comprehension. Understand the etymological roots of English vocabulary. Connect daily Squidley module usage to classical language origins.",
+  "real_world_application": "Read Latin inscriptions, legal phrases, and scientific terminology with comprehension. Understand the etymological roots of English vocabulary. Connect daily Peh module usage to classical language origins.",
   "exam_target": null,
   "exam_codes": null,
   "estimated_hours": 80,

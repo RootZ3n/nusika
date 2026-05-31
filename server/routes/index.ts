@@ -20,7 +20,7 @@ import { registerChahtaAnumpaRoutes } from "./chahta-anumpa.js";
 
 /**
  * Single source of truth for HTTP route registration.
- * Mirrors the squidley-v2 routes/index.ts pattern: every mount happens here,
+ * Mirrors the peh-v2 routes/index.ts pattern: every mount happens here,
  * nowhere else. Add a new route file? Add an import + a call below.
  */
 export async function registerAllRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {

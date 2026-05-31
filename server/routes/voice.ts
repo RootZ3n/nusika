@@ -1,9 +1,9 @@
 /**
  * Voice routes — TTS (Piper, ElevenLabs) and STT (whisper.cpp).
  *
- * Direct port of the squidley-v2 implementation in apps/api/src/routes/chat.ts
+ * Direct port of the peh-v2 implementation in apps/api/src/routes/chat.ts
  * (~lines 4683-4995). The original code shells out to local binaries with
- * no squidley-specific deps beyond paths + receipts, so the port is largely
+ * no peh-specific deps beyond paths + receipts, so the port is largely
  * a copy with paths and receipts swapped for the nusika equivalents.
  */
 

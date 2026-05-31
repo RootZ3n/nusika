@@ -5,7 +5,7 @@ import { resolve, normalize } from "node:path";
  * then verifies the resolved absolute path is still inside `dir`. Throws
  * a descriptive Error if not — caller should map to a 403.
  *
- * Vendored from squidley-v2/apps/api/src/lib/safe-serve-file.ts. Kept
+ * Vendored from peh-v2/apps/api/src/lib/safe-serve-file.ts. Kept
  * minimal — no fs access, just path math.
  */
 export function safeServeFile(dir: string, filename: string): string {

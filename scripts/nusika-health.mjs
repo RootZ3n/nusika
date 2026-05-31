@@ -7,8 +7,8 @@
  *   - Web           http://127.0.0.1:3003/                 (required)
  *   - Web→API proxy http://127.0.0.1:3003/api/proxy/...    (required)
  *   - Kokoro        http://127.0.0.1:18794/health          (optional)
- *   - Squidley      http://127.0.0.1:18791/nusika/modules (optional, only
- *                   probed if Squidley API is actually listening)
+ *   - Peh      http://127.0.0.1:18791/nusika/modules (optional, only
+ *                   probed if Peh API is actually listening)
  *
  * Then, if `tailscale` is on the PATH, prints the Tailscale URL
  * candidate (`http://<tailscale-ip>:3003`) and probes it too.
@@ -111,37 +111,37 @@ async function isPortListening(host, port) {
   });
 }
 
-async function probeSquidley() {
-  // Only probe if Squidley is actually listening — this script must work
-  // on machines that don't run Squidley at all.
+async function probePeh() {
+  // Only probe if Peh is actually listening — this script must work
+  // on machines that don't run Peh at all.
   const up = await isPortListening("127.0.0.1", 18791);
   if (!up) {
-    console.log("[health] INFO Squidley API not listening on 127.0.0.1:18791 — skipping bridge probe.");
+    console.log("[health] INFO Peh API not listening on 127.0.0.1:18791 — skipping bridge probe.");
     return;
   }
   const url = "http://127.0.0.1:18791/nusika/modules";
   try {
     const res = await fetch(url, { signal: AbortSignal.timeout(TIMEOUT_MS) });
     if (!res.ok) {
-      console.log(`[health] FAIL Squidley ${url} — HTTP ${res.status} (bridge probe, informational)`);
+      console.log(`[health] FAIL Peh ${url} — HTTP ${res.status} (bridge probe, informational)`);
       return;
     }
     const data = await res.json().catch(() => null);
     if (data && data.ok === true) {
-      console.log(`[health] PASS Squidley ${url} (bridge to Nusika works)`);
+      console.log(`[health] PASS Peh ${url} (bridge to Nusika works)`);
     } else {
-      console.log(`[health] FAIL Squidley ${url} — payload not ok (informational)`);
+      console.log(`[health] FAIL Peh ${url} — payload not ok (informational)`);
     }
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
-    console.log(`[health] FAIL Squidley ${url} — ${msg} (informational)`);
+    console.log(`[health] FAIL Peh ${url} — ${msg} (informational)`);
   }
 }
 
 for (const t of targets) {
   await probe(t);
 }
-await probeSquidley();
+await probePeh();
 await probeTailscale();
 
 if (failures > 0) {

@@ -2,7 +2,7 @@
  * Nusika Web — API Proxy
  *
  * Server-side proxy so the browser never directly hits the Nusika API
- * (cleaner CORS story, plus consistent with how the original squidley
+ * (cleaner CORS story, plus consistent with how the original peh
  * webapp shipped). All non-hop-by-hop headers are forwarded; binary +
  * multipart bodies pass through unmodified.
  *

@@ -23,8 +23,8 @@ export interface Receipt {
  * (default <state>/receipts). Failures log but never throw — receipt writes
  * must not break the request path.
  *
- * Mirrors the squidley-v2 receipt shape so logs are interchangeable when
- * nusika calls are aggregated alongside squidley calls.
+ * Mirrors the peh-v2 receipt shape so logs are interchangeable when
+ * nusika calls are aggregated alongside peh calls.
  */
 export async function writeReceipt(input: Receipt): Promise<string | null> {
   const id = randomUUID();
