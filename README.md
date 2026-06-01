@@ -141,13 +141,14 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > friendly `{ ok:false, error, detail }` body — no Python tracebacks, no
 > raw stderr.
 >
-> An optional **Kokoro 82M** voice sub-service lives in
-> [`voices/kokoro/`](voices/kokoro/README.md). It runs as a separate
+> The **Kokoro 82M** voice service (`nusika-voice`) lives in
+> [`voice/`](voice/README.md) — Nusika owns it. It runs as a separate
 > Python process on `127.0.0.1:18794`. Nusika dispatches `POST
 > /nusika/tts` to Kokoro when a resolved voice profile has
-> `engine: "kokoro"`. The near-term runtime posture (manual start
-> via `voices/kokoro/start.sh`, honest degradation when down,
-> optional systemd unit) is documented in
+> `engine: "kokoro"`. Runtime posture (start via
+> `voice/start.sh`, honest degradation when down, the
+> `voice/systemd/nusika-voice.service` unit) is documented in
+> [`voice/README.md`](voice/README.md). Legacy notes in
 > [`docs/MAGISTER_KOKORO_RUNTIME.md`](docs/MAGISTER_KOKORO_RUNTIME.md). **Slice 6E assigned Kokoro voices to Peh and
 > all 26 curriculum companions**, so any companion-targeted call now
 > reaches Kokoro by default (when the service is running). Piper is
@@ -301,7 +302,7 @@ cd web && npm run build && cd ..
 
 # provision the Kokoro venv once (don't keep using start.sh in the unit;
 # it pip-installs on every boot):
-voices/kokoro/start.sh   # ^C after it prints "starting on 127.0.0.1:18794"
+voice/start.sh   # ^C after it prints "starting on 127.0.0.1:18794"
 
 # install user units into ~/.config/systemd/user/ and daemon-reload:
 npm run service:install
