@@ -167,7 +167,7 @@ export async function kokoroGenerate(input: KokoroGenerateInput): Promise<Buffer
 
   // Merge caller signal with timeout signal.
   const timeoutSignal = AbortSignal.timeout(timeoutMs);
-  const signal = input.signal ? anySignal([input.signal, timeoutSignal]) : timeoutSignal;
+  const signal = input.signal ? AbortSignal.any([input.signal, timeoutSignal]) : timeoutSignal;
 
   let res: Response;
   try {
@@ -223,21 +223,4 @@ function kokoroError(input: { message: string; detail?: string; status?: number;
   return err;
 }
 
-/**
- * Combine multiple AbortSignals into one. Aborts as soon as any input
- * aborts. Tiny ponyfill for AbortSignal.any (which is Node 20+).
- */
-function anySignal(signals: AbortSignal[]): AbortSignal {
-  if (typeof (AbortSignal as unknown as { any?: (s: AbortSignal[]) => AbortSignal }).any === "function") {
-    return (AbortSignal as unknown as { any: (s: AbortSignal[]) => AbortSignal }).any(signals);
-  }
-  const ctrl = new AbortController();
-  for (const s of signals) {
-    if (s.aborted) {
-      ctrl.abort(s.reason);
-      return ctrl.signal;
-    }
-    s.addEventListener("abort", () => ctrl.abort(s.reason), { once: true });
-  }
-  return ctrl.signal;
-}
+// anySignal ponyfill removed — Node 20+ has AbortSignal.any() built-in. (Audit M3.)
