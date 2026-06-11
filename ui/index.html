@@ -54,7 +54,7 @@ const state={
 const PRODUCT_REGISTRY=[
   {id:'nusika', displayName:'The Academy', tagline:'Knowledge earned, not given',
    status:'public', order:6, accent:'#059669', accent2:'#7c3aed',
-   peh:'book', defaultScene:'reading-room',
+   peh:'book', defaultScene:'main-gate',
    mascotArt:'assets/peh-nusika.png',
    blurb:'Nusika teaches — adaptive learning, spaced repetition, mastery through practice.'}
 ];
@@ -62,60 +62,75 @@ const PRODUCT_REGISTRY=[
 const PEH_DEFAULT_PRODUCT='nusika';
 
 // ── SceneRegistry ──────────────────────────────────────────────────────
-// Six locations in the Academy — each is an AREA inside Nusika.
+// Eight locations in the Academy — each is a labeled room from the world map.
 const SCENE_REGISTRY={
   nusika:[
-    {id:'reading-room', title:'The Reading Room', purpose:'Hub / overview', route:'/reading-room',
-     desc:'Where every lesson begins. Shelves of knowledge, a warm lamp, and all the time in the world.', peh:'book',
+    {id:'main-gate', title:'Main Gate', purpose:'Entry & hub', route:'/main-gate',
+     desc:'The entrance to Nusika. Every learner passes through these gates — the journey begins here.', peh:'book',
+     pehSlot:{x:50, y:48, anchor:'center', variant:'gatekeeper'}, hotspots:[
+      {id:'mg-overview',   label:'Learning Overview',      x:50, y:38, workspace:'learning-overview', greeting:"Welcome to the Academy! I'm Nusika — pull up the overview and let's see where you stand."},
+      {id:'mg-grand-hall', label:'The Grand Hall',         x:50, y:22, scene:'grand-hall',            greeting:"The Grand Hall — the heart of the Academy. Let's head in."},
+      {id:'mg-reading',    label:'The Reading Room',       x:22, y:28, scene:'reading-room',           greeting:"The Reading Room — quiet study and deep understanding."},
+      {id:'mg-archives',   label:'The Archives',           x:78, y:28, scene:'archives',               greeting:"The Archives — every record, every milestone, safely kept."},
+      {id:'mg-rare-books', label:'The Rare Books Wing',    x:14, y:50, scene:'rare-books-wing',        greeting:"The Rare Books Wing — valuable literature and curated knowledge."},
+      {id:'mg-scriptorium',label:'The Scriptorium',        x:86, y:50, scene:'scriptorium',            greeting:"The Scriptorium — where knowledge is practiced and written."},
+      {id:'mg-lecture',    label:'The Lecture Hall',       x:26, y:78, scene:'lecture-hall',            greeting:"The Lecture Hall — lessons delivered, questions asked, understanding built."},
+      {id:'mg-correspond', label:'The Correspondence Chamber', x:74, y:78, scene:'correspondence-chamber', greeting:"The Correspondence Chamber — communication, reflection, and growth."}
+    ]},
+    {id:'grand-hall', title:'The Grand Hall', purpose:'Central gathering & administration', route:'/grand-hall',
+     desc:'The domed heart of the Academy. A grand space for gatherings, ceremonies, and the pulse of all learning.', peh:'spark',
+     pehSlot:{x:50, y:55, anchor:'center', variant:'steward'}, hotspots:[
+      {id:'gh-overview', label:'Academy Overview',          x:50, y:40, workspace:'learning-overview', greeting:"The Grand Hall — from here you can survey the entire Academy."},
+      {id:'gh-hub',      label:'Back to Main Gate',         x:50, y:85, scene:'main-gate',             greeting:"Back to the Main Gate — follow me!"}
+    ]},
+    {id:'reading-room', title:'The Reading Room', purpose:'Deep study & mastery', route:'/reading-room',
+     desc:'Quiet alcoves, tall shelves, and focused study. This is where understanding goes from surface to core.', peh:'orbit',
      pehSlot:{x:50, y:52, anchor:'center', variant:'librarian'}, hotspots:[
-      {id:'rr-overview', label:'Learning Overview',    x:50, y:44, workspace:'learning-overview', greeting:"Welcome to the Reading Room. Pull up a chair — every lesson begins with curiosity."},
-      {id:'rr-classroom', label:'The Classroom',       x:22, y:40, scene:'classroom',              greeting:"Step into the Classroom — this is where we break down big ideas."},
-      {id:'rr-practice',  label:'The Practice Hall',   x:78, y:34, scene:'practice-hall',           greeting:"The Practice Hall — repetition is how knowledge becomes instinct."},
-      {id:'rr-gallery',   label:'The Gallery',         x:18, y:66, scene:'gallery',                 greeting:"The Gallery — everything you've built, displayed for the world to see."},
-      {id:'rr-study',     label:'The Study',           x:82, y:62, scene:'study',                   greeting:"The Study — quiet, focused. This is where we go deep."},
-      {id:'rr-garden',    label:'The Garden of Growth',x:50, y:80, scene:'garden',                  greeting:"The Garden — where we check what's taken root and what still needs tending."}
+      {id:'rr-mastery', label:'Mastery Spine Workspace',   x:50, y:40, workspace:'mastery-spine',  greeting:"The Reading Room — quiet, focused. This is where we go deep, past the surface into real understanding."},
+      {id:'rr-hub',     label:'Back to Main Gate',          x:50, y:85, scene:'main-gate',          greeting:"Back to the Main Gate — follow me!"}
     ]},
-    {id:'classroom', title:'The Classroom', purpose:'Active learning', route:'/classroom',
-     desc:'Active learning. Lessons delivered, questions asked, understanding built one step at a time.', peh:'spark',
-     pehSlot:{x:50, y:60, anchor:'center', variant:'teacher'}, hotspots:[
-      {id:'cl-lessons', label:'Lessons Workspace',        x:44, y:50, workspace:'lessons',          greeting:"Let's break it down together — every concept gets its own moment here."},
-      {id:'cl-hub',     label:'Back to the Reading Room', x:82, y:78, scene:'reading-room',         greeting:"Back to the Reading Room — follow me!"}
+    {id:'archives', title:'The Archives', purpose:'Records, vaults & assessment', route:'/archives',
+     desc:'Rows of sealed vaults and indexed records. Every milestone, every score, every growth record is kept here.', peh:'leaf',
+     pehSlot:{x:50, y:55, anchor:'center', variant:'archivist'}, hotspots:[
+      {id:'ar-assessment', label:'Assessment Workspace',   x:50, y:40, workspace:'assessment',    greeting:"The Archives — where we check what's recorded, what's grown, and what still needs tending."},
+      {id:'ar-hub',        label:'Back to Main Gate',       x:50, y:85, scene:'main-gate',         greeting:"Back to the Main Gate — follow me!"}
     ]},
-    {id:'practice-hall', title:'The Practice Hall', purpose:'Spaced repetition & drills', route:'/practice-hall',
-     desc:'Repetition until it sticks. Spaced practice, mastery drills, knowledge under pressure.', peh:'tools',
-     pehSlot:{x:50, y:58, anchor:'center', variant:'coach'}, hotspots:[
-      {id:'ph-practice', label:'Practice Workspace',       x:46, y:50, workspace:'practice-drills', greeting:"The Practice Hall — repetition is how knowledge becomes instinct. Let's drill."},
-      {id:'ph-hub',      label:'Back to the Reading Room', x:82, y:78, scene:'reading-room',        greeting:"Back to the Reading Room — follow me!"}
+    {id:'rare-books-wing', title:'The Rare Books Wing', purpose:'Valuable literature & creative portfolio', route:'/rare-books-wing',
+     desc:'Illuminated manuscripts, first editions, and treasured works. Your creative portfolio lives among the rarest knowledge.', peh:'star',
+     pehSlot:{x:50, y:55, anchor:'center', variant:'curator'}, hotspots:[
+      {id:'rb-portfolio', label:'Portfolio Workspace',     x:50, y:40, workspace:'portfolio',     greeting:"The Rare Books Wing — everything you've created, displayed among the treasures. Take pride in it."},
+      {id:'rb-hub',       label:'Back to Main Gate',       x:50, y:85, scene:'main-gate',         greeting:"Back to the Main Gate — follow me!"}
     ]},
-    {id:'gallery', title:'The Gallery', purpose:'Creative portfolio', route:'/gallery',
-     desc:"What you've created on display. A creative portfolio, curated and proud.", peh:'star',
-     pehSlot:{x:48, y:58, anchor:'center', variant:'curator'}, hotspots:[
-      {id:'ga-portfolio', label:'Portfolio Workspace',      x:46, y:50, workspace:'portfolio',       greeting:"The Gallery — everything you've built, displayed for the world to see. Take pride in it."},
-      {id:'ga-hub',       label:'Back to the Reading Room', x:82, y:78, scene:'reading-room',        greeting:"Back to the Reading Room — follow me!"}
+    {id:'scriptorium', title:'The Scriptorium', purpose:'Writing, practice & drills', route:'/scriptorium',
+     desc:'Ink, parchment, and the steady hand of practice. This is where repetition turns knowledge into instinct.', peh:'tools',
+     pehSlot:{x:50, y:55, anchor:'center', variant:'scribe'}, hotspots:[
+      {id:'sc-practice', label:'Practice Workspace',       x:50, y:40, workspace:'practice-drills', greeting:"The Scriptorium — repetition is how knowledge becomes instinct. Let's drill."},
+      {id:'sc-hub',      label:'Back to Main Gate',         x:50, y:85, scene:'main-gate',           greeting:"Back to the Main Gate — follow me!"}
     ]},
-    {id:'study', title:'The Study', purpose:'Mastery spine — deep understanding', route:'/study',
-     desc:'Deep focus. The mastery spine — where understanding goes from surface to core.', peh:'orbit',
-     pehSlot:{x:52, y:58, anchor:'center', variant:'scholar'}, hotspots:[
-      {id:'st-mastery', label:'Mastery Spine Workspace',   x:46, y:50, workspace:'mastery-spine',  greeting:"The Study — quiet, focused. This is where we go deep, past the surface into real understanding."},
-      {id:'st-hub',     label:'Back to the Reading Room',   x:82, y:78, scene:'reading-room',       greeting:"Back to the Reading Room — follow me!"}
+    {id:'lecture-hall', title:'The Lecture Hall', purpose:'Teaching & active learning', route:'/lecture-hall',
+     desc:'An amphitheater of ideas. Lessons delivered, questions asked, understanding built one step at a time.', peh:'spark',
+     pehSlot:{x:50, y:55, anchor:'center', variant:'teacher'}, hotspots:[
+      {id:'lh-lessons', label:'Lessons Workspace',         x:50, y:40, workspace:'lessons',        greeting:"The Lecture Hall — let's break it down together. Every concept gets its own moment here."},
+      {id:'lh-hub',     label:'Back to Main Gate',          x:50, y:85, scene:'main-gate',          greeting:"Back to the Main Gate — follow me!"}
     ]},
-    {id:'garden', title:'The Garden of Growth', purpose:'Assessment & reflection', route:'/garden',
-     desc:'Where learning blooms. Assessment, reflection, and watching knowledge take root.', peh:'leaf',
-     pehSlot:{x:50, y:60, anchor:'center', variant:'gardener'}, hotspots:[
-      {id:'gd-assessment', label:'Assessment Workspace',    x:46, y:50, workspace:'assessment',     greeting:"The Garden — where we check what's taken root and what still needs tending."},
-      {id:'gd-hub',        label:'Back to the Reading Room', x:82, y:78, scene:'reading-room',      greeting:"Back to the Reading Room — follow me!"}
+    {id:'correspondence-chamber', title:'The Correspondence Chamber', purpose:'Communication & reflection', route:'/correspondence-chamber',
+     desc:'Letters, messages, and reflective correspondence. A place to communicate what you have learned and where you are growing.', peh:'pencil',
+     pehSlot:{x:50, y:55, anchor:'center', variant:'correspondent'}, hotspots:[
+      {id:'cc-correspond', label:'Correspondence Workspace', x:50, y:40, workspace:'correspondence', greeting:"The Correspondence Chamber — reflect, write, and communicate your journey."},
+      {id:'cc-hub',        label:'Back to Main Gate',         x:50, y:85, scene:'main-gate',          greeting:"Back to the Main Gate — follow me!"}
     ]}
   ]
 };
 
 // ── WorkspaceManager: definitions ──────────────────────────────────────
 const WORKSPACE_REGISTRY={
-  'learning-overview':{product:'nusika', title:'Learning Overview', kind:'deck', route:'/reading-room', dock:'fullscreen', peh:'book'},
-  'lessons':          {product:'nusika', title:'Lessons',           kind:'placeholder', route:'/classroom', dock:'right', peh:'spark', relatedTab:'lessons', blurb:'Lessons panel coming soon — active lessons, curriculum delivery, and guided learning will live here.'},
-  'practice-drills':  {product:'nusika', title:'Practice & Drills', kind:'placeholder', route:'/practice-hall', dock:'right', peh:'tools', relatedTab:'practice', blurb:'Practice panel coming soon — spaced repetition, mastery drills, and knowledge under pressure.'},
-  'portfolio':        {product:'nusika', title:'Creative Portfolio', kind:'placeholder', route:'/gallery', dock:'right', peh:'star', relatedTab:'portfolio', blurb:'Portfolio panel coming soon — your creative work, curated and displayed.'},
-  'mastery-spine':    {product:'nusika', title:'Mastery Spine',     kind:'placeholder', route:'/study', dock:'right', peh:'orbit', relatedTab:'mastery', blurb:'Mastery Spine coming soon — deep understanding tracking from surface to core.'},
-  'assessment':       {product:'nusika', title:'Assessment',        kind:'placeholder', route:'/garden', dock:'bottom', peh:'leaf', relatedTab:'overview', blurb:'Assessment panel coming soon — reflection, growth tracking, and knowledge that takes root.'}
+  'learning-overview':{product:'nusika', title:'Learning Overview', kind:'deck', route:'/main-gate', dock:'fullscreen', peh:'book'},
+  'lessons':          {product:'nusika', title:'Lessons',           kind:'placeholder', route:'/lecture-hall', dock:'right', peh:'spark', relatedTab:'lessons', blurb:'Lessons panel coming soon — active lessons, curriculum delivery, and guided learning will live here.'},
+  'practice-drills':  {product:'nusika', title:'Practice & Drills', kind:'placeholder', route:'/scriptorium', dock:'right', peh:'tools', relatedTab:'practice', blurb:'Practice panel coming soon — spaced repetition, mastery drills, and knowledge under pressure.'},
+  'portfolio':        {product:'nusika', title:'Creative Portfolio', kind:'placeholder', route:'/rare-books-wing', dock:'right', peh:'star', relatedTab:'portfolio', blurb:'Portfolio panel coming soon — your creative work, curated and displayed among the rarest treasures.'},
+  'mastery-spine':    {product:'nusika', title:'Mastery Spine',     kind:'placeholder', route:'/reading-room', dock:'right', peh:'orbit', relatedTab:'mastery', blurb:'Mastery Spine coming soon — deep understanding tracking from surface to core.'},
+  'assessment':       {product:'nusika', title:'Assessment',        kind:'placeholder', route:'/archives', dock:'bottom', peh:'leaf', relatedTab:'overview', blurb:'Assessment panel coming soon — records, growth tracking, and milestones safely archived.'},
+  'correspondence':   {product:'nusika', title:'Correspondence',    kind:'placeholder', route:'/correspondence-chamber', dock:'right', peh:'pencil', relatedTab:'overview', blurb:'Correspondence panel coming soon — reflective writing, communication, and documenting your learning journey.'}
 };
 
 // ── Registry lookups ───────────────────────────────────────────────────
@@ -605,23 +620,24 @@ const NUSIKA_WISDOMS=[
   'Practice makes permanent, not just perfect',
   'A page turned is a lesson earned',
   'Growth begins at the edge of comfort',
-  'The best teachers never stop learning'
+  'The best teachers never stop learning',
+  'Every room in the Academy holds a different kind of wisdom'
 ];
 function renderAcademyConsole(){
   const cards=[
-    {ws:'lessons',         scene:'classroom',     glyph:'spark',  title:'Lessons',            desc:'Active learning — lessons delivered, questions asked, understanding built.'},
-    {ws:'practice-drills', scene:'practice-hall',  glyph:'tools',  title:'Practice & Drills',  desc:'Spaced repetition and mastery drills — repetition until it sticks.'},
-    {ws:'portfolio',       scene:'gallery',        glyph:'star',   title:'Creative Portfolio',  desc:"What you've created on display — curated and proud."},
-    {ws:'mastery-spine',   scene:'study',          glyph:'orbit',  title:'Mastery Spine',       desc:'Deep understanding — from surface knowledge to core mastery.'},
-    {ws:'assessment',      scene:'garden',         glyph:'leaf',   title:'Garden of Growth',    desc:'Assessment, reflection, and watching knowledge take root.'},
-    {ws:null,              scene:'reading-room',   glyph:'book',   title:'The Reading Room',    desc:"Where every lesson begins — shelves of knowledge, a warm lamp, and time."}
+    {ws:'lessons',         scene:'lecture-hall',           glyph:'spark',    title:'The Lecture Hall',           desc:'Lessons delivered, questions asked, understanding built — the amphitheater of ideas.'},
+    {ws:'practice-drills', scene:'scriptorium',             glyph:'tools',    title:'The Scriptorium',            desc:'Writing, practice, and drills — repetition turns knowledge into instinct.'},
+    {ws:'portfolio',       scene:'rare-books-wing',         glyph:'star',     title:'The Rare Books Wing',        desc:'Valuable literature and your creative portfolio — curated and treasured.'},
+    {ws:'mastery-spine',   scene:'reading-room',            glyph:'orbit',    title:'The Reading Room',           desc:'Deep study and mastery — where understanding goes from surface to core.'},
+    {ws:'assessment',      scene:'archives',                glyph:'leaf',     title:'The Archives',              desc:'Records, vaults, and milestones — every growth record safely kept.'},
+    {ws:'correspondence',  scene:'correspondence-chamber',  glyph:'pencil',   title:'The Correspondence Chamber', desc:'Communication, reflection, and documenting your learning journey.'}
   ];
   return `<div class="nus-console">
     <div class="nus-hero">
       <span class="nus-hero-mark" aria-hidden="true">📚</span>
       <div>
-        <h2>Welcome to the Reading Room</h2>
-        <p>I'm Nusika — your adaptive learning companion. I teach through practice, spaced repetition, and mastery. Every room in this Academy has something to offer. Pick a path below, or tap a place on the map.</p>
+        <h2>Welcome to the Academy</h2>
+        <p>I'm Nusika — your adaptive learning companion. I teach through practice, spaced repetition, and mastery. Eight rooms, each holding a different kind of knowledge. Pick a path below, or tap a place on the map.</p>
       </div>
     </div>
     <h3 class="nus-section-title">Academy rooms</h3>
