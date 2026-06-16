@@ -40,28 +40,36 @@ nusika/
 └── state/               Local DB + receipts + uploads (gitignored)
 ```
 
-## Run
+## Quick Start
+
+### Prerequisites
+
+- Node.js 20 or newer
+- pnpm
+- Git
+
+### Run
 
 ```bash
 cp .env.example .env       # adjust if needed
-npm install
-npm run dev                # tsx watch
+pnpm install
+pnpm run dev                # tsx watch
 # or
-npm run build && npm run start:dist
+pnpm run build && pnpm run start:dist
 ```
 
 Listens on `NUSIKA_HOST:NUSIKA_PORT` (default `127.0.0.1:18793`).
 
 | Script | Purpose |
 |---|---|
-| `npm run dev` | tsx watch on `server/index.ts` — primary dev path |
-| `npm start` | tsx one-shot (no watch) |
-| `npm run build` | emit `dist/` (TypeScript build) |
-| `npm run start:dist` | run the built server (`node dist/server/index.js`) |
-| `npm run typecheck` | server type checking |
-| `npm test` | node:test under `test/` and any `*.test.ts` next to source |
-| `npm run smoke` | spawn the server, probe `/health` + `/nusika/modules`, tear down |
-| `cd web && npm run test:e2e` | Boot dist API + `next start`, fetch `/`, `/teach`, `/dm` HTML, probe `/api/proxy/nusika/lookup`. Pure-Node, no browsers. Requires both `npm run build` and `cd web && npm run build` first. |
+| `pnpm run dev` | tsx watch on `server/index.ts` — primary dev path |
+| `pnpm start` | tsx one-shot (no watch) |
+| `pnpm run build` | emit `dist/` (TypeScript build) |
+| `pnpm run start:dist` | run the built server (`node dist/server/index.js`) |
+| `pnpm run typecheck` | server type checking |
+| `pnpm test` | node:test under `test/` and any `*.test.ts` next to source |
+| `pnpm run smoke` | spawn the server, probe `/health` + `/nusika/modules`, tear down |
+| `cd web && pnpm run test:e2e` | Boot dist API + `next start`, fetch `/`, `/teach`, `/dm` HTML, probe `/api/proxy/nusika/lookup`. Pure-Node, no browsers. Requires both `pnpm run build` and `cd web && pnpm run build` first. |
 
 The built server (`start:dist`) and the dev server both resolve the project root by walking up from `server/lib/paths.ts` until they find `package.json` + `curriculum/`. Set `NUSIKA_PROJECT_ROOT` to override.
 
@@ -245,23 +253,23 @@ Nusika was extracted from a larger project and now runs standalone. Shipped in t
 - Voice routes (Piper TTS, ElevenLabs TTS, whisper.cpp STT — when local binaries are configured)
 - Curriculum scan of 19 subjects (now includes `ai-literacy` and `ai-systems`)
 - Product narrator (Peh) exposed via `/nusika/config`
-- Smoke test (`npm run smoke`) and baseline node:test suite (`npm test` — 241 tests)
+- Smoke test (`pnpm run smoke`) and baseline node:test suite (`pnpm test` — 241 tests)
 
 Known limitations (not blockers, future polish):
 
 - Mastery spines for most subjects (only modules with a spine validate concept IDs; others accept any concept).
 - No transcript table for sessions — session recap operates on metadata (atom, hint counts, timing) only.
 - Public-release blockers: permissive CORS, no auth, no rate-limit on LLM-backed routes. Private-use and friend-demo are fine.
-- The web E2E smoke (`cd web && npm run test:e2e`) is HTTP-level only — JS-driven interactions (click → confirm → DELETE) aren't covered until a real-browser harness lands.
+- The web E2E smoke (`cd web && pnpm run test:e2e`) is HTTP-level only — JS-driven interactions (click → confirm → DELETE) aren't covered until a real-browser harness lands.
 
 ## Web — running and known issues
 
 ```bash
 cd web/
-npm install        # postinstall patches a Next.js bundled package.json bug
-npm run dev        # http://127.0.0.1:3003 — proxies API via /api/proxy/* → NUSIKA_API_URL (default http://127.0.0.1:18793)
-npm run build      # production build
-npm run start      # serve the production build
+pnpm install        # postinstall patches a Next.js bundled package.json bug
+pnpm run dev        # http://127.0.0.1:3003 — proxies API via /api/proxy/* → NUSIKA_API_URL (default http://127.0.0.1:18793)
+pnpm run build      # production build
+pnpm run start      # serve the production build
 ```
 
 Routes:
@@ -294,15 +302,15 @@ LAN/Tailscale-exposed surface; the API and Kokoro stay on loopback.
 ```bash
 # build production bundles (the API unit runs `node dist/server/index.js`,
 # the web unit runs `next start`):
-npm run build
-cd web && npm run build && cd ..
+pnpm run build
+cd web && pnpm run build && cd ..
 
 # provision the Kokoro venv once (don't keep using start.sh in the unit;
 # it pip-installs on every boot):
 voice/start.sh   # ^C after it prints "starting on 127.0.0.1:18794"
 
 # install user units into ~/.config/systemd/user/ and daemon-reload:
-npm run service:install
+pnpm run service:install
 ```
 
 ### Bring everything up
@@ -335,7 +343,7 @@ systemctl --user stop nusika.target
 ### Health probe
 
 ```bash
-npm run service:health
+pnpm run service:health
 ```
 
 Hits `/health` on API + Kokoro and `/` on Web, plus prints the
@@ -364,7 +372,7 @@ Run `hostname -I` to see this machine's reachable interfaces, and
 
 If you ever need to override the default paths in the unit files,
 edit the unit files in `contrib/systemd/` (or use a `systemctl --user
-edit nusika-api.service` drop-in) and re-run `npm run service:install`.
+edit nusika-api.service` drop-in) and re-run `pnpm run service:install`.
 
 ## License
 
