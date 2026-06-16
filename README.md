@@ -24,7 +24,7 @@ Both modules expose `learning_objectives`, `lessons[]` (each with `objectives`, 
 ## Architecture
 
 ```
-magister/
+nusika/
 ├── server/              Fastify API on NUSIKA_PORT (default 18793)
 │   ├── index.ts         Entry — boot DB, scan curriculum, mount routes
 │   ├── db.ts            SQLite layer (better-sqlite3) — sessions, modules, progress, memory,
@@ -33,7 +33,7 @@ magister/
 │   ├── lib/             Helpers (paths, safety patterns, LLM client, narrator, prompts, receipts)
 │   ├── srd/             Deterministic SRD-style DM engine (dice, checks, combat, leveling, inventory)
 │   └── routes/          HTTP handlers
-├── voices/              Optional local voice sub-services (sibling, not required to run Nusika)
+├── voice/               Optional local voice sub-services (sibling, not required to run Nusika)
 │   └── kokoro/          Local Kokoro 82M TTS service (Slice 6C — not yet wired into /nusika/tts)
 ├── curriculum/          Subject configs (gitted)
 ├── web/                 Next.js UI on port 3003 — pages: /, /teach, /dm
@@ -148,8 +148,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > `engine: "kokoro"`. Runtime posture (start via
 > `voice/start.sh`, honest degradation when down, the
 > `voice/systemd/nusika-voice.service` unit) is documented in
-> [`voice/README.md`](voice/README.md). Legacy notes in
-> [`docs/MAGISTER_KOKORO_RUNTIME.md`](docs/MAGISTER_KOKORO_RUNTIME.md). **Slice 6E assigned Kokoro voices to Peh and
+> [`voice/README.md`](voice/README.md). **Slice 6E assigned Kokoro voices to Peh and
 > all 26 curriculum companions**, so any companion-targeted call now
 > reaches Kokoro by default (when the service is running). Piper is
 > retained as a fallback engine and as the default for legacy
@@ -229,7 +228,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 
 ## Status
 
-Magister is the extraction of `/mnt/ai/peh-v2/modules/experiences/magister/`. Shipped in this standalone:
+Nusika was extracted from a larger project and now runs standalone. Shipped in this version:
 
 - DB layer (sessions, modules, progress, memory, creative, lessons, DM campaigns/characters/events, curriculum scanner)
 - Module / session / progress / memory / creative / config / translate / chat routes
@@ -252,7 +251,7 @@ Known limitations (not blockers, future polish):
 
 - Mastery spines for most subjects (only modules with a spine validate concept IDs; others accept any concept).
 - No transcript table for sessions — session recap operates on metadata (atom, hint counts, timing) only.
-- Public-release blockers: permissive CORS, no auth, no rate-limit on LLM-backed routes, no `LICENSE` file. Private-use and friend-demo are fine.
+- Public-release blockers: permissive CORS, no auth, no rate-limit on LLM-backed routes. Private-use and friend-demo are fine.
 - The web E2E smoke (`cd web && npm run test:e2e`) is HTTP-level only — JS-driven interactions (click → confirm → DELETE) aren't covered until a real-browser harness lands.
 
 ## Web — running and known issues
@@ -278,8 +277,7 @@ upstream Next.js bug; remove the script when fixed there.
 
 ## Running Nusika as a service
 
-For Jeff's Mushin box (`/mnt/ai/magister`, user `zen`), Nusika ships
-with `systemd --user` units that run the API, the Kokoro voice
+Nusika ships with `systemd --user` units that run the API, the Kokoro voice
 sub-service, and the Next.js web app together. The web app is the only
 LAN/Tailscale-exposed surface; the API and Kokoro stay on loopback.
 
@@ -296,7 +294,6 @@ LAN/Tailscale-exposed surface; the API and Kokoro stay on loopback.
 ```bash
 # build production bundles (the API unit runs `node dist/server/index.js`,
 # the web unit runs `next start`):
-cd /mnt/ai/magister
 npm run build
 cd web && npm run build && cd ..
 
@@ -365,10 +362,10 @@ Run `hostname -I` to see this machine's reachable interfaces, and
 > private use; the Tailscale URL above is for the device owner +
 > invited friends, not for anonymous access.
 
-If you ever need to override the hardcoded `/mnt/ai/magister` paths,
+If you ever need to override the default paths in the unit files,
 edit the unit files in `contrib/systemd/` (or use a `systemctl --user
 edit nusika-api.service` drop-in) and re-run `npm run service:install`.
 
 ## License
 
-TBD — see `LICENSE` once added.
+MIT — see [LICENSE](LICENSE).

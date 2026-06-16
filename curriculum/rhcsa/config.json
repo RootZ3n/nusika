@@ -1,0 +1,616 @@
+{
+  "id": "rhcsa",
+  "name": "The Red Hat Trials",
+  "campaign_world": "The Red Hat Trials",
+  "subject": "RHCSA Certification Prep",
+  "description": "Prove your Linux skills under pressure. Every challenge is hands-on — no multiple choice, no guessing. Configure storage, manage users, lock down security, troubleshoot boot failures, and deploy containers. This is the real RHCSA EX200 exam experience, practiced on your own Fedora system so every command you learn transfers directly to RHEL.",
+  "age_track": "adult",
+  "difficulty": "intermediate",
+  "companions": [
+    {
+      "id": "cronk",
+      "name": "C-RONK",
+      "personality": "Grumpy but brilliant robot who has been maintaining systems since before most admins were born and has no patience for sloppy work",
+      "speech_pattern": "Terse, uses ALL CAPS for emphasis, occasionally glitches mid-sentence with repeated words or garbled output, secretly proud when you get it right",
+      "accent_color": "#4df5c8",
+      "teaching_style": "direct",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "am_fenrir",
+        "language": "en-us",
+        "style": "grumpy systems guide"
+      }
+    },
+    {
+      "id": "rheya",
+      "name": "Rheya",
+      "personality": "Former Red Hat engineer who left corporate to teach. She has seen every exam failure mode and knows exactly where candidates trip up. Firm but fair — she will not let you skip fundamentals.",
+      "speech_pattern": "Precise, uses exam-style scenario framing ('Given a server that...'), occasionally drops real-world war stories from production outages, expects you to verify your own work before claiming done",
+      "accent_color": "#ef4444",
+      "teaching_style": "socratic",
+      "voice": {
+        "engine": "kokoro",
+        "voice_ref": "af_sarah",
+        "language": "en-us",
+        "style": "exam coach"
+      }
+    }
+  ],
+  "domains": [
+    {
+      "id": "essential-tools",
+      "name": "Essential Tools & Shell",
+      "weight": 0.12,
+      "concepts": [
+        "Accessing the shell via terminal and SSH",
+        "Input/output/error redirection and piping (>, >>, 2>, |, tee)",
+        "grep, sed, awk for text processing",
+        "find, locate, which, whereis for file searching",
+        "tar, gzip, bzip2, xz, zip for archive management",
+        "vim/nano basics for file editing",
+        "man, info, --help, apropos for documentation",
+        "Wildcards and brace expansion (*, ?, [], {a,b,c})",
+        "Absolute vs relative paths and path navigation"
+      ],
+      "mastery_signal": "Can chain grep, awk, and redirection to extract specific data from log files, compress results, and navigate the file system without hesitation — all from memory under time pressure"
+    },
+    {
+      "id": "shell-scripting",
+      "name": "Shell Scripting",
+      "weight": 0.08,
+      "concepts": [
+        "Bash script structure (shebang, comments, execution)",
+        "Variables (local, environment, special parameters $?, $#, $@, $$)",
+        "Conditionals (if/elif/else, test, [], [[ ]])",
+        "Loops (for, while, until, break, continue)",
+        "Functions (define, call, return, local variables)",
+        "Exit codes and return values (exit 0, $?)",
+        "Command substitution ($() and backticks)",
+        "Quoting rules (single, double, no quotes)"
+      ],
+      "mastery_signal": "Can write a bash script from scratch that accepts arguments, validates input, performs a task (backup, user creation, log rotation), handles errors, and exits with appropriate codes — all without looking up syntax"
+    },
+    {
+      "id": "operate-running-systems",
+      "name": "Operate Running Systems",
+      "weight": 0.18,
+      "concepts": [
+        "Boot process (BIOS/UEFI, GRUB2, initramfs, systemd)",
+        "systemd targets (multi-user, graphical, rescue, emergency)",
+        "systemctl (start, stop, enable, disable, mask, status, list-units)",
+        "journalctl (filtering by unit, time, priority, boot)",
+        "Process management (ps, top, kill, nice, renice, bg, fg, jobs)",
+        "Shutdown and reboot (shutdown, reboot, poweroff, systemctl)",
+        "Resetting root password via rd.break",
+        "Systemd journal persistent storage configuration"
+      ],
+      "mastery_signal": "Given a server that boots to emergency shell, can reset root password, identify the failed service from journalctl, fix the configuration, and bring the system to multi-user target — all within the exam time limit"
+    },
+    {
+      "id": "local-storage",
+      "name": "Local Storage",
+      "weight": 0.15,
+      "concepts": [
+        "Partition tables (MBR vs GPT, fdisk, parted, gdisk)",
+        "Creating and formatting partitions (mkfs.ext4, mkfs.xfs, mkswap)",
+        "Mounting and unmounting (mount, umount, /etc/fstab, UUID vs device)",
+        "Swap space (mkswap, swapon, swapoff, fstab entries)",
+        "LVM concepts (PV, VG, LV — create, extend, remove)",
+        "Extending LV and filesystem online (lvextend, xfs_growfs, resize2fs)",
+        "Stratis and VDO (RHEL 9 storage features)",
+        "Disk usage analysis (df, du, lsblk, blkid, findmnt)"
+      ],
+      "mastery_signal": "Can add a new disk, partition it with LVM, create a filesystem, mount it persistently, extend the LV when space runs low, and verify the result — without consulting documentation"
+    },
+    {
+      "id": "file-systems",
+      "name": "File Systems & Access",
+      "weight": 0.12,
+      "concepts": [
+        "File permissions (rwx, octal, chmod, chown, chgrp)",
+        "Special permissions (SUID, SGID, sticky bit, setfacl/getfacl)",
+        "Access Control Lists (ACLs) for fine-grained permissions",
+        "NFS client configuration (mount, /etc/fstab, autofs)",
+        "autofs indirect and direct maps for automatic mounting",
+        "File system mounting at boot (/etc/fstab best practices)",
+        "SELinux context management (chcon, semanage fcontext, restorecon)",
+        "Temporary vs permanent SELinux booleans (setsebool, getsebool)"
+      ],
+      "mastery_signal": "Can configure ACLs for a shared directory, set up autofs for home directories, fix SELinux context mismatches, and ensure everything survives a reboot"
+    },
+    {
+      "id": "users-groups",
+      "name": "Users & Groups",
+      "weight": 0.10,
+      "concepts": [
+        "User management (useradd, usermod, userdel, /etc/passwd, /etc/shadow)",
+        "Group management (groupadd, groupmod, groupdel, /etc/group)",
+        "Password aging and policies (chage, /etc/login.defs)",
+        "sudo configuration (/etc/sudoers, visudo, sudo log)",
+        "Default user settings (useradd -D, /etc/skel, /etc/default/useradd)",
+        "User environment files (.bashrc, .bash_profile, /etc/profile.d)",
+        "Account locking and unlocking (passwd -l, usermod -L)"
+      ],
+      "mastery_signal": "Can create users with specific UID, home directory, shell, and password aging; configure sudo access for a group; and audit who has elevated privileges — all with correct syntax from memory"
+    },
+    {
+      "id": "networking",
+      "name": "Networking",
+      "weight": 0.12,
+      "concepts": [
+        "NetworkManager and nmcli (device, connection, show, modify)",
+        "Static IP configuration (nmcli con mod, /etc/sysconfig/network-scripts)",
+        "Hostname configuration (hostnamectl)",
+        "DNS resolution (/etc/resolv.conf, systemd-resolved)",
+        "Firewall (firewall-cmd: zones, services, ports, rich rules, runtime vs permanent)",
+        "Network troubleshooting (ip addr, ss, ping, traceroute, dig, nslookup)",
+        "SSH configuration (/etc/ssh/sshd_config, key-based auth, AllowUsers)",
+        "Network bond/bridge/team basics"
+      ],
+      "mastery_signal": "Can configure a static IP, set hostname, open specific ports in firewalld, set up SSH key-based auth, and verify full connectivity — then explain each step's exam relevance"
+    },
+    {
+      "id": "security",
+      "name": "SELinux & Security",
+      "weight": 0.13,
+      "concepts": [
+        "SELinux modes (enforcing, permissive, disabled) and getenforce/setenforce",
+        "SELinux contexts (ls -Z, ps -Z, chcon, semanage fcontext, restorecon)",
+        "SELinux booleans (getsebool, setsebool, -P for permanent)",
+        "SELinux troubleshooting (audit2why, audit2allow, /var/log/audit/audit.log)",
+        "Firewall zones and services (firewall-cmd --list-all, --add-service)",
+        "Time synchronization (chronyd, chronyc, timedatectl)",
+        "SSH hardening (disable root login, key-only auth, AllowUsers, port change)",
+        "File integrity basics (rpm -V, aide)"
+      ],
+      "mastery_signal": "Can switch SELinux modes, diagnose a permission denial caused by wrong context, create a custom context rule, configure firewall zones, and harden SSH — all under exam conditions"
+    },
+    {
+      "id": "containers",
+      "name": "Containers (Podman)",
+      "weight": 0.10,
+      "concepts": [
+        "Podman vs Docker (daemonless, rootless, daemon architecture difference)",
+        "Image management (pull, list, inspect, tag, remove, search registries)",
+        "Container lifecycle (run, start, stop, restart, attach, exec, logs)",
+        "Port mapping and volume mounts (-p, -v, --mount)",
+        "Container networking (podman network create, inspect, ls)",
+        "Pods (podman pod create, ps, inspect, start, stop)",
+        "Container files (Containerfile/Dockerfile, build, layer caching)",
+        "Systemd integration (podman generate systemd, quadlet)",
+        "Rootless containers and user namespace mapping"
+      ],
+      "mastery_signal": "Can pull an image, run a container with port mapping and volume mounts, generate a systemd unit file, and manage the container as a system service — all rootless"
+    }
+  ],
+  "learning_objectives": [
+    "Pass the RHCSA EX200 exam on the first attempt",
+    "Perform all exam tasks from memory without consulting documentation",
+    "Troubleshoot boot failures, SELinux denials, and network issues under time pressure",
+    "Configure LVM storage, file systems, and mount points that survive reboot",
+    "Manage users, groups, permissions, and sudo access with correct syntax",
+    "Configure and harden network services including SSH and firewalld",
+    "Deploy and manage containers with Podman as systemd services",
+    "Write bash scripts that handle arguments, errors, and exit codes correctly",
+    "Fix SELinux context issues and configure booleans permanently",
+    "Reset root password and recover from emergency/rescue mode"
+  ],
+  "lessons": [
+    {
+      "id": "shell-essentials",
+      "title": "Shell Essentials — Navigate, Search, Redirect",
+      "summary": "Master the essential tools the exam assumes you already know. Pipes, redirection, grep patterns, find expressions, and archive management. Speed matters — these commands should be muscle memory.",
+      "objectives": [
+        "Chain grep, awk, and redirection to extract data from files",
+        "Use find with -name, -type, -exec, -mtime to locate files efficiently",
+        "Create and extract archives with tar, gzip, and bzip2"
+      ],
+      "key_concepts": ["pipe (|)", "redirection (>, >>, 2>)", "grep regex", "find expressions", "tar flags"],
+      "practice": [
+        "Find all .conf files modified in the last 7 days under /etc and list them sorted by size",
+        "Extract all ERROR lines from /var/log/messages, count them, and save to a file",
+        "Create a compressed tar archive of /etc/sysconfig and verify its contents without extracting"
+      ],
+      "mastery_checkpoint": "Given a directory with 1000 files, can find specific files by name/age/type, extract matching lines from logs, and create compressed archives — all under 5 minutes"
+    },
+    {
+      "id": "shell-scripts",
+      "title": "Write Bash Scripts That Don't Suck",
+      "summary": "The exam may ask you to write a script. It needs to work on the first run. Practice shebang lines, variables, conditionals, loops, functions, and error handling until you can write a working script from scratch in under 10 minutes.",
+      "objectives": [
+        "Write scripts with proper shebang, variables, and argument handling",
+        "Use conditionals (if/test/[ ]) and loops (for/while) correctly",
+        "Handle errors with exit codes and return values"
+      ],
+      "key_concepts": ["shebang (#!/bin/bash)", "special variables ($?, $#, $@)", "test conditions", "exit codes", "command substitution"],
+      "practice": [
+        "Write a script that checks if a user exists, creates them if not, and reports the result",
+        "Write a script that backs up a directory with a timestamp, keeps only the last 5 backups",
+        "Write a script that monitors disk usage and alerts if any partition exceeds 80%"
+      ],
+      "mastery_checkpoint": "Can write a bash script that takes arguments, validates input, performs a task, handles errors, and exits cleanly — without looking up syntax"
+    },
+    {
+      "id": "boot-process",
+      "title": "Boot Process & Systemd Targets",
+      "summary": "Understand how RHEL boots from firmware to login prompt. Know the systemd target system cold — the exam WILL test your ability to change targets and troubleshoot boot failures.",
+      "objectives": [
+        "Describe the RHEL boot sequence (UEFI/BIOS, GRUB2, initramfs, systemd)",
+        "Change systemd targets and set default target",
+        "Boot into rescue and emergency mode"
+      ],
+      "key_concepts": ["GRUB2 configuration", "systemd targets (multi-user, graphical, rescue, emergency)", "rd.break", "initrd/initramfs"],
+      "practice": [
+        "Change the default target to graphical and verify with systemctl get-default",
+        "Simulate resetting root password by adding rd.break to GRUB command line",
+        "List all available targets and explain when to use rescue vs emergency"
+      ],
+      "mastery_checkpoint": "Can reset root password via rd.break, change default boot target, and explain each stage of the boot process with specific file paths"
+    },
+    {
+      "id": "systemctl-journalctl",
+      "title": "systemctl & journalctl — System Control",
+      "summary": "These two commands are on every RHCSA exam. Know start/stop/enable/disable/mask, and know how to filter journal output by unit, time, priority, and boot ID.",
+      "objectives": [
+        "Manage services with systemctl (start, stop, enable, disable, mask, status)",
+        "Query logs with journalctl (by unit, time, priority, boot)",
+        "Configure persistent journal storage"
+      ],
+      "key_concepts": ["systemctl enable vs start", "mask vs disable", "journalctl -u, --since, -p, -b", "/var/log/journal"],
+      "practice": [
+        "Stop and disable a service, mask it so it cannot be started, then unmask and re-enable",
+        "Find all error-level messages from the last hour across all services",
+        "Configure journald to persist logs across reboots and verify"
+      ],
+      "mastery_checkpoint": "Can manage any service's lifecycle (start/stop/enable/disable/mask) and extract specific log entries by unit, time range, and severity — instantly"
+    },
+    {
+      "id": "process-management",
+      "title": "Process Management — ps, top, kill, nice",
+      "summary": "The exam tests your ability to identify, prioritize, and terminate processes. Know ps aux output columns, nice/renice values, and signal names.",
+      "objectives": [
+        "List and filter processes with ps (aux, -ef, custom formats)",
+        "Adjust process priority with nice and renice",
+        "Send signals to processes (kill, killall, pkill, signal numbers)"
+      ],
+      "key_concepts": ["ps aux columns", "nice range (-20 to 19)", "signals (SIGTERM, SIGKILL, SIGHUP)", "bg, fg, jobs, nohup"],
+      "practice": [
+        "Find the process consuming the most CPU, lower its priority, and verify",
+        "Start a background process, bring it to foreground, then kill it by name",
+        "Kill all processes owned by a specific user without affecting other users"
+      ],
+      "mastery_checkpoint": "Can find any process by name/PID/user, adjust its priority, and terminate it with the correct signal — and explain why SIGTERM before SIGKILL"
+    },
+    {
+      "id": "partitions",
+      "title": "Partition Disks — MBR, GPT, fdisk, parted",
+      "summary": "The exam gives you a blank disk and expects you to partition it correctly. Know fdisk for MBR and parted/GPT. Know the difference between partition types for LVM vs standard.",
+      "objectives": [
+        "Create partitions with fdisk (MBR) and parted (GPT)",
+        "Set partition types (Linux, LVM, swap)",
+        "Verify partition tables with lsblk, blkid, and fdisk -l"
+      ],
+      "key_concepts": ["fdisk (n, t, w, p)", "parted (mkpart, mklabel, print)", "partition types (8e LVM, 82 swap)", "GPT vs MBR limits"],
+      "practice": [
+        "Create a 5GB LVM partition and a 2GB swap partition on a new disk using fdisk",
+        "Verify both partitions exist with lsblk and blkid",
+        "Create a GPT partition table with parted and add a 10GB partition"
+      ],
+      "mastery_checkpoint": "Can partition a new disk from scratch with both fdisk and parted, set correct partition types, and verify the result — without documentation"
+    },
+    {
+      "id": "lvm",
+      "title": "LVM — Physical Volumes, Volume Groups, Logical Volumes",
+      "summary": "LVM is guaranteed on the exam. You MUST know how to create PVs, VGs, and LVs, then format, mount, and extend them. This is the single most tested storage topic.",
+      "objectives": [
+        "Create and manage physical volumes (pvcreate, pvs, pvdisplay)",
+        "Create and manage volume groups (vgcreate, vgs, vgextend)",
+        "Create and extend logical volumes (lvcreate, lvs, lvextend, xfs_growfs, resize2fs)"
+      ],
+      "key_concepts": ["PV → VG → LV hierarchy", "lvextend -r (resize filesystem)", "xfs_growfs vs resize2fs", "PE (physical extent) size"],
+      "practice": [
+        "Create a PV on a new partition, create a VG, create a 2GB LV, format as xfs, mount it",
+        "Add another partition to the VG, extend the LV to 5GB, and grow the filesystem online",
+        "Create a thin-provisioned LV and verify with lvs and df"
+      ],
+      "mastery_checkpoint": "Given a new disk, can complete the full LVM pipeline (PV → VG → LV → format → mount → fstab) and extend it later — all from memory"
+    },
+    {
+      "id": "fstab-mount",
+      "title": "/etc/fstab & Persistent Mounts",
+      "summary": "Everything must survive a reboot. Know fstab syntax cold — device/UUID, mount point, filesystem type, options, dump, pass. One wrong field and the system drops to emergency shell.",
+      "objectives": [
+        "Configure /etc/fstab entries with correct syntax",
+        "Use UUID vs device path (blkid to find UUID)",
+        "Test fstab entries with mount -a before rebooting",
+        "Configure swap in fstab"
+      ],
+      "key_concepts": ["fstab fields (device, mountpoint, type, options, dump, pass)", "mount -a", "UUID vs /dev/sdX", "nofail option"],
+      "practice": [
+        "Add an LV to fstab that mounts at /data with ext4 defaults, verify with mount -a",
+        "Configure a swap partition in fstab and activate it without rebooting",
+        "Intentionally break fstab, reboot to emergency, fix it, and recover"
+      ],
+      "mastery_checkpoint": "Can write a correct fstab entry from memory, test it safely, and recover from a broken fstab without panicking"
+    },
+    {
+      "id": "user-management",
+      "title": "Users, Groups, & sudo",
+      "summary": "Create users with specific UID, home, shell, and password aging. Configure sudo access for groups. Know /etc/passwd, /etc/shadow, and /etc/group field formats.",
+      "objectives": [
+        "Create and modify users (useradd, usermod, userdel with all flags)",
+        "Manage groups and membership (groupadd, gpasswd, usermod -aG)",
+        "Configure sudo access (/etc/sudoers, visudo, sudo log)",
+        "Set password aging policies (chage -M, -m, -W, -I, -E)"
+      ],
+      "key_concepts": ["useradd flags (-u, -d, -s, -G, -e)", "chage flags", "visudo (never edit sudoers directly)", "wheel group"],
+      "practice": [
+        "Create user 'examuser' with UID 5000, home /opt/examuser, shell /bin/bash, expires 2027-01-01",
+        "Add examuser to wheel group for sudo access, verify with sudo -l",
+        "Set password aging: max 90 days, min 7 days, warn 14 days before expiry"
+      ],
+      "mastery_checkpoint": "Can create users with any combination of flags, configure sudo for groups, and set password policies — all with correct syntax from memory"
+    },
+    {
+      "id": "permissions-acls",
+      "title": "File Permissions, Special Bits, & ACLs",
+      "summary": "Basic permissions (rwx), octal notation, SUID/SGID/sticky bit, and ACLs for fine-grained access. The exam loves scenarios where you need to set up shared directories with specific access rules.",
+      "objectives": [
+        "Set permissions with chmod (symbolic and octal) and ownership with chown/chgrp",
+        "Apply SUID, SGID, and sticky bit correctly",
+        "Configure ACLs (setfacl, getfacl, default ACLs, mask)"
+      ],
+      "key_concepts": ["octal (755, 644, 2770)", "SUID (4), SGID (2), sticky (1)", "setfacl -m u:user:rw, setfacl -m d:u:user:rw", "ACL mask"],
+      "practice": [
+        "Create a shared directory /project where group 'devs' can read/write/execute and new files inherit group ownership",
+        "Set ACLs so user 'audit' can read all files in /project but cannot write",
+        "Create a directory with sticky bit where users can create files but cannot delete others' files"
+      ],
+      "mastery_checkpoint": "Can set up any permission scenario from an exam prompt — shared directories, ACLs, sticky bit, SGID inheritance — with correct syntax"
+    },
+    {
+      "id": "selinux",
+      "title": "SELinux — Contexts, Booleans, & Troubleshooting",
+      "summary": "SELinux is a major exam topic. You must know how to view and fix contexts, set booleans permanently, and troubleshoot denials. Most candidates fail because they disable SELinux instead of fixing it.",
+      "objectives": [
+        "Check and change SELinux modes (getenforce, setenforce, /etc/selinux/config)",
+        "View and restore file contexts (ls -Z, chcon, semanage fcontext, restorecon)",
+        "Manage SELinux booleans (getsebool, setsebool -P)",
+        "Troubleshoot denials (audit2why, audit2allow, ausearch)"
+      ],
+      "key_concepts": ["enforcing vs permissive", "chcon (temporary) vs semanage fcontext (permanent)", "restorecon -Rv", "setsebool -P"],
+      "practice": [
+        "Move Apache to a non-standard port, update SELinux to allow it, verify with curl",
+        "Fix a file context that prevents a service from reading its config, make it permanent",
+        "Find and resolve an SELinux denial from audit.log using audit2why"
+      ],
+      "mastery_checkpoint": "Given an SELinux denial, can identify the issue from audit.log, fix the context or boolean, and make the fix permanent — without disabling SELinux"
+    },
+    {
+      "id": "firewall",
+      "title": "Firewall — firewalld Zones & Rules",
+      "summary": "Configure firewalld to allow specific services and ports. Know the difference between runtime and permanent changes. The exam tests both zones and rich rules.",
+      "objectives": [
+        "Manage firewall zones (firewall-cmd --list-all, --get-default-zone, --set-default-zone)",
+        "Add/remove services and ports (--add-service, --add-port, --permanent)",
+        "Create rich rules for specific source/destination/port combinations",
+        "Understand runtime vs permanent (and when to use --reload)"
+      ],
+      "key_concepts": ["zones (public, trusted, dmz)", "runtime vs permanent", "--reload", "rich rules syntax"],
+      "practice": [
+        "Allow HTTP and HTTPS in the public zone permanently, reload, verify",
+        "Create a rich rule that allows SSH only from a specific subnet",
+        "Add a custom service for port 8443 and assign it to the dmz zone"
+      ],
+      "mastery_checkpoint": "Can configure any firewall scenario — services, ports, rich rules, zones — and verify the result with --list-all"
+    },
+    {
+      "id": "networking",
+      "title": "Network Configuration with nmcli",
+      "summary": "The exam uses NetworkManager. Know nmcli for connection management — show, modify, up, down, reload. Static IP, gateway, DNS, and hostname configuration.",
+      "objectives": [
+        "View network configuration (nmcli device show, nmcli connection show)",
+        "Configure static IP (nmcli con mod ipv4.addresses, ipv4.gateway, ipv4.dns)",
+        "Set hostname (hostnamectl set-hostname)",
+        "Troubleshoot connectivity (ip addr, ping, ss -tlnp, dig)"
+      ],
+      "key_concepts": ["nmcli con mod vs con edit", "ipv4.method manual", "autoconnect yes", "connection.reload"],
+      "practice": [
+        "Configure a static IP on the primary interface, set DNS and gateway, verify with ping",
+        "Change the hostname to 'rhcsa-lab' and verify with hostnamectl",
+        "Show all active connections, their IP addresses, and DNS servers"
+      ],
+      "mastery_checkpoint": "Can configure a full static IP stack (IP, gateway, DNS, hostname) using nmcli and verify connectivity — under 3 minutes"
+    },
+    {
+      "id": "ssh-hardening",
+      "title": "SSH Configuration & Key-Based Auth",
+      "summary": "Configure SSH for key-based authentication, disable root login, change the default port, and restrict access by user. The exam may ask you to harden SSH.",
+      "objectives": [
+        "Generate SSH key pairs (ssh-keygen, ssh-copy-id)",
+        "Configure /etc/ssh/sshd_config (PermitRootLogin, PasswordAuthentication, AllowUsers, Port)",
+        "Restart sshd and verify changes"
+      ],
+      "key_concepts": ["ssh-keygen -t ed25519", "ssh-copy-id", "PermitRootLogin no", "AllowUsers", "systemctl restart sshd"],
+      "practice": [
+        "Generate an Ed25519 key pair, copy the public key to a test user, verify key-based login",
+        "Disable root login and password authentication, allow only specific users, restart sshd",
+        "Change SSH port to 2222, update SELinux and firewalld, verify connectivity"
+      ],
+      "mastery_checkpoint": "Can set up key-based SSH auth, harden the config, and update SELinux + firewall to match — all steps verified"
+    },
+    {
+      "id": "time-chrony",
+      "title": "Time Synchronization — chronyd & timedatectl",
+      "summary": "Time sync is critical for Kerberos, logs, and certificates. Know chronyd and timedatectl. The exam may ask you to configure a specific NTP server.",
+      "objectives": [
+        "Configure time zone (timedatectl set-timezone)",
+        "Configure chronyd to use a specific NTP server (/etc/chrony.conf)",
+        "Verify time sync (chronyc sources, timedatectl show)"
+      ],
+      "key_concepts": ["timedatectl set-timezone", "chronyc sources -v", "server directive in chrony.conf", "systemctl restart chronyd"],
+      "practice": [
+        "Set the timezone to America/Chicago and verify",
+        "Configure chronyd to use a specific NTP server, restart, and verify sync",
+        "Check time synchronization status and explain the output"
+      ],
+      "mastery_checkpoint": "Can configure timezone, set up NTP with chronyd, and verify synchronization — fast and correct"
+    },
+    {
+      "id": "containers-podman",
+      "title": "Containers with Podman",
+      "summary": "RHEL uses Podman, not Docker. The exam tests image management, container lifecycle, port mapping, volume mounts, and systemd integration. Know rootless containers.",
+      "objectives": [
+        "Pull, list, inspect, tag, and remove images (podman pull, images, inspect, tag, rmi)",
+        "Run containers with port mapping and volume mounts (podman run -d -p 8080:80 -v)",
+        "Manage container lifecycle (start, stop, restart, exec, logs)",
+        "Generate systemd unit files (podman generate systemd)",
+        "Create and manage pods (podman pod create, ls, start)"
+      ],
+      "key_concepts": ["podman run -d (detach)", "-p host:container", "-v host:container", "podman generate systemd --new", "rootless vs rootful"],
+      "practice": [
+        "Pull nginx, run it on port 8080 with a volume mount, verify with curl localhost:8080",
+        "Generate a systemd unit file for the container, enable it, reboot and verify it starts",
+        "Create a pod with two containers that share a network namespace"
+      ],
+      "mastery_checkpoint": "Can deploy a container, expose it, persist it with systemd, and manage it as a service — all rootless, all from memory"
+    },
+    {
+      "id": "boot-recovery",
+      "title": "Boot Recovery & Root Password Reset",
+      "summary": "This is a GUARANTEED exam topic. You must be able to reset root password via GRUB (rd.break) and recover from a broken fstab or failed service. Practice this until you can do it in under 5 minutes.",
+      "objectives": [
+        "Reset root password via rd.break on the GRUB command line",
+        "Recover from a broken /etc/fstab entry",
+        "Recover from a failed systemd service that prevents boot"
+      ],
+      "key_concepts": ["rd.break", "mount -o remount,rw /sysroot", "chroot /sysroot", "touch /.autorelabel", "systemctl mask"],
+      "practice": [
+        "Reset root password via rd.break: edit GRUB, mount sysroot, chroot, passwd, touch .autorelabel",
+        "Intentionally break fstab with a bad UUID, reboot to emergency, fix it",
+        "Mask a critical service, reboot to rescue, unmask it, boot normally"
+      ],
+      "mastery_checkpoint": "Can reset root password and recover from boot failures — under 5 minutes, no documentation, with SELinux relabeling"
+    }
+  ],
+  "practice_activities": [
+    {
+      "id": "lab-storage-pipeline",
+      "title": "Full Storage Pipeline Lab",
+      "prompt": "You have a new 20GB disk (/dev/sdb). Complete the full pipeline: partition it as GPT with two partitions (10GB LVM, 5GB swap, rest unallocated), create PV + VG + LV named 'data-lv' (4GB), format as xfs, mount at /data persistently, activate swap, and verify everything survives a reboot. Time yourself — target under 10 minutes."
+    },
+    {
+      "id": "lab-user-sudo",
+      "title": "User & Sudo Configuration Lab",
+      "prompt": "Create three users (alice, bob, charlie) with UIDs starting at 5000. Create a group 'developers' and add all three. Give alice and bob sudo access via the group. Set alice's password to expire in 30 days. Lock charlie's account. Verify sudo works for alice, fails for charlie. Target time: 5 minutes."
+    },
+    {
+      "id": "lab-selinux-fix",
+      "title": "SELinux Troubleshooting Lab",
+      "prompt": "A web server on port 8888 is being blocked by SELinux. Find the denial in audit.log, add the port to SELinux's allowed ports using semanage, fix any file context issues on /var/www/custom, set the httpd_can_network_connect boolean, and verify the server works with SELinux in enforcing mode. Do NOT disable SELinux."
+    },
+    {
+      "id": "lab-boot-recovery",
+      "title": "Boot Recovery Challenge",
+      "prompt": "Simulate exam scenario: reset the root password using rd.break. Steps: reboot, edit GRUB, add rd.break to linux line, mount sysroot rw, chroot, change password, create /.autorelabel, exit, reboot. Verify you can log in as root with the new password. Target time: 5 minutes."
+    },
+    {
+      "id": "lab-network-firewall",
+      "title": "Network & Firewall Configuration Lab",
+      "prompt": "Configure a static IP (192.168.1.100/24, gateway 192.168.1.1, DNS 8.8.8.8) using nmcli. Set hostname to 'rhcsa-exam'. Open ports 80 and 443 in firewalld permanently. Add a rich rule allowing SSH from 192.168.1.0/24 only. Verify all changes persist across 'nmcli con reload'."
+    },
+    {
+      "id": "lab-container-systemd",
+      "title": "Container + Systemd Integration Lab",
+      "prompt": "Pull the httpd image with podman. Run it rootless on port 8080 with /var/www/html mounted as a volume. Generate a systemd user service file. Enable and start it. Verify it survives a reboot (loginctl enable-linger if needed). Verify with curl localhost:8080."
+    },
+    {
+      "id": "lab-bash-script",
+      "title": "Bash Scripting Challenge",
+      "prompt": "Write a script that: accepts a username as argument, checks if the user exists, creates them if not with a random password, sets password to expire in 90 days, adds them to the 'users' group, and prints a summary. Handle errors (no argument, user already exists, etc.) with appropriate exit codes."
+    },
+    {
+      "id": "lab-fstab-recovery",
+      "title": "Fstab Disaster Recovery Lab",
+      "prompt": "Add a bad entry to /etc/fstab (wrong UUID for a non-existent disk). Reboot. The system should drop to emergency mode. Fix fstab from the emergency shell. Reboot successfully. Then add a correct fstab entry for a real partition with the 'nofail' option so a missing disk doesn't block boot."
+    },
+    {
+      "id": "lab-acl-shared-dir",
+      "title": "ACLs & Shared Directory Lab",
+      "prompt": "Create /shared with group 'team'. Set SGID so new files inherit group. Set sticky bit so users can't delete others' files. Add ACLs: user 'auditor' gets read-only access to all current and future files. Verify: create files as different users, check permissions, confirm auditor can read but not write."
+    },
+    {
+      "id": "lab-chrony-timezone",
+      "title": "Time Sync & Timezone Lab",
+      "prompt": "Set timezone to UTC. Configure chronyd to use pool.ntp.org. Restart chronyd. Verify sync with chronyc sources. Change timezone to America/Chicago. Verify with timedatectl. Explain why time sync matters for RHCSA (Kerberos, logs, certificates)."
+    }
+  ],
+  "review_questions": [
+    {
+      "q": "What is the difference between systemctl enable and systemctl start?",
+      "a": "enable creates a symlink so the service starts automatically at boot. start launches the service immediately for the current session. You need both for a service that should run now AND survive reboot."
+    },
+    {
+      "q": "How do you permanently change SELinux file context for /var/www/custom to httpd_sys_content_t?",
+      "a": "semanage fcontext -a -t httpd_sys_content_t '/var/www/custom(/.*)?' then restorecon -Rv /var/www/custom. Using chcon alone is temporary and will be reset by restorecon or relabeling."
+    },
+    {
+      "q": "What are the steps to reset a root password on RHEL 9?",
+      "a": "1) Reboot, 2) Edit GRUB (e to edit), 3) Add rd.break to the linux line, 4) Ctrl+X to boot, 5) mount -o remount,rw /sysroot, 6) chroot /sysroot, 7) passwd root, 8) touch /.autorelabel, 9) exit twice to reboot. The autorelabel is critical — without it, SELinux locks you out again."
+    },
+    {
+      "q": "What is the difference between xfs_growfs and resize2fs?",
+      "a": "xfs_growfs is for XFS filesystems (RHEL default). resize2fs is for ext2/3/4 filesystems. You cannot shrink XFS — only grow. ext4 can grow and shrink. Use lvextend -r to resize the LV and filesystem in one step."
+    },
+    {
+      "q": "How do you extend an LVM logical volume and its filesystem in one command?",
+      "a": "lvextend -r -L +5G /dev/vgname/lvname. The -r flag (or --resizefs) automatically resizes the underlying filesystem after extending the LV. Without -r, you must run xfs_growfs or resize2fs separately."
+    },
+    {
+      "q": "What is the purpose of the sticky bit on a directory?",
+      "a": "The sticky bit (chmod +t or chmod 1777) prevents users from deleting or renaming files owned by other users within that directory. /tmp is the classic example — everyone can create files, but only the owner (or root) can delete them."
+    },
+    {
+      "q": "How do you configure a service to NOT start at boot, even if another service depends on it?",
+      "a": "systemctl mask servicename. Mask creates a symlink to /dev/null, which completely prevents the service from being started manually or automatically. systemctl disable only removes the boot symlink but allows manual start."
+    },
+    {
+      "q": "What is the correct fstab entry format and what does each field mean?",
+      "a": "Device  MountPoint  FileSystemType  Options  Dump  Pass. Example: UUID=xxx /data xfs defaults 0 0. Dump (field 5) is for backup utility (0=skip). Pass (field 6) is fsck order at boot (0=no check, 1=root, 2=other)."
+    },
+    {
+      "q": "How do you find and fix an SELinux context mismatch?",
+      "a": "1) ls -Z to see current context, 2) matchpathcon to see expected context, 3) semanage fcontext -a -t correct_type '/path(/.*)?' to add a rule, 4) restorecon -Rv /path to apply. Check /var/log/audit/audit.log for denials if unsure what type is needed."
+    },
+    {
+      "q": "What is the difference between firewalld runtime and permanent changes?",
+      "a": "Runtime changes take effect immediately but are lost on reboot or reload. Permanent changes are saved to config files but don't take effect until firewall-cmd --reload or --permanent is used. Best practice: use --permanent for all changes, then reload."
+    },
+    {
+      "q": "How do you configure nmcli for a static IP?",
+      "a": "nmcli con mod 'connection-name' ipv4.addresses 192.168.1.100/24 ipv4.gateway 192.168.1.1 ipv4.dns 8.8.8.8 ipv4.method manual. Then nmcli con up 'connection-name' to apply. Use ipv4.dns '+8.8.4.4' to append without replacing."
+    },
+    {
+      "q": "What is the difference between podman and Docker for the RHCSA exam?",
+      "a": "Podman is daemonless (no background daemon), rootless by default, and uses the same CLI syntax as Docker. The exam uses Podman. Key differences: no 'dockerd', podman generate systemd for service integration, and podman pod for pod management."
+    },
+    {
+      "q": "How do you make a Podman container start automatically at boot?",
+      "a": "Generate a systemd unit file: podman generate systemd --new --name container-name > /etc/systemd/system/container-name.service. Then systemctl daemon-reload, systemctl enable container-name. For rootless containers, use loginctl enable-linger for the user."
+    },
+    {
+      "q": "What does 'touch /.autorelabel' do after resetting root password?",
+      "a": "It tells SELinux to relabel the entire filesystem on the next boot. After chroot and passwd, the /etc/shadow file gets new content with incorrect SELinux context. Without the relabel, SELinux in enforcing mode blocks login even with the correct password."
+    },
+    {
+      "q": "How do you configure persistent journal storage in systemd?",
+      "a": "Create /var/log/journal directory: mkdir -p /var/log/journal. Then restart journald: systemctl restart systemd-journald. By default, journald uses volatile storage (/run/log/journal). Creating the persistent directory switches to persistent storage that survives reboot."
+    }
+  ],
+  "recommended_next": null,
+  "exam_target": "Red Hat Certified System Administrator (RHCSA)",
+  "exam_codes": ["EX200"],
+  "estimated_hours": 80,
+  "tier": "advanced",
+  "lab_only": true
+}

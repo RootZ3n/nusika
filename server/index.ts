@@ -11,6 +11,10 @@
 
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+import { existsSync } from "node:fs";
 import { NusikaDB } from "./db.js";
 import { scanCurriculum } from "./curriculum.js";
 import { registerAllRoutes } from "./routes/index.js";
@@ -73,6 +77,18 @@ async function main(): Promise<void> {
   consoleLogger.info(`curriculum scan complete — ${scanned} modules registered`);
 
   await registerAllRoutes(app, db);
+
+  // Serve the world-engine UI from the repo's ui/ directory.
+  const __dirname = dirname(fileURLToPath(import.meta.url));
+  const uiDir = join(__dirname, "..", "..", "ui");
+  if (existsSync(join(uiDir, "index.html"))) {
+    await app.register(fastifyStatic, {
+      root: uiDir,
+      prefix: "/",
+      decorateReply: false,
+    });
+    consoleLogger.info(`UI served from ${uiDir}`);
+  }
 
   const shutdown = async (signal: string): Promise<void> => {
     consoleLogger.info(`received ${signal}, shutting down`);

@@ -4,7 +4,7 @@
   "description": "Adaptive learning engine — companion-driven teaching, spaced repetition, mastery spine, creative portfolio.",
   "main": "dist/server/index.js",
   "type": "module",
-  "private": true,
+  "author": "Jeffrey Miller",
   "files": [
     "dist/",
     "curriculum/",
@@ -29,9 +29,28 @@
   },
   "dependencies": {
     "@fastify/multipart": "^8.3.0",
+    "@fastify/static": "^7.0.4",
     "better-sqlite3": "^11.5.0",
     "fastify": "^4.28.0"
   },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jeffreymiller/nusika.git"
+  },
+  "homepage": "https://github.com/jeffreymiller/nusika#readme",
+  "keywords": [
+    "adaptive-learning",
+    "spaced-repetition",
+    "companion-driven",
+    "tts",
+    "stt",
+    "education",
+    "curriculum",
+    "tutoring",
+    "fastify",
+    "sqlite"
+  ],
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.11",
     "@types/node": "^20.14.0",

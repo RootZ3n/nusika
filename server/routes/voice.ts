@@ -27,16 +27,16 @@ import {
 } from "../lib/voice-cache.js";
 
 // Read env at call time (not module load) so tests + ops can flip paths
-// before issuing a request. Defaults match Jeff's local layout; anywhere
-// else, set the env vars in `.env`.
+// before issuing a request. All voice/whisper paths require env vars;
+// set them in `.env` (see .env.example).
 //
 // Some accessors are exported because the voice registry (server/lib/voice-registry.ts)
 // reuses them to compute engine availability without duplicating preflight logic.
-export const piperBin = () => process.env["PIPER_BIN"] ?? "/home/zen/.local/bin/piper";
-export const piperVoicesDir = () => process.env["PIPER_VOICES_DIR"] ?? "/home/zen/.local/share/piper-voices";
-const whisperBin = () => process.env["WHISPER_BIN"] ?? "/mnt/ai/whisper.cpp/build/bin/whisper-cli";
-const whisperModelEn = () => process.env["WHISPER_MODEL"] ?? "/mnt/ai/whisper.cpp/models/ggml-base.en.bin";
-const whisperModelMulti = () => process.env["WHISPER_MODEL_MULTILINGUAL"] ?? "/mnt/ai/whisper.cpp/models/ggml-base.bin";
+export const piperBin = () => process.env["PIPER_BIN"] ?? "";
+export const piperVoicesDir = () => process.env["PIPER_VOICES_DIR"] ?? "";
+const whisperBin = () => process.env["WHISPER_BIN"] ?? "";
+const whisperModelEn = () => process.env["WHISPER_MODEL"] ?? "";
+const whisperModelMulti = () => process.env["WHISPER_MODEL_MULTILINGUAL"] ?? "";
 export const ttsDefaultVoice = () => nenv("TTS_DEFAULT_VOICE", "en_GB-alba-medium") ?? "en_GB-alba-medium";
 
 /** Where Piper expects to find a voice's .onnx file. */

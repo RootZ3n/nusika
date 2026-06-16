@@ -12,14 +12,11 @@
 // ══════════════════════════════════════════════════════════════════════
 // NUSIKA · THE ACADEMY — Pehverse world engine
 // Self-contained. The engine architecture (state shape, render pipeline,
-// function names) mirrors Pehlichi's / Luak's world shell so the engine
-// can be synced across repos later. This is an ADAPTIVE LEARNING UI —
-// no benchmark/scoring logic. Workspace panels show placeholder content
-// for now, except the Reading Room overview (deck with 6 area cards).
+// function names) mirrors Pehlichi's world shell so the engine can be synced
+// across repos later. Workspace panels show placeholder content for now.
 // ══════════════════════════════════════════════════════════════════════
 
-// ── TAB_CONFIG — Nusika-specific. These tabs label the learning areas
-//    and back the placeholder "open related console" affordance. ───────
+// ── TAB_CONFIG ────────────────────────────────────────────────────────
 const TAB_CONFIG={
   overview:{key:'overview',label:'Learning Overview',laneTitle:'Overview'},
   lessons:{key:'lessons',label:'Lessons',laneTitle:'Lessons'},
@@ -33,104 +30,121 @@ const esc=(v)=>String(v??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(
 function safeStr(value){const s=String(value??'');return(s==='undefined'||s==='null'||s==='NaN')?'':s}
 function humanizeToken(text){const raw=String(text||'').replace(/[_-]+/g,' ').replace(/\s+/g,' ').trim();if(!raw)return'General';return raw.replace(/\b\w/g,(m)=>m.toUpperCase())}
 
-// ── State — same shape as Pehlichi's / Luak's, scoped to one product. ─
+// ── State — same shape as Pehlichi's, scoped to the single live product. ─
 const state={
   activeTab:'overview',
   pehverse:{
     product:'nusika',
     scene:localStorage.getItem('pehverse-scene')||null,
-    mode:localStorage.getItem('pehverse-mode')||'immersive',
-    workspaces:[],
-    focus:null,
+    mode:localStorage.getItem('pehverse-mode')||'dashboard',
+    workspaces:[],   // [{uid, defId, dock:'right'|'bottom'|'fullscreen', min}]
+    focus:null,      // uid of focused workspace (top of stack)
     fastTravel:false,
     wsSeq:0,
-    pehBubble:null,
-    pehPosition:null
+    // Peh-as-guide: when a hotspot is clicked Peh "speaks" — a contextual
+    // speech bubble appears at the hotspot and the medallion glides there.
+    pehBubble:null,  // {text, x, y, anchor, variant, hotspotId, phase}
+    pehPosition:null // {x, y} — current Peh medallion position (for the glide)
   }
 };
 
-// ── ProductRegistry ─────────────────────────────────────────────────────
-// One public product: Nusika — The Academy. The adaptive learning engine.
+// ── ProductRegistry ──────────────────────────────────────────────────────
 const PRODUCT_REGISTRY=[
-  {id:'nusika', displayName:'The Academy', tagline:'Knowledge earned, not given',
-   status:'public', order:6, accent:'#059669', accent2:'#7c3aed',
-   peh:'book', defaultScene:'main-gate',
+  {id:'nusika', displayName:'The Academy', tagline:'Where knowledge takes root',
+   status:'public', order:1, accent:'#059669', accent2:'#8b5cf6',
+   peh:'star', defaultScene:'grand-hall',
    mascotArt:'assets/peh-nusika.png',
-   blurb:'Nusika teaches — adaptive learning, spaced repetition, mastery through practice.'}
+   blurb:'Nusika cultivates knowledge in the Academy — reading, teaching, archiving, and growing.'}
 ];
 
 const PEH_DEFAULT_PRODUCT='nusika';
 
-// ── SceneRegistry ──────────────────────────────────────────────────────
-// Eight locations in the Academy — each is a labeled room from the world map.
-const SCENE_REGISTRY={
-  nusika:[
-    {id:'main-gate', title:'Main Gate', purpose:'Entry & hub', route:'/main-gate',
-     desc:'The entrance to Nusika. Every learner passes through these gates — the journey begins here.', peh:'book',
-     pehSlot:{x:50, y:48, anchor:'center', variant:'gatekeeper'}, hotspots:[
-      {id:'mg-overview',   label:'Learning Overview',      x:50, y:38, workspace:'learning-overview', greeting:"Welcome to the Academy! I'm Nusika — pull up the overview and let's see where you stand."},
-      {id:'mg-grand-hall', label:'The Grand Hall',         x:50, y:22, scene:'grand-hall',            greeting:"The Grand Hall — the heart of the Academy. Let's head in."},
-      {id:'mg-reading',    label:'The Reading Room',       x:22, y:28, scene:'reading-room',           greeting:"The Reading Room — quiet study and deep understanding."},
-      {id:'mg-archives',   label:'The Archives',           x:78, y:28, scene:'archives',               greeting:"The Archives — every record, every milestone, safely kept."},
-      {id:'mg-rare-books', label:'The Rare Books Wing',    x:14, y:50, scene:'rare-books-wing',        greeting:"The Rare Books Wing — valuable literature and curated knowledge."},
-      {id:'mg-scriptorium',label:'The Scriptorium',        x:86, y:50, scene:'scriptorium',            greeting:"The Scriptorium — where knowledge is practiced and written."},
-      {id:'mg-lecture',    label:'The Lecture Hall',       x:26, y:78, scene:'lecture-hall',            greeting:"The Lecture Hall — lessons delivered, questions asked, understanding built."},
-      {id:'mg-correspond', label:'The Correspondence Chamber', x:74, y:78, scene:'correspondence-chamber', greeting:"The Correspondence Chamber — communication, reflection, and growth."}
-    ]},
-    {id:'grand-hall', title:'The Grand Hall', purpose:'Central gathering & administration', route:'/grand-hall',
-     desc:'The domed heart of the Academy. A grand space for gatherings, ceremonies, and the pulse of all learning.', peh:'spark',
-     pehSlot:{x:50, y:55, anchor:'center', variant:'steward'}, hotspots:[
-      {id:'gh-overview', label:'Academy Overview',          x:50, y:40, workspace:'learning-overview', greeting:"The Grand Hall — from here you can survey the entire Academy."},
-      {id:'gh-hub',      label:'Back to Main Gate',         x:50, y:85, scene:'main-gate',             greeting:"Back to the Main Gate — follow me!"}
-    ]},
-    {id:'reading-room', title:'The Reading Room', purpose:'Deep study & mastery', route:'/reading-room',
-     desc:'Quiet alcoves, tall shelves, and focused study. This is where understanding goes from surface to core.', peh:'orbit',
-     pehSlot:{x:50, y:52, anchor:'center', variant:'librarian'}, hotspots:[
-      {id:'rr-mastery', label:'Mastery Spine Workspace',   x:50, y:40, workspace:'mastery-spine',  greeting:"The Reading Room — quiet, focused. This is where we go deep, past the surface into real understanding."},
-      {id:'rr-hub',     label:'Back to Main Gate',          x:50, y:85, scene:'main-gate',          greeting:"Back to the Main Gate — follow me!"}
-    ]},
-    {id:'archives', title:'The Archives', purpose:'Records, vaults & assessment', route:'/archives',
-     desc:'Rows of sealed vaults and indexed records. Every milestone, every score, every growth record is kept here.', peh:'leaf',
-     pehSlot:{x:50, y:55, anchor:'center', variant:'archivist'}, hotspots:[
-      {id:'ar-assessment', label:'Assessment Workspace',   x:50, y:40, workspace:'assessment',    greeting:"The Archives — where we check what's recorded, what's grown, and what still needs tending."},
-      {id:'ar-hub',        label:'Back to Main Gate',       x:50, y:85, scene:'main-gate',         greeting:"Back to the Main Gate — follow me!"}
-    ]},
-    {id:'rare-books-wing', title:'The Rare Books Wing', purpose:'Valuable literature & creative portfolio', route:'/rare-books-wing',
-     desc:'Illuminated manuscripts, first editions, and treasured works. Your creative portfolio lives among the rarest knowledge.', peh:'star',
-     pehSlot:{x:50, y:55, anchor:'center', variant:'curator'}, hotspots:[
-      {id:'rb-portfolio', label:'Portfolio Workspace',     x:50, y:40, workspace:'portfolio',     greeting:"The Rare Books Wing — everything you've created, displayed among the treasures. Take pride in it."},
-      {id:'rb-hub',       label:'Back to Main Gate',       x:50, y:85, scene:'main-gate',         greeting:"Back to the Main Gate — follow me!"}
-    ]},
-    {id:'scriptorium', title:'The Scriptorium', purpose:'Writing, practice & drills', route:'/scriptorium',
-     desc:'Ink, parchment, and the steady hand of practice. This is where repetition turns knowledge into instinct.', peh:'tools',
-     pehSlot:{x:50, y:55, anchor:'center', variant:'scribe'}, hotspots:[
-      {id:'sc-practice', label:'Practice Workspace',       x:50, y:40, workspace:'practice-drills', greeting:"The Scriptorium — repetition is how knowledge becomes instinct. Let's drill."},
-      {id:'sc-hub',      label:'Back to Main Gate',         x:50, y:85, scene:'main-gate',           greeting:"Back to the Main Gate — follow me!"}
-    ]},
-    {id:'lecture-hall', title:'The Lecture Hall', purpose:'Teaching & active learning', route:'/lecture-hall',
-     desc:'An amphitheater of ideas. Lessons delivered, questions asked, understanding built one step at a time.', peh:'spark',
-     pehSlot:{x:50, y:55, anchor:'center', variant:'teacher'}, hotspots:[
-      {id:'lh-lessons', label:'Lessons Workspace',         x:50, y:40, workspace:'lessons',        greeting:"The Lecture Hall — let's break it down together. Every concept gets its own moment here."},
-      {id:'lh-hub',     label:'Back to Main Gate',          x:50, y:85, scene:'main-gate',          greeting:"Back to the Main Gate — follow me!"}
-    ]},
-    {id:'correspondence-chamber', title:'The Correspondence Chamber', purpose:'Communication & reflection', route:'/correspondence-chamber',
-     desc:'Letters, messages, and reflective correspondence. A place to communicate what you have learned and where you are growing.', peh:'pencil',
-     pehSlot:{x:50, y:55, anchor:'center', variant:'correspondent'}, hotspots:[
-      {id:'cc-correspond', label:'Correspondence Workspace', x:50, y:40, workspace:'correspondence', greeting:"The Correspondence Chamber — reflect, write, and communicate your journey."},
-      {id:'cc-hub',        label:'Back to Main Gate',         x:50, y:85, scene:'main-gate',          greeting:"Back to the Main Gate — follow me!"}
-    ]}
-  ]
-};
+// ── SceneRegistry ────────────────────────────────────────────────────────
+const SCENE_REGISTRY={nusika:[
+  // ── Hub: The Grand Hall (central domed structure) ─────────────────────
+  {id:'grand-hall', title:'The Grand Hall', purpose:'Hub / overview', route:'/hall',
+   desc:'The large central domed structure — the heart of the Academy where all knowledge converges.', peh:'star',
+   pehSlot:{x:50, y:55, anchor:'center', variant:'dean'}, hotspots:[
+    {id:'gh-overview',       label:'Learning Overview',       x:50, y:45, workspace:'console',
+     greeting:"Welcome to the Grand Hall — the heart of the Academy. All knowledge flows through here."},
+    {id:'gh-reading',        label:'Reading Room',            x:25, y:25, scene:'reading-room',
+     greeting:"The Reading Room — where every lesson begins with curiosity."},
+    {id:'gh-rare',           label:'Rare Books Wing',         x:20, y:50, scene:'rare-books-wing',
+     greeting:"The Rare Books Wing — treasures of knowledge preserved for centuries."},
+    {id:'gh-lecture',        label:'Lecture Hall',            x:25, y:75, scene:'lecture-hall',
+     greeting:"The Lecture Hall — where ideas are shared and minds are sharpened."},
+    {id:'gh-archives',       label:'The Archives',            x:80, y:25, scene:'archives',
+     greeting:"The Archives — centuries of accumulated wisdom, waiting to be explored."},
+    {id:'gh-scriptorium',    label:'The Scriptorium',         x:80, y:50, scene:'scriptorium',
+     greeting:"The Scriptorium — where knowledge is crafted and preserved by hand."},
+    {id:'gh-correspondence', label:'Correspondence Chamber',  x:78, y:75, scene:'correspondence-chamber',
+     greeting:"The Correspondence Chamber — where ideas travel between minds."}
+  ]},
+  // ── The Reading Room (upper left) — study & research ─────────────────
+  {id:'reading-room', title:'The Reading Room', purpose:'Study & research', route:'/reading',
+   desc:'A domed, ivy-clad sanctuary of books. Soft light filters through arched windows onto rows of reading desks.', peh:'book',
+   pehSlot:{x:30, y:30, anchor:'center', variant:'librarian'}, hotspots:[
+    {id:'rr-study', label:'Study Desk',             x:46, y:48, workspace:'reading-study',
+     greeting:"Find a comfortable seat — every great discovery starts with a good book."},
+    {id:'rr-hall',  label:'Back to the Grand Hall', x:72, y:82, scene:'grand-hall',
+     greeting:"Let's return to the Grand Hall — follow me!"}
+  ]},
+  // ── The Rare Books Wing (left) — special collections ─────────────────
+  {id:'rare-books-wing', title:'The Rare Books Wing', purpose:'Special collections', route:'/rare-books',
+   desc:'An elongated domed stone building with arched windows. The rarest volumes rest behind glass.', peh:'beaker',
+   pehSlot:{x:25, y:55, anchor:'center', variant:'archivist'}, hotspots:[
+    {id:'rb-collections', label:'Collections',            x:46, y:48, workspace:'rare-collections',
+     greeting:"Handle these with care — each volume is irreplaceable."},
+    {id:'rb-hall',        label:'Back to the Grand Hall', x:80, y:78, scene:'grand-hall',
+     greeting:"Let's return to the Grand Hall — follow me!"}
+  ]},
+  // ── The Lecture Hall (lower left) — teaching & practice ──────────────
+  {id:'lecture-hall', title:'The Lecture Hall', purpose:'Teaching & practice', route:'/lectures',
+   desc:'A circular open-air amphitheater with a decorative stone symbol at its center. Ideas echo off ancient walls.', peh:'spark',
+   pehSlot:{x:25, y:75, anchor:'center', variant:'professor'}, hotspots:[
+    {id:'lh-teach', label:'Teaching Platform',      x:46, y:48, workspace:'lecture-teach',
+     greeting:"Take the floor — every great teacher was once a curious student."},
+    {id:'lh-hall',  label:'Back to the Grand Hall', x:68, y:20, scene:'grand-hall',
+     greeting:"Let's return to the Grand Hall — follow me!"}
+  ]},
+  // ── The Archives (upper right) — knowledge preservation ──────────────
+  {id:'archives', title:'The Archives', purpose:'Knowledge preservation', route:'/archives',
+   desc:'A domed building on a rocky outcrop, reached by steep stone stairs. The air smells of old paper and ink.', peh:'gear',
+   pehSlot:{x:75, y:30, anchor:'center', variant:'keeper'}, hotspots:[
+    {id:'ar-catalog', label:'Catalog Room',           x:46, y:48, workspace:'archive-catalog',
+     greeting:"Every document has its place — let's find what you're looking for."},
+    {id:'ar-hall',    label:'Back to the Grand Hall', x:35, y:80, scene:'grand-hall',
+     greeting:"Let's return to the Grand Hall — follow me!"}
+  ]},
+  // ── The Scriptorium (right) — writing & creation ─────────────────────
+  {id:'scriptorium', title:'The Scriptorium', purpose:'Writing & creation', route:'/scriptorium',
+   desc:'A multi-domed building with an outdoor terrace. The scratch of pens and the smell of fresh ink fill the air.', peh:'leaf',
+   pehSlot:{x:75, y:55, anchor:'center', variant:'scribe'}, hotspots:[
+    {id:'sc-writing', label:'Writing Desk',           x:46, y:48, workspace:'script-writing',
+     greeting:"Here is where knowledge becomes permanent — pick up a pen."},
+    {id:'sc-hall',    label:'Back to the Grand Hall', x:35, y:78, scene:'grand-hall',
+     greeting:"Let's return to the Grand Hall — follow me!"}
+  ]},
+  // ── The Correspondence Chamber (lower right) — communication ─────────
+  {id:'correspondence-chamber', title:'The Correspondence Chamber', purpose:'Communication & exchange', route:'/correspondence',
+   desc:'A long domed building with a small tower. Messages, letters, and ideas pass through here between every corner of the Academy.', peh:'signal',
+   pehSlot:{x:75, y:75, anchor:'center', variant:'messenger'}, hotspots:[
+    {id:'cc-mail', label:'Message Desk',           x:46, y:48, workspace:'correspondence-mail',
+     greeting:"Open a channel — every great collaboration starts with a single message."},
+    {id:'cc-hall', label:'Back to the Grand Hall', x:40, y:20, scene:'grand-hall',
+     greeting:"Let's return to the Grand Hall — follow me!"}
+  ]}
+]};
 
 // ── WorkspaceManager: definitions ──────────────────────────────────────
 const WORKSPACE_REGISTRY={
-  'learning-overview':{product:'nusika', title:'Learning Overview', kind:'deck', route:'/main-gate', dock:'fullscreen', peh:'book'},
-  'lessons':          {product:'nusika', title:'Lessons',           kind:'placeholder', route:'/lecture-hall', dock:'right', peh:'spark', relatedTab:'lessons', blurb:'Lessons panel coming soon — active lessons, curriculum delivery, and guided learning will live here.'},
-  'practice-drills':  {product:'nusika', title:'Practice & Drills', kind:'placeholder', route:'/scriptorium', dock:'right', peh:'tools', relatedTab:'practice', blurb:'Practice panel coming soon — spaced repetition, mastery drills, and knowledge under pressure.'},
-  'portfolio':        {product:'nusika', title:'Creative Portfolio', kind:'placeholder', route:'/rare-books-wing', dock:'right', peh:'star', relatedTab:'portfolio', blurb:'Portfolio panel coming soon — your creative work, curated and displayed among the rarest treasures.'},
-  'mastery-spine':    {product:'nusika', title:'Mastery Spine',     kind:'placeholder', route:'/reading-room', dock:'right', peh:'orbit', relatedTab:'mastery', blurb:'Mastery Spine coming soon — deep understanding tracking from surface to core.'},
-  'assessment':       {product:'nusika', title:'Assessment',        kind:'placeholder', route:'/archives', dock:'bottom', peh:'leaf', relatedTab:'overview', blurb:'Assessment panel coming soon — records, growth tracking, and milestones safely archived.'},
-  'correspondence':   {product:'nusika', title:'Correspondence',    kind:'placeholder', route:'/correspondence-chamber', dock:'right', peh:'pencil', relatedTab:'overview', blurb:'Correspondence panel coming soon — reflective writing, communication, and documenting your learning journey.'}
+  'console':             {product:null,     title:'Academy Overview',  kind:'deck', route:'/hall',           dock:'fullscreen', peh:'star'},
+  'reading-study':       {product:'nusika', title:'Study Desk',        kind:'live', route:'/reading',        dock:'right',  peh:'book',   relatedTab:'lessons',  blurb:'Study desk — curated reading lists and lessons.'},
+  'rare-collections':    {product:'nusika', title:'Collections',       kind:'live', route:'/rare-books',     dock:'right',  peh:'beaker', relatedTab:'portfolio', blurb:'Special collections — rare texts and curated knowledge.'},
+  'lecture-teach':       {product:'nusika', title:'Teaching Platform', kind:'live', route:'/lectures',       dock:'bottom', peh:'spark',  relatedTab:'practice', blurb:'Teaching platform — lessons, drills, and practice sessions.'},
+  'archive-catalog':     {product:'nusika', title:'Catalog Room',      kind:'live', route:'/archives',       dock:'right',  peh:'gear',   relatedTab:'mastery',  blurb:'Archive catalog — the knowledge spine and mastery tracking.'},
+  'script-writing':      {product:'nusika', title:'Writing Desk',      kind:'live', route:'/scriptorium',    dock:'right',  peh:'leaf',   relatedTab:'portfolio', blurb:'Writing desk — creative portfolio and authored works.'},
+  'correspondence-mail': {product:'nusika', title:'Message Desk',      kind:'live', route:'/correspondence', dock:'right',  peh:'signal', relatedTab:'overview', blurb:'Message desk — correspondence and voice exchange.'}
 };
 
 // ── Registry lookups ───────────────────────────────────────────────────
@@ -184,9 +198,9 @@ function pehWorkspaceBelongsToActive(def){
 
 // ── Navigation (product-local scene travel + mode) ─────────────────────
 function pehSetScene(sceneId){
-  if(!pehScene(pehActiveProductId(),sceneId))return;
+  if(!pehScene(pehActiveProductId(),sceneId))return; // isolation: own areas only
   state.pehverse.scene=sceneId;
-  state.pehverse.pehPosition=null;
+  state.pehverse.pehPosition=null; // new scene → Peh rests at its own slot
   localStorage.setItem('pehverse-scene',sceneId);
   render();
 }
@@ -214,6 +228,7 @@ function pehDevSwitchProduct(productId){
 }
 function pehSetMode(mode){
   if(mode!=='immersive'&&mode!=='dashboard')return;
+  if(mode==='dashboard')_dashAutoOpenDone=false;
   state.pehverse.mode=mode;
   localStorage.setItem('pehverse-mode',mode);
   render();
@@ -233,7 +248,7 @@ function pehOpenWorkspace(defId,opts){
     }
     return;
   }
-  let ws=state.pehverse.workspaces.find((w)=>w.defId===defId);
+  let ws=state.pehverse.workspaces.find((w)=>w.defId===defId); // de-dupe
   if(!ws){
     ws={uid:'ws'+(++state.pehverse.wsSeq),defId,dock:(opts&&opts.dock)||def.dock||'right',min:false};
     state.pehverse.workspaces.push(ws);
@@ -244,10 +259,13 @@ function pehOpenWorkspace(defId,opts){
 }
 
 // ── Peh-as-guide: contextual speech bubble ─────────────────────────────
-let pehBubbleFadeTimer=null;
-let pehBubbleClearTimer=null;
-const PEH_BUBBLE_HOLD_MS=6000;
-const PEH_BUBBLE_FADE_MS=300;
+// When a hotspot is clicked, Peh "appears" there with a greeting. The
+// bubble auto-dismisses after a few seconds (fade), and the medallion
+// glides to the hotspot (renderPehSlot reads pehPosition).
+let pehBubbleFadeTimer=null;  // fires the exit (fade-out) phase
+let pehBubbleClearTimer=null; // removes the bubble after the fade
+const PEH_BUBBLE_HOLD_MS=6000; // visible before fade begins
+const PEH_BUBBLE_FADE_MS=300;  // fade-out duration (matches CSS .peh-bubble-exit)
 function pehClearBubbleTimers(){
   if(pehBubbleFadeTimer){clearTimeout(pehBubbleFadeTimer);pehBubbleFadeTimer=null;}
   if(pehBubbleClearTimer){clearTimeout(pehBubbleClearTimer);pehBubbleClearTimer=null;}
@@ -266,6 +284,7 @@ function pehSayGreeting(hotspot,scene){
     hotspotId:hotspot.id,
     phase:'enter'
   };
+  // Peh glides to the hotspot — use the true x (not the clamped bubble x).
   state.pehverse.pehPosition={x:hotspot.x!=null?hotspot.x:50,y};
   render();
   pehBubbleFadeTimer=setTimeout(()=>{
@@ -299,6 +318,8 @@ function pehHotspot(defId,sceneId){
   }
   pehOpenWorkspace(defId);
 }
+// Hotspot activation entry point: Peh greets FIRST, then — after a short
+// beat so the bubble/medallion are seen — the navigation runs.
 function pehHotspotActivate(sceneId,hotspotId){
   const scene=pehScene(pehActiveProductId(),sceneId);
   const hotspot=scene&&scene.hotspots?scene.hotspots.find((h)=>h.id===hotspotId):null;
@@ -315,6 +336,7 @@ function pehFocusWorkspace(uid,skipRender){
   state.pehverse.focus=uid;
   const def=pehWorkspaceDef(ws.defId);
   if(def&&def.kind==='lane'&&def.tab)state.activeTab=def.tab;
+  // Move focused workspace to the end of the stack (top of z-order).
   state.pehverse.workspaces=state.pehverse.workspaces.filter((w)=>w.uid!==uid).concat(ws);
   if(!skipRender)render();
 }
@@ -345,44 +367,58 @@ function pehBackToMap(uid){
   try{localStorage.setItem('pehverse-mode','immersive')}catch(e){}
   render();
 }
-function pehOpenRelatedLane(tab){if(tab)state.activeTab=tab;pehOpenWorkspace('learning-overview')}
+function pehOpenRelatedLane(tab){if(tab)state.activeTab=tab;pehOpenWorkspace('console')}
 
 // ── Peh glyphs (atmospheric placeholders, NOT final art) ───────────────
 function pehGlyph(key){
   const P={
-    book:'<path d="M5 4h10a2 2 0 0 1 2 2v13a1 1 0 0 0-1-1H5zM5 18a1 1 0 0 0-1 1V6a2 2 0 0 1 1-1.7M9 8h5M9 11h5"/>',
-    spark:'<path d="M12 3v6M12 15v6M3 12h6M15 12h6"/>',
-    tools:'<path d="M14.5 5.5a3.5 3.5 0 0 0 4.6 4.6L21 12l-9 9-2-2 6.9-6.9M9 9l-5 5L6 16M3.5 8.5l3-3 3 3-3 3z"/>',
-    star:'<path d="M12 3l2.6 5.6L21 9.3l-4.5 4.3 1.1 6.1L12 17l-5.6 2.7 1.1-6.1L3 9.3l6.4-.7z"/>',
-    orbit:'<circle cx="12" cy="12" r="3"/><path d="M5 5c4-2 10 4 8 8M19 19c-4 2-10-4-8-8"/>',
-    leaf:'<path d="M5 19c0-8 5-13 14-13 0 9-5 14-13 14M5 19c2-5 5-8 9-9"/>',
-    pencil:'<path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>',
-    brain:'<path d="M12 2a5 5 0 0 1 4.5 2.8A4 4 0 0 1 20 9a4 4 0 0 1-1.5 3.2A5 5 0 0 1 18 16a5 5 0 0 1-10 0 5 5 0 0 1-.5-3.8A4 4 0 0 1 4 9a4 4 0 0 1 3.5-4.2A5 5 0 0 1 12 2z"/><path d="M12 2v20"/>',
-    palette:'<circle cx="12" cy="12" r="10"/><circle cx="8" cy="9" r="1.5" fill="currentColor"/><circle cx="15" cy="8" r="1.5" fill="currentColor"/><circle cx="16" cy="13" r="1.5" fill="currentColor"/><circle cx="9" cy="14" r="1.5" fill="currentColor"/>',
-    mortarboard:'<path d="M12 3L2 8l10 5 10-5-10-5z"/><path d="M6 10v5c0 2 3 4 6 4s6-2 6-4v-5"/><path d="M22 8v6"/>',
     microscope:'<path d="M9 17h7M6 21h12M11 5l3 3-4 4-3-3zM12.5 9.5l3.5 3.5a4 4 0 0 1-5 6"/>',
     telescope:'<path d="M3 14l11-4 1.6 4.4L5 18zM14 10l4-1.4.9 2.6-4 1.4zM7 17l-2 4M12 18v3M9 21h6"/>',
     beaker:'<path d="M9 3h6M10 3v6l-5 8a2 2 0 0 0 1.8 3h10.4A2 2 0 0 0 19 17l-5-8V3M7.5 14h9"/>',
+    book:'<path d="M5 4h10a2 2 0 0 1 2 2v13a1 1 0 0 0-1-1H5zM5 18a1 1 0 0 0-1 1V6a2 2 0 0 1 1-1.7M9 8h5M9 11h5"/>',
     gear:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+    leaf:'<path d="M5 19c0-8 5-13 14-13 0 9-5 14-13 14M5 19c2-5 5-8 9-9"/>',
+    tools:'<path d="M14.5 5.5a3.5 3.5 0 0 0 4.6 4.6L21 12l-9 9-2-2 6.9-6.9M9 9l-5 5L6 16M3.5 8.5l3-3 3 3-3 3z"/>',
     signal:'<path d="M12 18v3M9 21h6M5 11a9 9 0 0 1 14 0M8 13.5a5 5 0 0 1 8 0"/><circle cx="12" cy="16" r="1.6"/>',
-    wrench:'<path d="M15 7a4 4 0 0 1-5.2 3.8L5 15.6 8.4 19l4.8-4.8A4 4 0 0 1 17 9l-2 2-2-2 2-2z"/>'
+    star:'<path d="M12 3l2.6 5.6L21 9.3l-4.5 4.3 1.1 6.1L12 17l-5.6 2.7 1.1-6.1L3 9.3l6.4-.7z"/>',
+    orbit:'<circle cx="12" cy="12" r="3"/><path d="M5 5c4-2 10 4 8 8M19 19c-4 2-10-4-8-8"/>',
+    wrench:'<path d="M15 7a4 4 0 0 1-5.2 3.8L5 15.6 8.4 19l4.8-4.8A4 4 0 0 1 17 9l-2 2-2-2 2-2z"/>',
+    spark:'<path d="M12 3v6M12 15v6M3 12h6M15 12h6"/>'
   };
   return `<svg class="peh-glyph" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[key]||'<circle cx="12" cy="12" r="7"/>'}</svg>`;
 }
 
-// ── Peh placeholder slot (data-driven squirrel guide medallion) ────────
-function pehSquirrelSilhouette(){
-  return `<svg class="peh-squirrel" viewBox="0 0 64 64" width="100%" height="100%" aria-hidden="true"><path fill="currentColor" d="M40 9c2.2 0 4 2 4 4.6 0 2-1 3.6-2.4 4.4 3 2.4 4.8 6 4.8 10.2 0 3-1 5.7-2.7 7.9 5.7 2.5 9.7 8.1 9.7 14.6 0 1.7-1.3 3-3 3H22c-7.2 0-13-5.8-13-13 0-6.8 5.2-12.4 11.9-13 .3-4 2.3-7.5 5.3-9.8-.7-1-1.1-2.2-1.1-3.5C25 11 28 8 31.8 8c1.9 0 3.6.8 4.8 2 1-1.2 2.4-1 3.4-1z"/><g fill="none" stroke="#3a2a18" stroke-width="1.6" stroke-linecap="round" opacity=".92"><circle cx="29.5" cy="23.5" r="3.7"/><path d="M33 22.4c3-1 5.2-.9 7 .5"/></g><circle cx="29.5" cy="23.5" r="1.4" fill="#0a0f0d"/></svg>`;
+// ── Peh slot (Pehlichi portrait medallion) ────────────────────────────
+// Each location carries a `pehSlot:{x,y,anchor,variant}`. Peh glides to
+// the clicked hotspot. The medallion shows the real peh-nusika.png portrait.
+var _dashAutoOpenDone=false;
+function pehAutoOpenDashboard(){
+  if(_dashAutoOpenDone)return;
+  _dashAutoOpenDone=true;
+  Object.keys(WORKSPACE_REGISTRY).forEach(function(defId){
+    var def=WORKSPACE_REGISTRY[defId];
+    if(!def||def.product==null)return; // skip console (product:null)
+    if(def.product!==pehActiveProductId())return;
+    if(!state.pehverse.workspaces.find(function(w){return w.defId===defId;})){
+      var ws={uid:'ws'+(++state.pehverse.wsSeq),defId:defId,dock:def.dock||'right',min:false};
+      state.pehverse.workspaces.push(ws);
+    }
+  });
+  if(state.pehverse.workspaces.length){
+    var last=state.pehverse.workspaces[state.pehverse.workspaces.length-1];
+    state.pehverse.focus=last.uid;
+  }
 }
 function pehSlotMarkup(slot,opts){
   if(!slot)return'';
   const o=opts||{};
   const variant=slot.variant||'guide';
-  const pos=o.inline?'' : `left:${slot.x}%;top:${slot.y}%;`;
+  const inline=o.inline;
+  const pos=inline?'' : `left:${slot.x}%;top:${slot.y}%;`;
   const anchor=slot.anchor||'center';
-  return `<div class="peh-slot peh-slot-${anchor} ${o.inline?'peh-slot-inline':''} ${o.glow?'glow':''}" style="${pos}" data-variant="${esc(variant)}" data-anchor="${esc(anchor)}" title="Peh — your guide here (${esc(variant)})" aria-label="Peh placeholder — ${esc(variant)}">
-    <span class="peh-slot-medallion" aria-hidden="true">${pehSquirrelSilhouette()}</span>
-    ${o.inline?'':'<span class="peh-slot-tag">Peh</span>'}
+  return `<div class="peh-slot peh-slot-${anchor} ${inline?'peh-slot-inline':''} ${o.glow?'glow':''}" style="${pos}" data-variant="${esc(variant)}" data-anchor="${esc(anchor)}" title="Pehlichi — your Academy guide" aria-label="Pehlichi — ${esc(variant)}">
+    <span class="peh-slot-medallion" aria-hidden="true"><img src="assets/peh-nusika.png" alt="" loading="lazy" width="100%" height="100%"></span>
+    ${inline?'':'<span class="peh-slot-tag">Peh</span>'}
   </div>`;
 }
 function renderPehSlot(scene){
@@ -393,6 +429,9 @@ function renderPehSlot(scene){
     : scene.pehSlot;
   return pehSlotMarkup(slot,{inline:false,glow:!!pv.pehBubble});
 }
+// Peh's contextual speech bubble — anchored at the clicked hotspot. The
+// scene overlay layer is click-through (pointer-events:none in CSS); only
+// the bubble itself is interactive.
 function renderPehBubble(){
   const b=state.pehverse.pehBubble;
   if(!b)return'';
@@ -400,18 +439,21 @@ function renderPehBubble(){
   return `<div class="peh-bubble-layer" aria-hidden="false">
     <div class="peh-bubble peh-bubble-anchor-${esc(b.anchor)} ${phaseClass}" style="left:${b.x}%;top:${b.y}%" role="status" title="Dismiss" onclick="pehDismissBubble()">
       <div class="peh-bubble-content">
-        <span class="peh-bubble-name">Nusika</span>
+        <span class="peh-bubble-name">Pehlichi</span>
         <p class="peh-bubble-text">${esc(b.text)}</p>
       </div>
       <div class="peh-bubble-tail" aria-hidden="true"></div>
     </div>
   </div>`;
 }
+// Peh guide figure — the product's real mascot art (Nusika's portrait),
+// framed as a "your guide" portrait. Renders ONLY when the active
+// product ships mascotArt. Decorative (aria-hidden).
 function renderPehGuide(product){
   if(!product||!product.mascotArt)return'';
   return `<figure class="peh-guide" aria-hidden="true">
     <span class="peh-guide-frame"><img class="peh-guide-img" src="${esc(product.mascotArt)}" alt="" loading="lazy"></span>
-    <figcaption class="peh-guide-cap"><b>Nusika</b><i>your guide</i></figcaption>
+    <figcaption class="peh-guide-cap"><b>Pehlichi</b><i>your guide</i></figcaption>
   </figure>`;
 }
 
@@ -452,6 +494,8 @@ function renderPehStage(product,scene,deckMarkup){
     : renderPehImmersive(product,scene,deckMarkup);
 }
 
+// Immersive: scene-first. Background atmosphere + caption + hotspots, with
+// open workspaces docking over the scene (or as mobile bottom sheets).
 function renderPehImmersive(product,scene,deckMarkup){
   return `<div class="peh-scene" data-scene="${scene?scene.id:''}">
     <div class="peh-scene-atmos" aria-hidden="true"></div>
@@ -469,6 +513,8 @@ function renderPehImmersive(product,scene,deckMarkup){
   </div>`;
 }
 
+// Dashboard: workspace-first. Thin scene strip on top, open workspaces tile
+// in a grid. When nothing is open, show a chooser of THIS product's spaces.
 function renderPehDashboard(product,scene,deckMarkup){
   const open=state.pehverse.workspaces;
   const grid=open.length
@@ -496,6 +542,7 @@ function renderHotspotLayer(scene){
   }).join('')}</div>`;
 }
 
+// Scene-to-scene waypoints — fast hops between the active product's own areas.
 function renderPehWaypoints(product,scene){
   const scenes=pehScenes(product.id);
   if(scenes.length<2)return'';
@@ -507,7 +554,7 @@ function renderWorkspaceOverlays(deckMarkup){
   const open=state.pehverse.workspaces;
   if(!open.length)return'';
   let ws=open.find((w)=>w.uid===state.pehverse.focus)||open[open.length-1];
-  if(ws.min)return'';
+  if(ws.min)return''; // minimized → scene unobstructed; chip stays in taskbar
   return `<div class="peh-overlays">${renderWorkspacePanel(ws,deckMarkup)}</div>`;
 }
 function renderWorkspacePanel(w,deckMarkup){
@@ -526,23 +573,24 @@ function renderWorkspaceTile(w,deckMarkup){
   </section>`;
 }
 function renderWorkspaceHeader(w,def,isTile){
-  const kindTag=def.kind==='lane'?'LIVE':def.kind==='deck'?'CONSOLE':'PLACEHOLDER';
-  const dockBtn=(d,glyph,label)=>`<button class="peh-dockbtn ${w.dock===d?'on':''}" type="button" title="Dock ${label}" aria-label="Dock ${label}" onclick="event.stopPropagation();pehDockWorkspace('${w.uid}','${d}')">${glyph}</button>`;
+  const kindTag=(def.kind==='lane'||def.kind==='live')?'LIVE':def.kind==='deck'?'CONSOLE':'PLACEHOLDER';
+  const dockBtn=(d,glyph,label)=>`<button class="peh-dockbtn ${w.dock===d?'on':''}" type="button" title="Dock ${label}" aria-label="Dock ${label}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pehDockWorkspace('${w.uid}','${d}')">${glyph}</button>`;
   return `<header class="peh-panel-head">
-    ${isTile?'':`<button class="peh-backmap" type="button" title="Back to the map" aria-label="Back to the world map" onclick="event.stopPropagation();pehBackToMap('${w.uid}')"><span aria-hidden="true">‹</span> Map</button>`}
+    ${isTile?'':`<button class="peh-backmap" type="button" title="Back to the map" aria-label="Back to the world map" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pehBackToMap('${w.uid}')"><span aria-hidden="true">‹</span> Map</button>`}
     <span class="peh-panel-glyph">${pehGlyph(def.peh)}</span>
     <span class="peh-panel-title">${esc(def.title||w.defId)}</span>
     <span class="peh-panel-kind k-${kindTag.toLowerCase()}">${kindTag}</span>
     <span class="peh-panel-ctrls">
       ${isTile?'':dockBtn('right','⫼','right')+dockBtn('bottom','▭','bottom')+dockBtn('fullscreen','⛶','full')}
-      <button class="peh-dockbtn" type="button" title="Minimize" aria-label="Minimize" onclick="event.stopPropagation();pehMinimizeWorkspace('${w.uid}')">—</button>
-      <button class="peh-dockbtn close" type="button" title="Close" aria-label="Close" onclick="event.stopPropagation();pehCloseWorkspace('${w.uid}')">×</button>
+      <button class="peh-dockbtn" type="button" title="Minimize" aria-label="Minimize" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pehMinimizeWorkspace('${w.uid}')">—</button>
+      <button class="peh-dockbtn close" type="button" title="Close" aria-label="Close" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pehCloseWorkspace('${w.uid}')">×</button>
     </span>
   </header>`;
 }
 function pehWorkspaceBody(w,deckMarkup){
   const def=pehWorkspaceDef(w.defId); if(!def)return'';
   if(def.kind==='deck')return `<div class="peh-deck-wrap">${deckMarkup}</div>`;
+  if(def.kind==='live')return''; // filled by NusScenes.fill() via app.js override
   return pehPlaceholderBody(def);
 }
 function pehPlaceholderBody(def){
@@ -567,7 +615,7 @@ function pehWorkspaceChooser(product){
     return `<button class="peh-choice" type="button" onclick="pehOpenWorkspace('${id}')">
       <span class="peh-choice-glyph">${pehGlyph(d.peh)}</span>
       <span class="peh-choice-title">${esc(d.title)}</span>
-      <span class="peh-choice-kind">${d.kind==='lane'?'live lane':d.kind==='deck'?'console':'placeholder'}</span>
+      <span class="peh-choice-kind">${(d.kind==='lane'||d.kind==='live')?'live lane':d.kind==='deck'?'console':'placeholder'}</span>
     </button>`;
   }).join('')}</div>`;
 }
@@ -579,7 +627,7 @@ function renderPehTaskbar(){
     <button class="peh-task-travel" type="button" onclick="pehToggleFastTravel()" title="Fast travel (Alt+T)" aria-label="Fast travel"><span aria-hidden="true">✦</span></button>
     <div class="peh-task-chips">${open.length?open.map((w)=>{
       const def=pehWorkspaceDef(w.defId)||{};
-      return `<button class="peh-task-chip ${state.pehverse.focus===w.uid?'active':''} ${w.min?'min':''}" type="button" onclick="pehFocusWorkspace('${w.uid}')" title="${esc(def.title||w.defId)}"><span class="peh-task-glyph">${pehGlyph(def.peh)}</span><span class="peh-task-name">${esc(def.title||w.defId)}</span><span class="peh-task-x" role="button" tabindex="0" title="Close" aria-label="Close ${esc(def.title||w.defId)}" onclick="event.stopPropagation();pehCloseWorkspace('${w.uid}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();pehCloseWorkspace('${w.uid}')}">×</span></button>`;
+      return `<button class="peh-task-chip ${state.pehverse.focus===w.uid?'active':''} ${w.min?'min':''}" type="button" onclick="pehFocusWorkspace('${w.uid}')" title="${esc(def.title||w.defId)}"><span class="peh-task-glyph">${pehGlyph(def.peh)}</span><span class="peh-task-name">${esc(def.title||w.defId)}</span><span class="peh-task-x" role="button" tabindex="0" title="Close" aria-label="Close ${esc(def.title||w.defId)}" onmousedown="event.stopPropagation()" onclick="event.stopPropagation();pehCloseWorkspace('${w.uid}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();event.stopPropagation();pehCloseWorkspace('${w.uid}')}">×</span></button>`;
     }).join(''):`<span class="peh-task-empty">No open workspaces — tap a hotspot, or ✦ Fast travel.</span>`}</div>
     ${open.length?`<button class="peh-task-clear" type="button" onclick="pehCloseAllWorkspaces()">Close all</button>`:''}
   </div>`;
@@ -593,8 +641,8 @@ function renderFastTravelMenu(){
   const scenes=pehScenes(product.id);
   return `<div class="peh-ft-overlay" role="dialog" aria-modal="true" aria-label="Fast travel" onclick="if(event.target===this)pehToggleFastTravel(false)">
     <div class="peh-ft">
-      <header class="peh-ft-head"><h2>Fast travel</h2><span class="peh-ft-hint">Within ${esc(product.displayName)} · jump to any room</span><button class="peh-ft-close" type="button" onclick="pehToggleFastTravel(false)" aria-label="Close fast travel">×</button></header>
-      <div class="peh-ft-scenes peh-ft-scenes-main">${scenes.length?scenes.map((s)=>`<button class="peh-ft-scene ${here&&here.id===s.id?'active':''}" aria-current="${here&&here.id===s.id?'true':'false'}" type="button" onclick="pehGoScene('${s.id}')">${esc(s.title)}</button>`).join(''):`<span class="peh-ft-empty">No additional rooms in ${esc(product.displayName)} yet.</span>`}</div>
+      <header class="peh-ft-head"><h2>Fast travel</h2><span class="peh-ft-hint">Within ${esc(product.displayName)} · jump to any area</span><button class="peh-ft-close" type="button" onclick="pehToggleFastTravel(false)" aria-label="Close fast travel">×</button></header>
+      <div class="peh-ft-scenes peh-ft-scenes-main">${scenes.length?scenes.map((s)=>`<button class="peh-ft-scene ${here&&here.id===s.id?'active':''}" aria-current="${here&&here.id===s.id?'true':'false'}" type="button" onclick="pehGoScene('${s.id}')">${esc(s.title)}</button>`).join(''):`<span class="peh-ft-empty">No additional areas in ${esc(product.displayName)} yet.</span>`}</div>
       ${pehDevMode()?renderPehDevSwitcher(product):''}
     </div>
   </div>`;
@@ -612,46 +660,35 @@ function renderPehDevSwitcher(active){
 }
 
 // ── Academy Overview console (the kind:'deck' workspace body) ──────────
-// Nusika's "Learning Overview" dashboard: a warm scholarly learning console.
-// 6 area cards — one per Academy room — plus Peh's learning wisdoms.
-const NUSIKA_WISDOMS=[
-  'Every expert was once a beginner',
-  "Knowledge isn't about speed — it's about depth",
-  'Practice makes permanent, not just perfect',
-  'A page turned is a lesson earned',
-  'Growth begins at the edge of comfort',
-  'The best teachers never stop learning',
-  'Every room in the Academy holds a different kind of wisdom'
-];
-function renderAcademyConsole(){
+function renderObservatoryConsole(){
   const cards=[
-    {ws:'lessons',         scene:'lecture-hall',           glyph:'spark',    title:'The Lecture Hall',           desc:'Lessons delivered, questions asked, understanding built — the amphitheater of ideas.'},
-    {ws:'practice-drills', scene:'scriptorium',             glyph:'tools',    title:'The Scriptorium',            desc:'Writing, practice, and drills — repetition turns knowledge into instinct.'},
-    {ws:'portfolio',       scene:'rare-books-wing',         glyph:'star',     title:'The Rare Books Wing',        desc:'Valuable literature and your creative portfolio — curated and treasured.'},
-    {ws:'mastery-spine',   scene:'reading-room',            glyph:'orbit',    title:'The Reading Room',           desc:'Deep study and mastery — where understanding goes from surface to core.'},
-    {ws:'assessment',      scene:'archives',                glyph:'leaf',     title:'The Archives',              desc:'Records, vaults, and milestones — every growth record safely kept.'},
-    {ws:'correspondence',  scene:'correspondence-chamber',  glyph:'pencil',   title:'The Correspondence Chamber', desc:'Communication, reflection, and documenting your learning journey.'}
+    {ws:'reading-study',       scene:'reading-room',           glyph:'book',   title:'The Reading Room',           desc:'A sanctuary of books — where every lesson begins with curiosity.'},
+    {ws:'rare-collections',    scene:'rare-books-wing',        glyph:'beaker', title:'The Rare Books Wing',        desc:'Special collections — rare texts and preserved knowledge behind glass.'},
+    {ws:'lecture-teach',       scene:'lecture-hall',           glyph:'spark',  title:'The Lecture Hall',           desc:'An open amphitheater — where ideas are shared and minds are sharpened.'},
+    {ws:'archive-catalog',     scene:'archives',               glyph:'gear',   title:'The Archives',               desc:'Centuries of accumulated wisdom, catalogued and preserved.'},
+    {ws:'script-writing',      scene:'scriptorium',            glyph:'leaf',   title:'The Scriptorium',            desc:'Where knowledge becomes permanent — the place of writing and creation.'},
+    {ws:'correspondence-mail', scene:'correspondence-chamber', glyph:'signal', title:'The Correspondence Chamber', desc:'Where ideas travel between minds — messages, letters, and exchange.'}
   ];
   return `<div class="nus-console">
     <div class="nus-hero">
-      <span class="nus-hero-mark" aria-hidden="true">📚</span>
+      <span class="nus-hero-mark" aria-hidden="true">🏛</span>
       <div>
         <h2>Welcome to the Academy</h2>
-        <p>I'm Nusika — your adaptive learning companion. I teach through practice, spaced repetition, and mastery. Eight rooms, each holding a different kind of knowledge. Pick a path below, or tap a place on the map.</p>
+        <p>Nusika cultivates knowledge in the Academy — reading, teaching, archiving, and growing. Every path begins with a question. Choose a place below, or tap a location on the map.</p>
       </div>
     </div>
-    <h3 class="nus-section-title">Academy rooms</h3>
+    <h3 class="nus-section-title">Academy areas</h3>
     <div class="nus-cards">${cards.map((c)=>`
-      <button class="nus-card" type="button" onclick="${c.ws?`pehHotspot('${c.ws}','${c.scene}')`:`pehSetScene('${c.scene}')`}">
+      <button class="nus-card" type="button" onclick="pehHotspot('${c.ws}','${c.scene}')">
         <span class="nus-card-glyph">${pehGlyph(c.glyph)}</span>
         <span class="nus-card-title">${esc(c.title)}</span>
         <span class="nus-card-desc">${esc(c.desc)}</span>
       </button>`).join('')}</div>
     <div class="nus-wisdom">
-      <p>"Every lesson is a seed. Some grow fast, some take time — but all of them matter."</p>
-      <div class="nus-wisdom-row">${NUSIKA_WISDOMS.map((w)=>`<span class="nus-wisdom-item">${esc(w)}</span>`).join('')}</div>
+      <p>"Every lesson begins with a question."</p>
+      <div class="nus-wisdom-row"></div>
     </div>
-    <div class="nus-foot">THE ACADEMY · Nusika · adaptive learning engine</div>
+    <div class="nus-foot">THE ACADEMY · Nusika · where knowledge takes root</div>
   </div>`;
 }
 
@@ -670,11 +707,15 @@ pehBindKeys();
 pehInitProduct();
 
 function render(){
-  const deckMarkup=renderAcademyConsole();
+  if(state.pehverse.mode==='dashboard'&&!state.pehverse.workspaces.length&&!_dashAutoOpenDone){
+    pehAutoOpenDashboard();
+  }
+  const deckMarkup=renderObservatoryConsole();
   document.getElementById('app').innerHTML=renderPehverse(deckMarkup);
 }
 
-// Expose handlers used by inline onclick attributes.
+// Expose handlers used by inline onclick attributes (function declarations
+// are already global in a classic script; these are belt-and-suspenders).
 window.pehHotspotActivate=pehHotspotActivate;
 window.pehDismissBubble=pehDismissBubble;
 window.pehToggleFastTravel=pehToggleFastTravel;
@@ -691,8 +732,10 @@ window.pehCloseAllWorkspaces=pehCloseAllWorkspaces;
 window.pehBackToMap=pehBackToMap;
 window.pehOpenRelatedLane=pehOpenRelatedLane;
 window.pehHotspot=pehHotspot;
+window.pehAutoOpenDashboard=pehAutoOpenDashboard;
 
 // ── Boot ────────────────────────────────────────────────────────────────
+// No sign-in, no server. The UI loads directly into the Academy.
 function boot(){
   try{
     render();
@@ -704,5 +747,16 @@ function boot(){
 window.boot=boot;
 boot();
 </script>
+<!-- ── Live backend layer (loaded AFTER the inline engine so its globals exist).
+     api.js → client · scenes.js → live workspace data · peh-guide.js → journal ·
+     app.js → glue (status dot, command bar, overrides). All pure vanilla JS. ── -->
+<script src="api.js"></script>
+<script src="scenes.js"></script>
+<script src="peh-guide.js"></script>
+<script src="app.js"></script>
+<!-- Translation Layer: maps fantasy labels to plain English for demos -->
+<link rel="stylesheet" href="translation-layer.css">
+<script src="translations-nusika.js"></script>
+<script src="translation-layer.js"></script>
 </body>
 </html>
