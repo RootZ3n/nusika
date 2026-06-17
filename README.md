@@ -10,7 +10,7 @@ Nusika teaches one concept per session through a chosen companion (a character w
 
 Above the subject companions sits **Peh**, the product narrator — the voice the learner hears at Ittunaha (the gathering place), between sessions, and in any future product-level mode that does not bind to a subject companion. Peh is defined in `server/lib/narrator.ts` and surfaced via `GET /nusika/config`. Subject companions (Marcus for Latin, Wei for Mandarin, etc.) are unchanged.
 
-Curriculum lives in `./curriculum/<subject>/config.json` — each one declares the world, companions, domains, concepts, and (optionally) a mastery spine. 19 subjects ship today: latin, mandarin, vietnamese, spanish, french, history, history-through-story, science, mathematics, social-emotional, financial-basics, shukha-anumpa (inkwell), linux, a-plus, network-plus, security-plus, prompt-engineering, **ai-literacy**, **ai-systems**.
+Curriculum lives in `./curriculum/<subject>/config.json` — each one declares the world, companions, domains, concepts, and (optionally) a mastery spine. 21 subjects ship today: latin, mandarin, vietnamese, spanish, french, history, history-through-story, science, mathematics, social-emotional, financial-basics, shukha-anumpa (inkwell), chahta-anumpa, linux, a-plus, network-plus, security-plus, rhcsa, prompt-engineering, **ai-literacy**, **ai-systems**.
 
 ### AI Literacy and AI Systems
 
@@ -157,7 +157,7 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > `voice/start.sh`, honest degradation when down, the
 > `voice/systemd/nusika-voice.service` unit) is documented in
 > [`voice/README.md`](voice/README.md). **Slice 6E assigned Kokoro voices to Peh and
-> all 26 curriculum companions**, so any companion-targeted call now
+> all 33 curriculum companions**, so any companion-targeted call now
 > reaches Kokoro by default (when the service is running). Piper is
 > retained as a fallback engine and as the default for legacy
 > `{ text }` callers without a voice profile match.
@@ -245,15 +245,15 @@ Nusika was extracted from a larger project and now runs standalone. Shipped in t
 - Session recap with companion memory writeback (`/nusika/sessions/:id/recap`)
 - Teach Me Anything mode (`/nusika/lessons/*`, `/teach` web UI)
 - Lookup placeholder that honestly returns `supported: false`
-- All 17 curriculum modules carry at least one companion (globally unique ids)
+- All 21 curriculum modules carry at least one companion (globally unique ids)
 - SRD-style deterministic DM engine (`server/srd/`)
 - DM persistence + routes (`/nusika/dm/*`) — campaigns, characters, rolls, encounters, turn intents, rest, event log
 - DM narration endpoint that is structurally prevented from mutating engine state (`/nusika/dm/campaigns/:id/narrate`)
 - `/dm` standalone web UI
 - Voice routes (Piper TTS, ElevenLabs TTS, whisper.cpp STT — when local binaries are configured)
-- Curriculum scan of 19 subjects (now includes `ai-literacy` and `ai-systems`)
+- Curriculum scan of 21 subjects (now includes `ai-literacy`, `ai-systems`, `chahta-anumpa`, and `rhcsa`)
 - Product narrator (Peh) exposed via `/nusika/config`
-- Smoke test (`pnpm run smoke`) and baseline node:test suite (`pnpm test` — 241 tests)
+- Smoke test (`pnpm run smoke`) and baseline node:test suite (`pnpm test` — 293 tests)
 
 Known limitations (not blockers, future polish):
 

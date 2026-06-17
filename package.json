@@ -14,9 +14,9 @@
     "LICENSE"
   ],
   "scripts": {
-    "start": "tsx server/index.ts",
+    "start": "tsx --env-file-if-exists=.env server/index.ts",
     "start:dist": "node dist/server/index.js",
-    "dev": "tsx watch server/index.ts",
+    "dev": "tsx watch --env-file-if-exists=.env server/index.ts",
     "build": "rm -rf dist && tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "tsx --test test/**/*.test.ts server/**/*.test.ts",
