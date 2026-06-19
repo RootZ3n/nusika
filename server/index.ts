@@ -12,6 +12,7 @@
 import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
+import { velumFastify } from "velum-ai/adapters/fastify";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
 import { existsSync } from "node:fs";
@@ -52,6 +53,9 @@ async function main(): Promise<void> {
       return url;
     },
   });
+
+  // Velum: AI privacy/injection defense middleware
+  velumFastify(app, { defaultPiiLevel: 2 });
 
   // Permissive CORS for now — locked down later when we know the production caller set.
   app.addHook("onRequest", async (req, reply) => {
