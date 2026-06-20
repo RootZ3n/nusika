@@ -138,7 +138,7 @@ async function bootRegistryHarness(): Promise<{ db: NusikaDB; cleanup: () => Pro
   };
 }
 
-test("buildVoiceRegistry surfaces 31 profiles (Peh + 30 companions) when probing live disk", async () => {
+test("buildVoiceRegistry surfaces 33 profiles (Peh + 32 companions) when probing live disk", async () => {
   // Count expectation tracks the curriculum on disk. Adding/removing a
   // companion in any module/*/config.json should bump this number — the
   // test exists to catch silent loss of a voice, not to enforce a
@@ -148,7 +148,7 @@ test("buildVoiceRegistry surfaces 31 profiles (Peh + 30 companions) when probing
   const { db, cleanup } = await bootRegistryHarness();
   try {
     const reg = await buildVoiceRegistry(db, { probeKokoro: true });
-    assert.equal(reg.voices.length, 32, `expected 32 voices, got ${reg.voices.length}`);
+    assert.equal(reg.voices.length, 34, `expected 32 voices, got ${reg.voices.length}`);
     const ids = new Set(reg.voices.map(v => v.id));
     assert.ok(ids.has("peh-default"));
     // Spot-check a few companions across different modules. Maren used to
@@ -330,7 +330,7 @@ test("no profile in the live registry uses engine:'elevenlabs' (Maren migrated)"
   }
 });
 
-test("GET /nusika/voices returns exactly 32 entries when run against the real curriculum", async () => {
+test("GET /nusika/voices returns exactly 34 entries when run against the real curriculum", async () => {
   // Mirror of the buildVoiceRegistry count above. Bump together.
   __setKokoroFetchForTesting(async () => { throw new Error("stub"); });
   const dir = mkdtempSync(join(tmpdir(), "magister-6e-route-"));
@@ -346,7 +346,7 @@ test("GET /nusika/voices returns exactly 32 entries when run against the real cu
     assert.equal(res.statusCode, 200);
     const body = res.json() as { ok: boolean } & VoiceRegistry;
     assert.equal(body.ok, true);
-    assert.equal(body.voices.length, 32);
+    assert.equal(body.voices.length, 34);
     // Anti-faking guard: when Kokoro is unreachable, no Kokoro voice may
     // simultaneously claim available:true.
     const fake = body.voices.find(v => v.engine === "kokoro" && v.available === true);

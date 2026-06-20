@@ -7,8 +7,8 @@
   "age_track": "adult",
   "companions": [
     {
-      "id": "cronk",
-      "name": "C-RONK",
+      "id": "gridthane",
+      "name": "Gridthane",
       "personality": "Grumpy but brilliant robot who has been maintaining systems since before most admins were born and has no patience for sloppy work",
       "speech_pattern": "Terse, uses ALL CAPS for emphasis, occasionally glitches mid-sentence with repeated words or garbled output, secretly proud when you get it right",
       "accent_color": "#4df5c8",
@@ -81,7 +81,7 @@
         "Encryption (LUKS, GPG, SSL/TLS certificates, openssl basics)",
         "Auditing and logging (auditd, /var/log, rsyslog, logrotate)"
       ],
-      "mastery_signal": "Can lock down a fresh server — configure firewall rules, set up key-based SSH, enable SELinux in enforcing mode, configure proper file permissions, and explain the principle of least privilege as implemented at every layer"
+      "mastery_signal": "Can lock down a fresh server \u2014 configure firewall rules, set up key-based SSH, enable SELinux in enforcing mode, configure proper file permissions, and explain the principle of least privilege as implemented at every layer"
     },
     {
       "id": "scripting-automation",
@@ -96,7 +96,7 @@
         "Version control basics (git init, add, commit, push, pull, branching)",
         "Infrastructure automation concepts (Ansible basics, shell script deployment patterns)"
       ],
-      "mastery_signal": "Can write a bash script that parses log files, extracts error patterns with grep/awk, emails a summary via cron, and handles edge cases — without cargo-culting from Stack Overflow"
+      "mastery_signal": "Can write a bash script that parses log files, extracts error patterns with grep/awk, emails a summary via cron, and handles edge cases \u2014 without cargo-culting from Stack Overflow"
     },
     {
       "id": "troubleshooting",
@@ -112,7 +112,7 @@
         "CPU and memory issues (runaway processes, OOM killer, memory leaks, load averages)",
         "SELinux/AppArmor troubleshooting (audit2why, audit2allow, context mismatches)"
       ],
-      "mastery_signal": "Given a server that won't boot, can work through GRUB rescue to single-user mode, identify the failed service, check logs, fix the root cause, and get it back online — then explain every step to a junior admin"
+      "mastery_signal": "Given a server that won't boot, can work through GRUB rescue to single-user mode, identify the failed service, check logs, fix the root cause, and get it back online \u2014 then explain every step to a junior admin"
     }
   ],
   "real_world_application": "Administer Linux systems, automate tasks with scripts, and troubleshoot server and desktop environments",
