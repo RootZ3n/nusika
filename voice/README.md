@@ -13,7 +13,7 @@ git — see [`.gitignore`](.gitignore).
 | Property | Value |
 |---|---|
 | Service name | `nusika-voice` (systemd `nusika-voice.service`) |
-| Canonical source | `/pehverse/repos/nusika/voice/` (this dir) |
+| Canonical source | `/pehverse/repos/ecosystem/nusika/voice/` (this dir) |
 | Backend | Kokoro 82M (Apache-2.0), CPU-only |
 | Bind | `127.0.0.1:18794` (loopback only) |
 | Health | `GET http://127.0.0.1:18794/health` |
@@ -83,7 +83,7 @@ reused via `NUSIKA_VOICE_VENV` (set in `nusika-voice.env`). To build or
 refresh it from scratch:
 
 ```bash
-cd /pehverse/repos/nusika/voice
+cd /pehverse/repos/ecosystem/nusika/voice
 cp nusika-voice.env.example nusika-voice.env   # then edit paths if needed
 # Build into the path NUSIKA_VOICE_VENV points at (or ./.venv by default):
 NUSIKA_VOICE_VENV=/pehverse/services/nusika-voice/.venv \
@@ -97,7 +97,7 @@ HF_HOME=/pehverse/cache/huggingface \
 ## Run (manual)
 
 ```bash
-cd /pehverse/repos/nusika/voice
+cd /pehverse/repos/ecosystem/nusika/voice
 ./start.sh        # sources nusika-voice.env, ensures venv, runs uvicorn
 ```
 
@@ -108,7 +108,7 @@ The unit template lives at
 this `start.sh`. Install once (needs sudo):
 
 ```bash
-sudo install -m 644 /pehverse/repos/nusika/voice/systemd/nusika-voice.service \
+sudo install -m 644 /pehverse/repos/ecosystem/nusika/voice/systemd/nusika-voice.service \
   /etc/systemd/system/nusika-voice.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now nusika-voice.service
@@ -152,7 +152,7 @@ curl -sS -X POST http://127.0.0.1:18793/nusika/tts \
 ## Nusika integration
 
 Nusika reaches this service via `NUSIKA_KOKORO_URL=http://127.0.0.1:18794`
-(set in `/pehverse/repos/nusika/.env`; 18794 is also the client default).
+(set in `/pehverse/repos/ecosystem/nusika/.env`; 18794 is also the client default).
 
 - `GET /nusika/voices` probes `/health` and reports `engines.kokoro.configured`.
 - `POST /nusika/tts` with a Kokoro-engine voice profile (e.g. `voice:"peh"`)

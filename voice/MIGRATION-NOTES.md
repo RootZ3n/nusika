@@ -31,7 +31,7 @@ migration.
   code change. 18794/18893/18894 were all free; 18794 chosen to avoid
   any config churn.
 - Activated `NUSIKA_KOKORO_URL=http://127.0.0.1:18794` and
-  `NUSIKA_VOICE_CACHE_MAX_MB=500` in `/pehverse/repos/nusika/.env`.
+  `NUSIKA_VOICE_CACHE_MAX_MB=500` in `/pehverse/repos/ecosystem/nusika/.env`.
 - systemd unit `nusika-voice.service` authored, staged in
   `/pehverse/services/systemd/`. Loopback-only bind, restart-on-failure,
   start-on-boot.
@@ -62,7 +62,7 @@ Ownership/packaging pass — behavior unchanged, no backend rewrite:
 - `start.sh` now honors `NUSIKA_VOICE_VENV` so systemd/operators can reuse
   the existing ~5 GB runtime venv instead of rebuilding it.
 - The systemd unit template now runs the **repo-owned** `start.sh`
-  (`WorkingDirectory=/pehverse/repos/nusika/voice`).
+  (`WorkingDirectory=/pehverse/repos/ecosystem/nusika/voice`).
 - `.gitignore` hardened: `.venv/`, `__pycache__/`, `*.wav`, `samples/*.wav`,
   `cache/`, `models/`, and the real `nusika-voice.env` stay out of git.
   The 5.2 GB venv and Kokoro model files are never committed.
