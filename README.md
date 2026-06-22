@@ -67,8 +67,8 @@
 67|33|│   ├── lib/             Helpers (paths, safety patterns, LLM client, narrator, prompts, receipts)
 68|34|│   ├── srd/             Deterministic SRD-style DM engine (dice, checks, combat, leveling, inventory)
 69|35|│   └── routes/          HTTP handlers
-70|36|├── voice/               Optional local voice sub-services (sibling, not required to run Nusika)
-71|37|│   └── kokoro/          Local Kokoro 82M TTS service (Slice 6C — not yet wired into /nusika/tts)
+70|36|│                        (local voice moved out — see the separate OPTIONAL repo `nusika-voice`)
+71|37|│                        Kokoro 82M TTS runs there on 127.0.0.1:18794; Nusika reaches it over HTTP, text-only if absent
 72|38|├── curriculum/          Subject configs (gitted)
 73|39|├── web/                 Next.js UI on port 3003 — pages: /, /teach, /dm
 74|40|└── state/               Local DB + receipts + uploads (gitignored)

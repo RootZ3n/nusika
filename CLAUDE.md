@@ -11,7 +11,9 @@ quizzes/review questions per module, and optional local voice (TTS/STT). It was
 extracted from `peh-v2` to standalone in May 2026 and is consumed by Peh over HTTP.
 
 The engine is a Fastify API (TypeScript, ESM, Node >=20) backed by SQLite. A separate
-Next.js web UI lives in `web/`, and an optional Python Kokoro voice sub-service in `voice/`.
+Next.js web UI lives in `web/`. Local voice (Python Kokoro TTS) is an **optional,
+separate repo** (`nusika-voice`, sibling of this one) that runs on 127.0.0.1:18794;
+Nusika reaches it over HTTP and degrades to text-only when it is absent.
 
 ## Build / Test / Dev commands
 
@@ -76,7 +78,7 @@ server/                Fastify API (entry: server/index.ts — boots DB, scans c
                        dm, dm-narration, chahta-anumpa, inkwell
 curriculum/            Subject configs (data, gitted) — 21+ modules incl. rhcsa, linux, ai-literacy
 web/                   Next.js 3003 UI — routes: / (Ittunaha), /teach, /dm, /chahta-anumpa
-voice/                 Optional Python Kokoro 82M TTS sub-service (127.0.0.1:18794; not required to run Nusika)
+(voice)                Local Kokoro 82M TTS is the separate optional `nusika-voice` repo (127.0.0.1:18794; not required)
 scripts/               smoke.mjs, install-systemd.mjs, nusika-health.mjs
 contrib/systemd/       systemd --user unit files
 state/                 Local DB + receipts + uploads + voice cache (gitignored)
