@@ -15,7 +15,7 @@
 
 /** Voice profile attached to a narrator. Mirrors the per-companion shape. */
 export interface NarratorVoice {
-  engine: "kokoro" | "piper" | "elevenlabs" | "none";
+  engine: "kokoro" | "piper" | "edge" | "elevenlabs" | "none";
   voice_ref: string;
   language?: string;
   style?: string;

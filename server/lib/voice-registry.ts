@@ -17,6 +17,7 @@
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import type { NusikaDB } from "../db.js";
+import { nenv } from "./env.js";
 import { getProductNarrator } from "./narrator.js";
 import {
   piperBin,
@@ -25,8 +26,9 @@ import {
   voiceModelPath,
 } from "../routes/voice.js";
 import { kokoroHealth, kokoroBaseUrl } from "./voices/kokoro.js";
+import { edgeTtsHealth, mapKokoroToEdge } from "./voices/edge.js";
 
-export type VoiceEngine = "piper" | "kokoro" | "elevenlabs" | "none";
+export type VoiceEngine = "piper" | "kokoro" | "edge" | "elevenlabs" | "none";
 export type VoiceRole = "narrator" | "companion" | "fallback";
 
 export interface VoiceProfile {
@@ -59,8 +61,19 @@ export interface VoiceRegistry {
   engines: {
     piper: EngineStatus;
     kokoro: EngineStatus;
+    edge: EngineStatus;
     elevenlabs: EngineStatus;
   };
+}
+
+/**
+ * When `NUSIKA_TTS_ENGINE=edge`, every companion that would otherwise
+ * route to Kokoro is served by Edge instead — using a mapped Edge voice —
+ * with zero curriculum edits. This is the "free voice for all companions,
+ * no GPU" switch.
+ */
+function edgePreferred(): boolean {
+  return (nenv("TTS_ENGINE") ?? "").toLowerCase() === "edge";
 }
 
 // ── Engine status ────────────────────────────────────────────────────────────
@@ -130,6 +143,23 @@ async function kokoroEngineStatus(probe: boolean): Promise<EngineStatus> {
     configured: true,
     detail: `Kokoro service at ${url} — ${stateNote}.`,
   };
+}
+
+/**
+ * Edge TTS is configured iff the `edge-tts` CLI is installed and runnable.
+ * The probe runs `edge-tts --help` (offline, ~instant) and is only run
+ * when the caller asks for it — `buildVoiceRegistry({ probeEdge: true })`.
+ * The dispatch path skips the probe to keep `/nusika/tts` snappy.
+ */
+async function edgeEngineStatus(probe: boolean): Promise<EngineStatus> {
+  if (!probe) {
+    return {
+      configured: false,
+      detail: "Edge TTS probe skipped (would run edge-tts --help).",
+    };
+  }
+  const health = await edgeTtsHealth();
+  return { configured: health.configured, detail: health.detail };
 }
 
 /**
@@ -220,6 +250,21 @@ function profileFromCompanion(
   const override = entry.voice;
   const legacyElevenLabs = typeof entry.voice_id === "string" ? entry.voice_id : undefined;
 
+  // Explicit Edge binding, or a Kokoro binding redirected to Edge by the
+  // global NUSIKA_TTS_ENGINE=edge switch. Either way the companion is
+  // served by Edge with a mapped voice and no curriculum edit.
+  if (override?.engine === "edge" || (override?.engine === "kokoro" && defaults.edgePreferred)) {
+    return edgeProfileFromParts({
+      id, display_name,
+      ref: override.voice_ref ?? override.voice_id ?? "",
+      companion_id: entry.id,
+      role: "companion",
+      module_id: moduleId,
+      ...(override.language ? { language: override.language } : {}),
+      ...(override.style ? { style: override.style } : {}),
+    }, defaults);
+  }
+
   if (override?.engine === "kokoro") {
     const ref = override.voice_ref ?? override.voice_id ?? "";
     return {
@@ -296,6 +341,45 @@ interface RegistryDefaults {
   defaultPiperVoice: string;
   kokoroConfigured: boolean;
   kokoroDetail?: string;
+  edgeConfigured: boolean;
+  edgeDetail?: string;
+  /** NUSIKA_TTS_ENGINE=edge — route Kokoro-configured voices through Edge. */
+  edgePreferred: boolean;
+}
+
+/**
+ * Build an Edge voice profile. `ref` may be a Kokoro voice id (mapped to a
+ * comparable Edge voice) or an Edge voice id (used as-is). Availability
+ * reflects whether the edge-tts CLI is installed.
+ */
+function edgeProfileFromParts(
+  parts: {
+    id: string;
+    display_name: string;
+    ref: string;
+    companion_id: string;
+    role: VoiceRole;
+    module_id?: string;
+    language?: string;
+    style?: string;
+  },
+  defaults: RegistryDefaults,
+): VoiceProfile {
+  return {
+    id: parts.id,
+    display_name: parts.display_name,
+    engine: "edge",
+    voice_ref: mapKokoroToEdge(parts.ref),
+    companion_id: parts.companion_id,
+    role: parts.role,
+    ...(parts.module_id ? { module_id: parts.module_id } : {}),
+    ...(parts.language ? { language: parts.language } : {}),
+    ...(parts.style ? { style: parts.style } : {}),
+    available: defaults.edgeConfigured,
+    ...(defaults.edgeConfigured
+      ? {}
+      : { reason: defaults.edgeDetail ?? "Edge TTS (edge-tts CLI) not available." }),
+  };
 }
 
 /**
@@ -306,6 +390,18 @@ function pehProfile(defaults: RegistryDefaults): VoiceProfile {
   const narrator = getProductNarrator();
   const id = `${narrator.id}-default`;
   const display_name = `${narrator.name} (default voice)`;
+
+  if (narrator.voice && (narrator.voice.engine === "edge" ||
+      (narrator.voice.engine === "kokoro" && defaults.edgePreferred))) {
+    return edgeProfileFromParts({
+      id, display_name,
+      ref: narrator.voice.voice_ref,
+      companion_id: narrator.id,
+      role: "narrator",
+      ...(narrator.voice.language ? { language: narrator.voice.language } : {}),
+      style: narrator.voice.style ?? "warm narrator",
+    }, defaults);
+  }
 
   if (narrator.voice && narrator.voice.engine === "kokoro") {
     return {
@@ -369,15 +465,21 @@ export async function buildVoiceRegistry(
     loader?: (configPath: string | null) => Promise<ModuleConfig | null>;
     /** When true, probes the Kokoro service /health (default 750 ms timeout). */
     probeKokoro?: boolean;
+    /** When true, probes the edge-tts CLI (`edge-tts --help`). */
+    probeEdge?: boolean;
   } = {},
 ): Promise<VoiceRegistry> {
   const piperStatus = piperEngineStatus();
   const kokoroStatus = await kokoroEngineStatus(opts.probeKokoro ?? false);
+  const edgeStatus = await edgeEngineStatus(opts.probeEdge ?? false);
   const defaults: RegistryDefaults = {
     piperConfigured: piperStatus.configured,
     defaultPiperVoice: ttsDefaultVoice(),
     kokoroConfigured: kokoroStatus.configured,
     ...(kokoroStatus.detail ? { kokoroDetail: kokoroStatus.detail } : {}),
+    edgeConfigured: edgeStatus.configured,
+    ...(edgeStatus.detail ? { edgeDetail: edgeStatus.detail } : {}),
+    edgePreferred: edgePreferred(),
   };
   const load = opts.loader ?? loadModuleConfig;
 
@@ -417,6 +519,7 @@ export async function buildVoiceRegistry(
     engines: {
       piper: piperStatus,
       kokoro: kokoroStatus,
+      edge: edgeStatus,
       elevenlabs: elevenLabsEngineStatus(),
     },
   };

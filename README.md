@@ -164,11 +164,11 @@ The built server (`start:dist`) and the dev server both resolve the project root
 | GET  | `/nusika/config` | Accessibility settings + product narrator (Peh) identity |
 
 | POST | `/nusika/translate` | Companion-friendly translation via the configured LLM |
-| GET  | `/nusika/voices` | Voice registry: every companion + Peh + per-engine status (Piper / Kokoro / ElevenLabs). Always returns 200; missing binaries surface as `available:false` with a `reason`, not a crash. Probes Kokoro health live with a 750ms timeout. |
-| GET  | `/nusika/voices/preview/:engine/:voice_id` | Synthesises a short sample phrase (`"Hello, I am <name>."` when `?name=` is given) and returns `audio/wav`. Engine: `kokoro` or `piper`. Shares the `/nusika/tts` audio cache; identical previews return cached bytes with `X-TTS-Provider: kokoro-cached` / `X-TTS-Cache-Hit: true`. 400 on bad input; 503 on engine failure with a sanitised `detail`. |
+| GET  | `/nusika/voices` | Voice registry: every companion + Peh + per-engine status (Piper / Kokoro / Edge / ElevenLabs). Always returns 200; missing binaries surface as `available:false` with a `reason`, not a crash. Probes Kokoro health (750ms) and the `edge-tts` CLI live. |
+| GET  | `/nusika/voices/preview/:engine/:voice_id` | Synthesises a short sample phrase (`"Hello, I am <name>."` when `?name=` is given). Engine: `kokoro`, `edge`, or `piper` (`edge` returns `audio/mpeg`, the others `audio/wav`). Edge accepts an Edge voice id or a Kokoro id (mapped). Shares the `/nusika/tts` audio cache; identical previews return cached bytes with `X-TTS-Cache-Hit: true`. 400 on bad input; 503 on engine failure with a sanitised `detail`. |
 | GET  | `/nusika/voices/cache` | Returns `{ ok, bytes, mb, maxBytes, maxMb }` describing the voice cache state. |
 | DELETE | `/nusika/voices/cache` | Clears `*.wav` files inside `state/voices/cache/` only; never touches other state files. Returns `{ ok, deletedFiles, deletedBytes }`. |
-| POST | `/nusika/tts` | Local TTS via Piper — requires `PIPER_BIN` and a voice model |
+| POST | `/nusika/tts` | TTS dispatch. Routes a resolved voice profile to its engine — Kokoro, **Edge** (free, no GPU/key; `audio/mpeg`), or Piper — and keeps the legacy Piper-basename path. Set `NUSIKA_TTS_ENGINE=edge` to serve every companion via Edge. |
 | POST | `/nusika/tts/elevenlabs` | Cloud TTS, falls back to Piper — requires `ELEVENLABS_API_KEY`. *Deprecated.* |
 | POST | `/nusika/stt` | Local STT via whisper.cpp — requires `WHISPER_BIN` and a model |
 
@@ -201,6 +201,23 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > support is a future engine-or-content slice; the registry honestly
 > labels each tutor voice's style with `(English speech)` so callers
 > aren't surprised.
+>
+> **Edge TTS — the free, zero-GPU engine.** Microsoft Edge's online
+> neural voices, reached through the `edge-tts` Python CLI
+> (`pip install edge-tts`). No API key and no GPU — synthesis runs on
+> Microsoft's online endpoint, so it needs network access at call time;
+> it returns `audio/mpeg`. Nusika dispatches to it when a resolved
+> profile has `engine: "edge"`. Because every companion config declares a
+> Kokoro voice id today, a built-in **Kokoro→Edge map**
+> (`server/lib/voices/edge.ts`) gives each companion a distinct, accent-
+> and gender-matched Edge voice with **zero curriculum edits**. Two ways
+> to use it for everyone: set `NUSIKA_TTS_ENGINE=edge` to route all 33
+> companions + Peh through Edge (overriding their `engine:"kokoro"`
+> configs with a mapped voice), or set `NUSIKA_VOICE_FALLBACK=edge` to
+> use Edge only when Kokoro is unreachable. A companion can also opt in
+> explicitly with `voice: { engine: "edge", voice_ref: "en-US-GuyNeural" }`
+> in its config. Failures degrade honestly: a missing `edge-tts` CLI or a
+> failed call returns 503 with a sanitised `detail`, never a traceback.
 >
 > **Voice picker (per-user, browser-only).** `/teach` and `/dm` each
 > include a small voice dropdown next to the existing Preview button.
@@ -237,7 +254,9 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > |---|---|---|
 > | `NUSIKA_KOKORO_URL` | `http://127.0.0.1:18794` | Where the Kokoro sub-service listens. |
 > | `NUSIKA_VOICE_CACHE_MAX_MB` | `500` | LRU cap for `state/voices/cache/`. |
-> | `NUSIKA_VOICE_FALLBACK` | unset | Set to `piper` to fall through to Piper when Kokoro is down. |
+> | `NUSIKA_VOICE_FALLBACK` | unset | Fall-through engine when the primary fails: `piper` or `edge`. |
+> | `NUSIKA_EDGE_TTS_BIN` | `edge-tts` | Path/name of the `edge-tts` CLI (resolved on `PATH`). |
+> | `NUSIKA_TTS_ENGINE` | unset | Set to `edge` to route every companion through Edge TTS (free, no GPU). |
 >
 > The `/nusika/voices` route probes Kokoro's `/health` (with a 750 ms
 > timeout) on every call so its `engines.kokoro.configured` reflects the

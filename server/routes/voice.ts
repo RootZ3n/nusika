@@ -20,6 +20,7 @@ import { writeReceipt } from "../lib/receipts.js";
 import { safeServeFile } from "../lib/safe-serve-file.js";
 import { resolveVoiceProfile, type VoiceProfile } from "../lib/voice-registry.js";
 import { kokoroGenerate, type KokoroGenerateError } from "../lib/voices/kokoro.js";
+import { edgeGenerate, mapKokoroToEdge, type EdgeGenerateError } from "../lib/voices/edge.js";
 import {
   voiceCacheKey,
   getCachedVoice,
@@ -224,13 +225,97 @@ async function runKokoroSynthesis(
       meta: { voice: profile.voice_ref, profile_id: profile.id, error: detail, status: e.status, reachable: e.reachable },
     });
 
-    if (nenv("VOICE_FALLBACK") === "piper") {
+    const fallback = nenv("VOICE_FALLBACK");
+    if (fallback === "edge") {
+      app.log.info("nusika:tts: falling back to Edge after Kokoro failure");
+      return runEdgeSynthesis(app, reply, profile, text);
+    }
+    if (fallback === "piper") {
       app.log.info("nusika:tts: falling back to Piper after Kokoro failure");
       return runPiperSynthesis(app, reply, text, ttsDefaultVoice(), /*isFallback=*/ true);
     }
     return reply.status(503).send({
       ok: false,
       error: "Kokoro TTS unavailable.",
+      detail,
+    });
+  }
+}
+
+/**
+ * Run Edge TTS synthesis through the `edge-tts` CLI. Edge is the free,
+ * zero-GPU engine: no API key, hundreds of neural voices, synthesis runs
+ * on Microsoft's online endpoint. Cache hits skip the upstream call. On
+ * failure, optionally fall back to Piper if `NUSIKA_VOICE_FALLBACK=piper`.
+ *
+ * `profile.voice_ref` may be an Edge voice id (engine:"edge" profiles) or
+ * a Kokoro voice id (when reached as a fallback from a Kokoro profile);
+ * `mapKokoroToEdge` resolves either to a concrete Edge voice so the cache
+ * key, headers, and synthesis all agree. Edge emits MP3 (audio/mpeg).
+ */
+async function runEdgeSynthesis(
+  app: FastifyInstance,
+  reply: FastifyReply,
+  profile: VoiceProfile,
+  text: string,
+): Promise<FastifyReply> {
+  const voiceRef = mapKokoroToEdge(profile.voice_ref);
+  const cacheKey = voiceCacheKey({ engine: "edge", voiceId: voiceRef, text });
+  const cached = await getCachedVoice(cacheKey);
+  if (cached) {
+    void writeReceipt({
+      componentType: "module-event", componentName: "magister-tts",
+      reason: "magister:tts:edge:cached",
+      meta: { voice: voiceRef, profile_id: profile.id, characters: text.length, audioBytes: cached.length, cache_hit: true },
+    });
+    return reply
+      .header("Content-Type", "audio/mpeg")
+      .header("X-TTS-Provider", "edge-cached")
+      .header("X-Voice-Engine", "edge")
+      .header("X-Voice-Id", profile.id)
+      .header("X-TTS-Voice", voiceRef)
+      .header("X-TTS-Cache-Hit", "true")
+      .send(cached);
+  }
+
+  const start = Date.now();
+  try {
+    const audio = await edgeGenerate({ voice: voiceRef, text });
+    const durationMs = Date.now() - start;
+    await putCachedVoice(cacheKey, audio);
+
+    void writeReceipt({
+      componentType: "module-event", componentName: "magister-tts",
+      reason: "magister:tts:edge",
+      durationMs,
+      meta: { voice: voiceRef, profile_id: profile.id, characters: text.length, audioBytes: audio.length, cache_hit: false },
+    });
+    return reply
+      .header("Content-Type", "audio/mpeg")
+      .header("X-TTS-Provider", "edge")
+      .header("X-Voice-Engine", "edge")
+      .header("X-Voice-Id", profile.id)
+      .header("X-TTS-Voice", voiceRef)
+      .header("X-TTS-Duration-Ms", String(durationMs))
+      .header("X-TTS-Cache-Hit", "false")
+      .send(audio);
+  } catch (err) {
+    const e = err as EdgeGenerateError;
+    const detail = e.detail ?? (err instanceof Error ? err.message : String(err));
+    app.log.warn(`nusika:tts: Edge failed: ${detail}`);
+    void writeReceipt({
+      componentType: "module-event", componentName: "magister-tts",
+      reason: "magister:tts:edge", status: "failure",
+      meta: { voice: voiceRef, profile_id: profile.id, error: detail, reachable: e.reachable },
+    });
+
+    if (nenv("VOICE_FALLBACK") === "piper") {
+      app.log.info("nusika:tts: falling back to Piper after Edge failure");
+      return runPiperSynthesis(app, reply, text, ttsDefaultVoice(), /*isFallback=*/ true);
+    }
+    return reply.status(503).send({
+      ok: false,
+      error: "Edge TTS unavailable.",
       detail,
     });
   }
@@ -265,6 +350,8 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
         switch (profile.engine) {
           case "kokoro":
             return runKokoroSynthesis(app, reply, profile, text);
+          case "edge":
+            return runEdgeSynthesis(app, reply, profile, text);
           case "piper":
             return runPiperSynthesis(app, reply, text, profile.voice_ref);
           case "elevenlabs":
@@ -275,6 +362,9 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
               detail: "Use POST /nusika/tts/elevenlabs explicitly, or rebind this companion to a local engine.",
             });
           case "none":
+            if (nenv("VOICE_FALLBACK") === "edge") {
+              return runEdgeSynthesis(app, reply, profile, text);
+            }
             if (nenv("VOICE_FALLBACK") === "piper") {
               return runPiperSynthesis(app, reply, text, ttsDefaultVoice(), /*isFallback=*/ true);
             }

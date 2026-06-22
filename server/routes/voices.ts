@@ -34,13 +34,19 @@ import {
   type KokoroGenerateError,
 } from "../lib/voices/kokoro.js";
 import {
+  EDGE_VOICE_IDS,
+  edgeGenerate,
+  mapKokoroToEdge,
+  type EdgeGenerateError,
+} from "../lib/voices/edge.js";
+import {
   piperBin,
   piperSynth,
   voiceModelPath,
 } from "./voice.js";
 import { writeReceipt } from "../lib/receipts.js";
 
-const PREVIEW_ENGINES = new Set(["kokoro", "piper"]);
+const PREVIEW_ENGINES = new Set(["kokoro", "edge", "piper"]);
 
 /**
  * Build the short sample phrase used for previews. Same input always
@@ -84,6 +90,49 @@ async function previewKokoro(
       componentType: "module-event", componentName: "magister-voice-preview",
       reason: "magister:voices:preview:kokoro", status: "failure",
       meta: { voice: voiceId, error: detail, status: e.status, reachable: e.reachable },
+    });
+    return reply.status(503).send({
+      ok: false,
+      error: "Voice preview unavailable.",
+      detail,
+    });
+  }
+}
+
+async function previewEdge(
+  app: FastifyInstance,
+  reply: FastifyReply,
+  voiceId: string,
+  text: string,
+): Promise<FastifyReply> {
+  const voiceRef = mapKokoroToEdge(voiceId);
+  const cacheKey = voiceCacheKey({ engine: "edge", voiceId: voiceRef, text });
+  const cached = await getCachedVoice(cacheKey);
+  if (cached) {
+    return reply
+      .header("Content-Type", "audio/mpeg")
+      .header("X-TTS-Provider", "edge-cached")
+      .header("X-TTS-Voice", voiceRef)
+      .header("X-TTS-Cache-Hit", "true")
+      .send(cached);
+  }
+  try {
+    const audio = await edgeGenerate({ voice: voiceRef, text });
+    await putCachedVoice(cacheKey, audio);
+    return reply
+      .header("Content-Type", "audio/mpeg")
+      .header("X-TTS-Provider", "edge")
+      .header("X-TTS-Voice", voiceRef)
+      .header("X-TTS-Cache-Hit", "false")
+      .send(audio);
+  } catch (err) {
+    const e = err as EdgeGenerateError;
+    const detail = e.detail ?? (err instanceof Error ? err.message : String(err));
+    app.log.warn(`nusika:voices:preview: Edge failed: ${detail}`);
+    void writeReceipt({
+      componentType: "module-event", componentName: "magister-voice-preview",
+      reason: "magister:voices:preview:edge", status: "failure",
+      meta: { voice: voiceRef, error: detail, reachable: e.reachable },
     });
     return reply.status(503).send({
       ok: false,
@@ -156,7 +205,7 @@ export async function registerVoicesRoute(app: FastifyInstance, db: NusikaDB): P
   // ── GET /nusika/voices ──────────────────────────────────────────────────
   app.get("/nusika/voices", async (_req, reply) => {
     try {
-      const registry = await buildVoiceRegistry(db, { probeKokoro: true });
+      const registry = await buildVoiceRegistry(db, { probeKokoro: true, probeEdge: true });
       return reply.send({ ok: true, ...registry });
     } catch (err) {
       app.log.error(`nusika:voices: registry failed: ${err}`);
@@ -166,6 +215,7 @@ export async function registerVoicesRoute(app: FastifyInstance, db: NusikaDB): P
         engines: {
           piper: { configured: false, detail: "registry unavailable" },
           kokoro: { configured: false, detail: "Kokoro service not wired yet." },
+          edge: { configured: false, detail: "Edge TTS not probed." },
           elevenlabs: { configured: false, deprecated: true },
         },
         warning: "Voice registry could not be built; see server logs.",
@@ -201,9 +251,19 @@ export async function registerVoicesRoute(app: FastifyInstance, db: NusikaDB): P
         detail: "GET /nusika/voices for the supported list.",
       });
     }
+    // Edge accepts either an Edge voice id or a Kokoro id (mapped). Reject
+    // only a string that resolves to neither a known Kokoro nor Edge voice.
+    if (engine === "edge" && !EDGE_VOICE_IDS.has(voiceId) && !KOKORO_VOICE_IDS.has(voiceId)) {
+      return reply.status(400).send({
+        ok: false,
+        error: `Unknown Edge voice id '${voiceId}'.`,
+        detail: "GET /nusika/voices for the supported list (Edge or Kokoro ids accepted).",
+      });
+    }
 
     const text = previewText(req.query?.name);
     if (engine === "kokoro") return previewKokoro(app, reply, voiceId, text);
+    if (engine === "edge") return previewEdge(app, reply, voiceId, text);
     return previewPiper(app, reply, voiceId, text);
   });
 
