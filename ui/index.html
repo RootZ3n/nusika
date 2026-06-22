@@ -229,6 +229,11 @@ function pehDevSwitchProduct(productId){
 function pehSetMode(mode){
   if(mode!=='immersive'&&mode!=='dashboard')return;
   if(mode==='dashboard')_dashAutoOpenDone=false;
+  if(mode==='immersive'){
+    // Leaving the dashboard: tear down open workspaces so immersive view is clean.
+    state.pehverse.workspaces=[];
+    state.pehverse.focus=null;
+  }
   state.pehverse.mode=mode;
   localStorage.setItem('pehverse-mode',mode);
   render();
@@ -393,21 +398,9 @@ function pehGlyph(key){
 // the clicked hotspot. The medallion shows the real peh-nusika.png portrait.
 var _dashAutoOpenDone=false;
 function pehAutoOpenDashboard(){
-  if(_dashAutoOpenDone)return;
-  _dashAutoOpenDone=true;
-  Object.keys(WORKSPACE_REGISTRY).forEach(function(defId){
-    var def=WORKSPACE_REGISTRY[defId];
-    if(!def||def.product==null)return; // skip console (product:null)
-    if(def.product!==pehActiveProductId())return;
-    if(!state.pehverse.workspaces.find(function(w){return w.defId===defId;})){
-      var ws={uid:'ws'+(++state.pehverse.wsSeq),defId:defId,dock:def.dock||'right',min:false};
-      state.pehverse.workspaces.push(ws);
-    }
-  });
-  if(state.pehverse.workspaces.length){
-    var last=state.pehverse.workspaces[state.pehverse.workspaces.length-1];
-    state.pehverse.focus=last.uid;
-  }
+  // Intentionally a no-op. Auto-opening every workspace on dashboard entry
+  // flooded the screen and overrode the user's chosen layout. Workspaces are
+  // now opened explicitly via hotspots / WorkspaceManager instead.
 }
 function pehSlotMarkup(slot,opts){
   if(!slot)return'';
