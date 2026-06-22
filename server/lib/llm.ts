@@ -11,6 +11,7 @@
  *   - groq        — api.groq.com (OpenAI-compatible)
  *   - mistral     — api.mistral.ai (OpenAI-compatible)
  *   - together    — api.together.xyz (OpenAI-compatible)
+ *   - minimax     — api.minimax.io chatcompletion_v2 (companion roleplay: MiniMax-M3)
  *   - ollama      — local fallback
  *
  * When LLM_PROVIDER is not set, the legacy behavior applies:
@@ -54,11 +55,12 @@ export type LlmProvider =
   | "groq"
   | "mistral"
   | "together"
+  | "minimax"
   | "ollama";
 
 /** All providers that use the OpenAI-compatible /v1/chat/completions format. */
 const OPENAI_COMPATIBLE_PROVIDERS: LlmProvider[] = [
-  "openrouter", "openai", "deepseek", "mimo", "groq", "mistral", "together",
+  "openrouter", "openai", "deepseek", "mimo", "groq", "mistral", "together", "minimax",
 ];
 
 interface ProviderEndpoint {
@@ -104,6 +106,18 @@ const PROVIDER_ENDPOINTS: Record<string, ProviderEndpoint> = {
     baseUrl: "https://api.together.xyz/v1/chat/completions",
     defaultModel: "meta-llama/Meta-Llama-3.1-70B-Instruct-Turbo",
     apiKeyEnv: "TOGETHER_API_KEY",
+  },
+  minimax: {
+    // MiniMax international platform. chatcompletion_v2 is OpenAI-shape-compatible
+    // (messages in, choices[].message.content out) but returns a base_resp status.
+    // MiniMax-M3 is the current chat model — warm, conversational, good for
+    // companion roleplay and returns content directly. (The M2/M2.7 "reasoning"
+    // variants spend the token budget on hidden reasoning and return empty
+    // content via this path; the registry's "MiniMax-M2.7-her" is a display
+    // label, not a valid API model id.)
+    baseUrl: "https://api.minimax.io/v1/text/chatcompletion_v2",
+    defaultModel: "MiniMax-M3",
+    apiKeyEnv: "MINIMAX_API_KEY",
   },
   anthropic: {
     baseUrl: "https://api.anthropic.com/v1/messages",
@@ -156,6 +170,8 @@ interface OpenAICompatResponse {
   choices?: OpenAICompatChoice[];
   model?: string;
   usage?: { prompt_tokens?: number; completion_tokens?: number; total_tokens?: number };
+  /** MiniMax returns HTTP 200 even on errors; the real status is here. */
+  base_resp?: { status_code?: number; status_msg?: string };
 }
 
 interface AnthropicContentBlock {
@@ -231,6 +247,11 @@ async function completeOpenAICompat(
   }
 
   const data = await res.json() as OpenAICompatResponse;
+  // MiniMax replies HTTP 200 with a non-zero base_resp.status_code on errors
+  // (auth, quota, bad model). Other OpenAI-compatible providers omit base_resp.
+  if (data.base_resp && typeof data.base_resp.status_code === "number" && data.base_resp.status_code !== 0) {
+    throw new Error(`${provider} error ${data.base_resp.status_code}: ${data.base_resp.status_msg ?? "unknown"}`);
+  }
   const text = data.choices?.[0]?.message?.content ?? "";
   const tokensIn = data.usage?.prompt_tokens ?? 0;
   const tokensOut = data.usage?.completion_tokens ?? 0;
