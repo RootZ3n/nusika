@@ -94,7 +94,6 @@ async function previewKokoro(
     return reply.status(503).send({
       ok: false,
       error: "Voice preview unavailable.",
-      detail,
     });
   }
 }
@@ -137,7 +136,6 @@ async function previewEdge(
     return reply.status(503).send({
       ok: false,
       error: "Voice preview unavailable.",
-      detail,
     });
   }
 }
@@ -164,16 +162,14 @@ async function previewPiper(
   if (!existsSync(bin)) {
     return reply.status(503).send({
       ok: false,
-      error: "Piper preview not available.",
-      detail: `PIPER_BIN not found at ${bin}.`,
+      error: "Voice preview not available.",
     });
   }
   const modelPath = voiceModelPath(voiceId);
   if (!existsSync(modelPath)) {
     return reply.status(503).send({
       ok: false,
-      error: "Piper preview voice not available.",
-      detail: `Voice model not found at ${modelPath}.`,
+      error: "Voice preview not available.",
     });
   }
 
@@ -193,8 +189,7 @@ async function previewPiper(
     app.log.warn(`nusika:voices:preview: Piper failed: ${fullDetail}`);
     return reply.status(503).send({
       ok: false,
-      error: "Piper preview failed.",
-      detail: "Piper exited with an error. See server logs for details.",
+      error: "Voice preview unavailable.",
     });
   } finally {
     if (outFile) unlink(outFile).catch(() => {});

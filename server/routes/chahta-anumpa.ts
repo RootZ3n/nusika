@@ -72,7 +72,23 @@ async function loadSeedData(): Promise<SeedData> {
     "../../curriculum/chahta-anumpa/seed-data.json",
   );
   const raw = await readFile(seedPath, "utf-8");
-  seedCache = JSON.parse(raw) as SeedData;
+  const parsed = JSON.parse(raw) as unknown;
+
+  // Structural validation before caching — reject malformed data early.
+  if (!parsed || typeof parsed !== "object") {
+    throw new Error("Seed data is not an object");
+  }
+  const obj = parsed as Record<string, unknown>;
+  if (!Array.isArray(obj.words)) throw new Error("Seed data missing 'words' array");
+  if (!Array.isArray(obj.phrases)) throw new Error("Seed data missing 'phrases' array");
+  if (!Array.isArray(obj.lessons)) throw new Error("Seed data missing 'lessons' array");
+
+  const data = parsed as SeedData;
+
+  // Validate every entry has required fields before caching.
+  validateEntries(data);
+
+  seedCache = data;
   return seedCache;
 }
 
@@ -94,7 +110,6 @@ export async function registerChahtaAnumpaRoutes(app: FastifyInstance): Promise<
   // GET /nusika/chahta-anumpa/lessons — list all lessons with expanded word/phrase data
   app.get("/nusika/chahta-anumpa/lessons", async (_req, reply) => {
     const data = await loadSeedData();
-    validateEntries(data);
     const lessons = data.lessons.map((lesson) => ({
       ...lesson,
       words: lesson.wordIds.map((wid) => data.words.find((w) => w.id === wid)).filter(Boolean),
@@ -106,14 +121,12 @@ export async function registerChahtaAnumpaRoutes(app: FastifyInstance): Promise<
   // GET /nusika/chahta-anumpa/words — all words with source + verification
   app.get("/nusika/chahta-anumpa/words", async (_req, reply) => {
     const data = await loadSeedData();
-    validateEntries(data);
     return reply.send({ ok: true, words: data.words });
   });
 
   // GET /nusika/chahta-anumpa/phrases — all phrases with source + verification
   app.get("/nusika/chahta-anumpa/phrases", async (_req, reply) => {
     const data = await loadSeedData();
-    validateEntries(data);
     return reply.send({ ok: true, phrases: data.phrases });
   });
 }

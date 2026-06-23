@@ -202,7 +202,7 @@ test("Kokoro down + NUSIKA_VOICE_FALLBACK=piper falls through to Piper preflight
     assert.equal(res.statusCode, 503);
     const body = res.json();
     assert.match(body.error, /TTS not configured/i, "should be the Piper preflight 503, not the Kokoro one");
-    assert.match(body.detail, /PIPER_BIN/);
+    assert.match(body.error, /TTS not configured/i);
   } finally {
     __resetKokoroFetchForTesting();
     await h.cleanup();
@@ -262,7 +262,7 @@ test("Legacy { text, voice: '<piper-basename>' } still hits the Piper path", asy
     // PIPER_BIN missing → preflight 503. Detail mentions PIPER_BIN, not
     // Kokoro, proving we routed to Piper.
     assert.equal(res.statusCode, 503);
-    assert.match(res.json().detail, /PIPER_BIN/);
+    assert.match(res.json().error, /TTS not configured/i);
   } finally {
     await h.cleanup();
   }
@@ -333,7 +333,7 @@ test("scope: '' (empty) is treated like no scope and falls through to the defaul
     // Piper-shaped detail. Proves we did NOT 200 with a silently wrong
     // voice, and did NOT 4xx with a malformed-payload error.
     assert.equal(res.statusCode, 503);
-    assert.match(res.json().detail, /PIPER_BIN/,
+    assert.match(res.json().error, /TTS not configured/i,
       "empty scope must fall through to the default-voice path, not error out");
   } finally {
     await h.cleanup();

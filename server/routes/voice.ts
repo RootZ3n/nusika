@@ -105,7 +105,6 @@ async function runPiperSynthesis(
     return reply.status(503).send({
       ok: false,
       error: "TTS not configured.",
-      detail: `PIPER_BIN not found at ${bin}.`,
     });
   }
   const modelPath = voiceModelPath(voice);
@@ -118,7 +117,6 @@ async function runPiperSynthesis(
     return reply.status(503).send({
       ok: false,
       error: "TTS voice not configured.",
-      detail: `Voice model not found at ${modelPath}.`,
     });
   }
 
@@ -156,7 +154,6 @@ async function runPiperSynthesis(
     return reply.status(500).send({
       ok: false,
       error: "TTS execution failed.",
-      detail: "Piper exited with an error. See server logs for details.",
     });
   } finally {
     if (outFile) unlink(outFile).catch(() => {});
@@ -237,7 +234,6 @@ async function runKokoroSynthesis(
     return reply.status(503).send({
       ok: false,
       error: "Kokoro TTS unavailable.",
-      detail,
     });
   }
 }
@@ -316,9 +312,17 @@ async function runEdgeSynthesis(
     return reply.status(503).send({
       ok: false,
       error: "Edge TTS unavailable.",
-      detail,
     });
   }
+}
+
+/** Maximum characters accepted for TTS synthesis. Prevents resource exhaustion. */
+const TTS_MAX_CHARACTERS = 10_000;
+
+/** Reject text containing control characters (except newline/tab). */
+function hasControlChars(text: string): boolean {
+  // Allow \n (0x0A), \t (0x09), \r (0x0D) — reject everything else below 0x20.
+  return /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(text);
 }
 
 export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
@@ -342,6 +346,12 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
     async (req, reply) => {
       const text = req.body?.text;
       if (!text) return reply.status(400).send({ ok: false, error: "text required" });
+      if (text.length > TTS_MAX_CHARACTERS) {
+        return reply.status(400).send({ ok: false, error: `text exceeds maximum length of ${TTS_MAX_CHARACTERS} characters` });
+      }
+      if (hasControlChars(text)) {
+        return reply.status(400).send({ ok: false, error: "text contains invalid control characters" });
+      }
 
       const query = (req.body?.voice ?? req.body?.scope ?? "").trim();
       const profile = query ? await resolveVoiceProfile(db, query) : null;
@@ -390,6 +400,12 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
     async (req, reply) => {
       const { text, voice_id: explicitVoiceId, companion_voice } = req.body ?? {};
       if (!text) return reply.status(400).send({ ok: false, error: "text required" });
+      if (text.length > TTS_MAX_CHARACTERS) {
+        return reply.status(400).send({ ok: false, error: `text exceeds maximum length of ${TTS_MAX_CHARACTERS} characters` });
+      }
+      if (hasControlChars(text)) {
+        return reply.status(400).send({ ok: false, error: "text contains invalid control characters" });
+      }
 
       const voice_id = explicitVoiceId || "21m00Tcm4TlvDq8ikWAM"; // Rachel default
       const isCompanionVoice = Boolean(companion_voice);
@@ -452,7 +468,6 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
         return reply.status(503).send({
           ok: false,
           error: "TTS not configured.",
-          detail: `ElevenLabs failed and PIPER_BIN fallback not found at ${bin}.`,
         });
       }
       const fallbackModelPath = voiceModelPath(fallbackVoice);
@@ -460,7 +475,6 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
         return reply.status(503).send({
           ok: false,
           error: "TTS voice not configured.",
-          detail: `ElevenLabs failed and Piper fallback voice not found at ${fallbackModelPath}.`,
         });
       }
 
@@ -485,7 +499,6 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
         return reply.status(500).send({
           ok: false,
           error: "TTS execution failed.",
-          detail: "All TTS providers failed. See server logs for details.",
         });
       } finally {
         if (outFile) unlink(outFile).catch(() => {});
@@ -530,7 +543,6 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
         return reply.status(503).send({
           ok: false,
           error: "STT not configured.",
-          detail: `WHISPER_BIN not found at ${bin}.`,
         });
       }
       if (!existsSync(whisperModel)) {
@@ -542,7 +554,6 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
         return reply.status(503).send({
           ok: false,
           error: "STT model not configured.",
-          detail: `Whisper model not found at ${whisperModel}.`,
         });
       }
 
@@ -611,7 +622,6 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
       return reply.status(500).send({
         ok: false,
         error: "STT execution failed.",
-        detail: "Whisper exited with an error. See server logs for details.",
       });
     } finally {
       if (audioPath) unlink(audioPath).catch(() => {});
