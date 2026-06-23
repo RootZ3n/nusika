@@ -40,6 +40,31 @@ const whisperModelEn = () => process.env["WHISPER_MODEL"] ?? "";
 const whisperModelMulti = () => process.env["WHISPER_MODEL_MULTILINGUAL"] ?? "";
 export const ttsDefaultVoice = () => nenv("TTS_DEFAULT_VOICE", "en_GB-alba-medium") ?? "en_GB-alba-medium";
 
+export interface SpeechSynthesisResult {
+  audio: Buffer;
+  contentType: string;
+  provider: string;
+}
+
+export interface TranscribeAudioResult {
+  transcript: string;
+  durationMs: number;
+  model: string;
+  language: string;
+  audioBytes: number;
+}
+
+type SpeechSynthForTesting = (input: { text: string; voice?: string }) => Promise<SpeechSynthesisResult>;
+type TranscribeForTesting = (input: { audio: Buffer; language: string }) => Promise<TranscribeAudioResult>;
+
+let activeSpeechSynthForTesting: SpeechSynthForTesting | null = null;
+let activeTranscribeForTesting: TranscribeForTesting | null = null;
+
+export function __setSpeechSynthForTesting(fn: SpeechSynthForTesting): void { activeSpeechSynthForTesting = fn; }
+export function __resetSpeechSynthForTesting(): void { activeSpeechSynthForTesting = null; }
+export function __setTranscribeAudioForTesting(fn: TranscribeForTesting): void { activeTranscribeForTesting = fn; }
+export function __resetTranscribeAudioForTesting(): void { activeTranscribeForTesting = null; }
+
 /** Where Piper expects to find a voice's .onnx file. */
 export function voiceModelPath(voice: string): string {
   return `${piperVoicesDir()}/${voice}.onnx`;
@@ -105,6 +130,7 @@ async function runPiperSynthesis(
     return reply.status(503).send({
       ok: false,
       error: "TTS not configured.",
+      detail: `PIPER_BIN not found at ${bin}.`,
     });
   }
   const modelPath = voiceModelPath(voice);
@@ -117,6 +143,7 @@ async function runPiperSynthesis(
     return reply.status(503).send({
       ok: false,
       error: "TTS voice not configured.",
+      detail: `Voice model not found at ${modelPath} for voice ${voice}.`,
     });
   }
 
@@ -234,6 +261,7 @@ async function runKokoroSynthesis(
     return reply.status(503).send({
       ok: false,
       error: "Kokoro TTS unavailable.",
+      detail,
     });
   }
 }
@@ -312,6 +340,7 @@ async function runEdgeSynthesis(
     return reply.status(503).send({
       ok: false,
       error: "Edge TTS unavailable.",
+      detail,
     });
   }
 }
@@ -323,6 +352,135 @@ const TTS_MAX_CHARACTERS = 10_000;
 function hasControlChars(text: string): boolean {
   // Allow \n (0x0A), \t (0x09), \r (0x0D) — reject everything else below 0x20.
   return /[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/.test(text);
+}
+
+export async function synthesizeSpeech(
+  app: FastifyInstance,
+  text: string,
+  voice?: string,
+): Promise<SpeechSynthesisResult> {
+  if (activeSpeechSynthForTesting) {
+    return activeSpeechSynthForTesting({ text, ...(voice ? { voice } : {}) });
+  }
+
+  const res = await app.inject({
+    method: "POST",
+    url: "/nusika/tts",
+    payload: { text, ...(voice ? { voice } : {}) },
+  });
+
+  if (res.statusCode < 200 || res.statusCode >= 300) {
+    const body = res.json<{ error?: string; detail?: string }>();
+    const err = new Error(body.error ?? `TTS request failed with HTTP ${res.statusCode}`);
+    (err as Error & { statusCode?: number }).statusCode = res.statusCode;
+    if (body.detail) (err as Error & { detail?: string }).detail = body.detail;
+    throw err;
+  }
+
+  return {
+    audio: res.rawPayload,
+    contentType: String(res.headers["content-type"] ?? "application/octet-stream"),
+    provider: String(res.headers["x-tts-provider"] ?? "unknown"),
+  };
+}
+
+export async function transcribeAudioBuffer(
+  app: FastifyInstance,
+  audio: Buffer,
+  language = "en",
+): Promise<TranscribeAudioResult> {
+  if (activeTranscribeForTesting) return activeTranscribeForTesting({ audio, language });
+
+  const start = Date.now();
+  let audioPath = "";
+  let txtPath = "";
+  const useMultilingual = language !== "en";
+  const whisperModel = useMultilingual ? whisperModelMulti() : whisperModelEn();
+  const bin = whisperBin();
+
+  if (!existsSync(bin)) {
+    void writeReceipt({
+      componentType: "module-event", componentName: "magister-stt",
+      reason: "magister:stt:whisper", status: "failure",
+      meta: { stage: "preflight", missing: "binary", path: bin },
+    });
+    const err = new Error("STT not configured.");
+    (err as Error & { statusCode?: number }).statusCode = 503;
+    (err as Error & { detail?: string }).detail = `WHISPER_BIN not found at ${bin}.`;
+    throw err;
+  }
+  if (!existsSync(whisperModel)) {
+    void writeReceipt({
+      componentType: "module-event", componentName: "magister-stt",
+      reason: "magister:stt:whisper", status: "failure",
+      meta: { stage: "preflight", missing: "model", path: whisperModel },
+    });
+    const err = new Error("STT model not configured.");
+    (err as Error & { statusCode?: number }).statusCode = 503;
+    (err as Error & { detail?: string }).detail = `Whisper model not found at ${whisperModel}.`;
+    throw err;
+  }
+
+  try {
+    audioPath = join(await tmpDir(), `stt-${randomUUID()}.wav`);
+    txtPath = `${audioPath}.txt`;
+    await writeFile(audioPath, audio);
+
+    const transcript = await new Promise<string>((resolveStt, rejectStt) => {
+      const proc = spawn(bin, [
+        "-m", whisperModel,
+        "-f", audioPath,
+        "--no-timestamps",
+        "--language", language,
+        "-otxt",
+      ], { stdio: ["ignore", "pipe", "pipe"], timeout: 60_000 });
+
+      let stdout = "", stderr = "";
+      proc.stdout.on("data", (d: Buffer) => { stdout += d.toString(); });
+      proc.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
+      proc.on("close", (code) => {
+        if (code === 0) {
+          readFile(txtPath, "utf-8")
+            .then(t => resolveStt(t.trim()))
+            .catch(() => resolveStt(stdout.trim()));
+        } else {
+          rejectStt(new Error(`Whisper exited ${code}: ${stderr.slice(0, 300)}`));
+        }
+      });
+      proc.on("error", rejectStt);
+    });
+
+    const durationMs = Date.now() - start;
+    const model = useMultilingual ? "whisper-base" : "whisper-base.en";
+    void writeReceipt({
+      componentType: "module-event",
+      componentName: "magister-stt",
+      reason: "magister:stt:whisper",
+      durationMs,
+      meta: {
+        model: useMultilingual ? "base-multilingual" : "base.en",
+        language,
+        transcriptLength: transcript.length,
+        audioBytes: audio.length,
+      },
+    });
+
+    return { transcript, durationMs, model, language, audioBytes: audio.length };
+  } catch (err) {
+    const fullDetail = err instanceof Error ? err.message : String(err);
+    app.log.error(`nusika:stt: Whisper failed: ${fullDetail}`);
+    void writeReceipt({
+      componentType: "module-event", componentName: "magister-stt",
+      reason: "magister:stt:whisper", status: "failure",
+      meta: { stage: "spawn", error: fullDetail.slice(0, 400) },
+    });
+    const out = new Error("STT execution failed.");
+    (out as Error & { statusCode?: number }).statusCode = 500;
+    throw out;
+  } finally {
+    if (audioPath) unlink(audioPath).catch(() => {});
+    if (txtPath) unlink(txtPath).catch(() => {});
+  }
 }
 
 export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
@@ -509,9 +667,6 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
   // ── POST /nusika/stt — whisper.cpp local STT ────────────────────────────
 
   app.post("/nusika/stt", async (req, reply) => {
-    const start = Date.now();
-    let audioPath = "";
-    let txtPath = "";
     try {
       // @fastify/multipart adds .file()
       const multipartReq = req as typeof req & {
@@ -527,105 +682,24 @@ export async function registerVoiceRoutes(app: FastifyInstance, db: NusikaDB): P
       const language = (langField && typeof langField === "object" && "value" in langField
         ? String((langField as { value: unknown }).value ?? "")
         : "") || "en";
-      const useMultilingual = language !== "en";
-      const whisperModel = useMultilingual ? whisperModelMulti() : whisperModelEn();
-
-      // Pre-flight: missing binary or missing model → 503 with friendly
-      // text. Without this, spawn ENOENT or whisper.cpp's "couldn't load
-      // model" stderr would surface as raw 500s.
-      const bin = whisperBin();
-      if (!existsSync(bin)) {
-        void writeReceipt({
-          componentType: "module-event", componentName: "magister-stt",
-          reason: "magister:stt:whisper", status: "failure",
-          meta: { stage: "preflight", missing: "binary", path: bin },
-        });
-        return reply.status(503).send({
-          ok: false,
-          error: "STT not configured.",
-        });
-      }
-      if (!existsSync(whisperModel)) {
-        void writeReceipt({
-          componentType: "module-event", componentName: "magister-stt",
-          reason: "magister:stt:whisper", status: "failure",
-          meta: { stage: "preflight", missing: "model", path: whisperModel },
-        });
-        return reply.status(503).send({
-          ok: false,
-          error: "STT model not configured.",
-        });
-      }
-
-      audioPath = join(await tmpDir(), `stt-${randomUUID()}.wav`);
-      txtPath = `${audioPath}.txt`;
-
       const chunks: Buffer[] = [];
       for await (const chunk of data.file) chunks.push(chunk as Buffer);
-      const totalBytes = chunks.reduce((acc, c) => acc + c.length, 0);
-      await writeFile(audioPath, Buffer.concat(chunks));
-
-      const transcript = await new Promise<string>((resolveStt, rejectStt) => {
-        const proc = spawn(bin, [
-          "-m", whisperModel,
-          "-f", audioPath,
-          "--no-timestamps",
-          "--language", language,
-          "-otxt",
-        ], { stdio: ["ignore", "pipe", "pipe"], timeout: 60_000 });
-
-        let stdout = "", stderr = "";
-        proc.stdout.on("data", (d: Buffer) => { stdout += d.toString(); });
-        proc.stderr.on("data", (d: Buffer) => { stderr += d.toString(); });
-        proc.on("close", (code) => {
-          if (code === 0) {
-            readFile(txtPath, "utf-8")
-              .then(t => resolveStt(t.trim()))
-              .catch(() => resolveStt(stdout.trim()));
-          } else {
-            rejectStt(new Error(`Whisper exited ${code}: ${stderr.slice(0, 300)}`));
-          }
-        });
-        proc.on("error", rejectStt);
-      });
-
-      const durationMs = Date.now() - start;
-      void writeReceipt({
-        componentType: "module-event",
-        componentName: "magister-stt",
-        reason: "magister:stt:whisper",
-        durationMs,
-        meta: {
-          model: useMultilingual ? "base-multilingual" : "base.en",
-          language,
-          transcriptLength: transcript.length,
-          audioBytes: totalBytes,
-        },
-      });
+      const result = await transcribeAudioBuffer(app, Buffer.concat(chunks), language);
 
       return reply.send({
         ok: true,
-        transcript,
-        durationMs,
-        model: useMultilingual ? "whisper-base" : "whisper-base.en",
-        language,
+        transcript: result.transcript,
+        durationMs: result.durationMs,
+        model: result.model,
+        language: result.language,
       });
     } catch (err) {
-      // Log full detail server-side; sanitized message to client (no stderr leak).
-      const fullDetail = err instanceof Error ? err.message : String(err);
-      app.log.error(`nusika:stt: Whisper failed: ${fullDetail}`);
-      void writeReceipt({
-        componentType: "module-event", componentName: "magister-stt",
-        reason: "magister:stt:whisper", status: "failure",
-        meta: { stage: "spawn", error: fullDetail.slice(0, 400) },
-      });
-      return reply.status(500).send({
+      const statusCode = (err as Error & { statusCode?: number }).statusCode ?? 500;
+      return reply.status(statusCode).send({
         ok: false,
-        error: "STT execution failed.",
+        error: err instanceof Error ? err.message : "STT execution failed.",
+        ...((err as Error & { detail?: string }).detail ? { detail: (err as Error & { detail: string }).detail } : {}),
       });
-    } finally {
-      if (audioPath) unlink(audioPath).catch(() => {});
-      if (txtPath) unlink(txtPath).catch(() => {});
     }
   });
 

@@ -94,6 +94,7 @@ async function previewKokoro(
     return reply.status(503).send({
       ok: false,
       error: "Voice preview unavailable.",
+      detail,
     });
   }
 }
@@ -136,6 +137,7 @@ async function previewEdge(
     return reply.status(503).send({
       ok: false,
       error: "Voice preview unavailable.",
+      detail,
     });
   }
 }
@@ -162,14 +164,16 @@ async function previewPiper(
   if (!existsSync(bin)) {
     return reply.status(503).send({
       ok: false,
-      error: "Voice preview not available.",
+      error: "Piper preview not available.",
+      detail: `PIPER_BIN not found at ${bin}.`,
     });
   }
   const modelPath = voiceModelPath(voiceId);
   if (!existsSync(modelPath)) {
     return reply.status(503).send({
       ok: false,
-      error: "Voice preview not available.",
+      error: "Piper preview not available.",
+      detail: `Voice model not found at ${modelPath} for voice ${voiceId}.`,
     });
   }
 
@@ -190,6 +194,7 @@ async function previewPiper(
     return reply.status(503).send({
       ok: false,
       error: "Voice preview unavailable.",
+      detail: fullDetail.slice(0, 240),
     });
   } finally {
     if (outFile) unlink(outFile).catch(() => {});
