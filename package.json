@@ -40,6 +40,9 @@
     "url": "https://github.com/RootZ3n/nusika.git"
   },
   "homepage": "https://github.com/RootZ3n/nusika#readme",
+  "bugs": {
+    "url": "https://github.com/RootZ3n/nusika/issues"
+  },
   "keywords": [
     "adaptive-learning",
     "spaced-repetition",
