@@ -4,7 +4,7 @@
   "description": "Adaptive learning engine — companion-driven teaching, spaced repetition, mastery spine, creative portfolio.",
   "main": "dist/server/index.js",
   "type": "module",
-  "author": "Jeffrey Miller",
+  "author": "RootZ3n <rootz3n@proton.me>",
   "files": [
     "dist/",
     "curriculum/",
@@ -28,7 +28,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "velum-ai": "file:../velum",
+    "velum-ai": "^0.2.2",
     "@fastify/multipart": "^8.3.0",
     "@fastify/static": "^7.0.4",
     "better-sqlite3": "^11.5.0",
@@ -37,9 +37,9 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/jeffreymiller/nusika.git"
+    "url": "https://github.com/RootZ3n/nusika.git"
   },
-  "homepage": "https://github.com/jeffreymiller/nusika#readme",
+  "homepage": "https://github.com/RootZ3n/nusika#readme",
   "keywords": [
     "adaptive-learning",
     "spaced-repetition",
