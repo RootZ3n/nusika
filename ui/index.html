@@ -67,17 +67,17 @@ const SCENE_REGISTRY={nusika:[
    pehSlot:{x:50, y:55, anchor:'center', variant:'dean'}, hotspots:[
     {id:'gh-overview',       label:'Learning Overview',       x:50, y:45, workspace:'console',
      greeting:"Welcome to the Grand Hall — the heart of the Academy. All knowledge flows through here."},
-    {id:'gh-reading',        label:'Reading Room',            x:25, y:25, scene:'reading-room',
+    {id:'gh-reading',        label:'Reading Room',            x:25, y:25, workspace:'reading-study',
      greeting:"The Reading Room — where every lesson begins with curiosity."},
-    {id:'gh-rare',           label:'Rare Books Wing',         x:20, y:50, scene:'rare-books-wing',
+    {id:'gh-rare',           label:'Rare Books Wing',         x:20, y:50, workspace:'rare-collections',
      greeting:"The Rare Books Wing — treasures of knowledge preserved for centuries."},
-    {id:'gh-lecture',        label:'Lecture Hall',            x:25, y:75, scene:'lecture-hall',
+    {id:'gh-lecture',        label:'Lecture Hall',            x:25, y:75, workspace:'lecture-teach',
      greeting:"The Lecture Hall — where ideas are shared and minds are sharpened."},
-    {id:'gh-archives',       label:'The Archives',            x:80, y:25, scene:'archives',
+    {id:'gh-archives',       label:'The Archives',            x:80, y:25, workspace:'archive-catalog',
      greeting:"The Archives — centuries of accumulated wisdom, waiting to be explored."},
-    {id:'gh-scriptorium',    label:'The Scriptorium',         x:80, y:50, scene:'scriptorium',
+    {id:'gh-scriptorium',    label:'The Scriptorium',         x:80, y:50, workspace:'script-writing',
      greeting:"The Scriptorium — where knowledge is crafted and preserved by hand."},
-    {id:'gh-correspondence', label:'Correspondence Chamber',  x:78, y:75, scene:'correspondence-chamber',
+    {id:'gh-correspondence', label:'Correspondence Chamber',  x:78, y:75, workspace:'correspondence-mail',
      greeting:"The Correspondence Chamber — where ideas travel between minds."}
   ]},
   // ── The Reading Room (upper left) — study & research ─────────────────
@@ -412,21 +412,16 @@ function pehHotspotActivate(sceneId,hotspotId){
   const scene=pehScene(pehActiveProductId(),sceneId);
   const hotspot=scene&&scene.hotspots?scene.hotspots.find((h)=>h.id===hotspotId):null;
   if(!hotspot)return;
-  // Peh greets at the hotspot FIRST, then — after a short beat — the workspace
-  // pops up as a movable window beside the pin (or we travel to a sub-scene).
+  // Peh greets at the hotspot and the workspace opens AS A MOVABLE WINDOW pinned
+  // beside the pin — the map STAYS PUT (the luak model). The other hotspots never
+  // disappear; we do NOT travel to a sub-scene. Pure scene hotspots still travel.
   pehSayGreeting(hotspot,scene);
-  setTimeout(()=>{
-    if(hotspot.workspace){
-      if(hotspot.scene&&pehScene(pehActiveProductId(),hotspot.scene)){
-        state.pehverse.scene=hotspot.scene;state.pehverse.pehPosition=null;
-        try{localStorage.setItem('pehverse-scene',hotspot.scene)}catch(e){}
-      }
-      state.pehverse.pehPopUp={x:hotspot.x,y:hotspot.y};
-      pehOpenWorkspaceAt(hotspot.workspace,hotspot.x,hotspot.y);
-    }else if(hotspot.scene){
-      pehSetScene(hotspot.scene);
-    }
-  },300);
+  if(hotspot.workspace){
+    state.pehverse.pehPopUp={x:hotspot.x,y:hotspot.y};
+    pehOpenWorkspaceAt(hotspot.workspace,hotspot.x,hotspot.y);
+  }else if(hotspot.scene){
+    pehSetScene(hotspot.scene);
+  }
 }
 function pehFocusWorkspace(uid,skipRender){
   const ws=state.pehverse.workspaces.find((w)=>w.uid===uid);
@@ -519,7 +514,7 @@ function renderPehBubble(){
   return `<div class="peh-bubble-layer" aria-hidden="false">
     <div class="peh-bubble peh-bubble-anchor-${esc(b.anchor)} ${phaseClass}" style="left:${b.x}%;top:${b.y}%" role="status" title="Dismiss" onclick="pehDismissBubble()">
       <div class="peh-bubble-content">
-        <span class="peh-bubble-name">Pehlichi</span>
+        <span class="peh-bubble-name">Peh</span>
         <p class="peh-bubble-text">${esc(b.text)}</p>
       </div>
       <div class="peh-bubble-tail" aria-hidden="true"></div>
@@ -595,13 +590,10 @@ function renderPehMap(product,scene,deckMarkup){
       <h1 class="peh-scene-title">${esc(scene?scene.title:product.displayName)}</h1>
       <p class="peh-scene-desc">${esc(scene?scene.desc:product.blurb)}</p>
     </div>
-    ${renderPehSlot(scene)}
-    ${renderPehBubble()}
-    ${renderPehGuide(product)}
     ${renderHotspotLayer(scene)}
-    ${renderPehWaypoints(product,scene)}
     ${renderWorkspaceWindows(deckMarkup)}
     ${renderPehPopUp()}
+    ${renderPehBubble()}
   </div>`;
 }
 
