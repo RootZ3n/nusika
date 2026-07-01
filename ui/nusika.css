@@ -966,3 +966,194 @@ button{font-family:inherit}
   .peh-onboard-overlay,.peh-onboard-overlay.visible,.peh-onboard-overlay.exiting{transition-duration:.01ms}
   .peh-onboard-card{animation:none}
 }
+
+/* ══════════════════════════════════════════════════════════════════════
+   PEHVERSE MODERN SHELL — movable floating windows + Voltron pack-tight
+   dashboard with FLIP morph. Ported from luak's shell (generic, theme-
+   neutral; colour flows from --peh-accent / structural vars). The nusika
+   reskin (parchment + emerald scholar) lives in the .peh-product-nusika
+   block further down. This REPLACES the earlier docked-panel / CSS-grid
+   render layer (.peh-overlays/.peh-panel/.peh-tile/.peh-grid/.peh-dash —
+   now unused).
+   ══════════════════════════════════════════════════════════════════════ */
+
+/* ── Movable workspace windows (map overlay) ─────────────────────────── */
+.peh-ws-windows{position:absolute;inset:0;z-index:10;pointer-events:none;overflow:visible}
+.peh-ws-window{
+  position:absolute;width:min(460px,44vw);max-height:calc(100% - 28px);
+  pointer-events:auto;display:flex;flex-direction:column;
+  border-radius:14px;overflow:hidden;
+  background:linear-gradient(180deg,rgba(14,22,19,.97),rgba(10,15,13,.97));
+  border:1px solid var(--border-subtle);
+  box-shadow:0 14px 44px rgba(0,0,0,.55);
+  transition:box-shadow .15s,border-color .15s;
+}
+.peh-ws-window.focused{
+  border-color:color-mix(in srgb,var(--peh-accent) 60%,var(--border-subtle));
+  box-shadow:0 14px 44px rgba(0,0,0,.55),0 0 24px color-mix(in srgb,var(--peh-accent) 20%,transparent);
+}
+.peh-ws-header{
+  display:flex;align-items:center;gap:7px;padding:8px 10px;
+  background:rgba(5,150,105,.10);border-bottom:1px solid var(--border-subtle);
+  cursor:grab;user-select:none;flex-shrink:0;
+}
+.peh-ws-header:active{cursor:grabbing}
+.peh-ws-glyph{color:var(--peh-accent);display:inline-flex;flex:0 0 auto}
+.peh-ws-glyph svg{width:17px;height:17px}
+.peh-ws-title{flex:1 1 auto;min-width:0;font-size:13px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.peh-ws-console{
+  appearance:none;flex:0 0 auto;cursor:pointer;font-size:11px;font-weight:700;
+  letter-spacing:.03em;padding:4px 9px;border-radius:8px;border:1px solid var(--border-subtle);
+  background:transparent;color:var(--peh-accent);
+}
+.peh-ws-console:hover{border-color:var(--peh-accent);filter:brightness(1.15)}
+.peh-ws-close{
+  appearance:none;border:1px solid transparent;background:transparent;color:var(--ink-dim);
+  font:inherit;font-size:16px;line-height:1;width:24px;height:24px;border-radius:7px;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.peh-ws-close:hover{background:rgba(239,68,68,.22);color:#fff}
+.peh-ws-body{flex:1 1 auto;min-height:0;overflow:auto;padding:6px;-webkit-overflow-scrolling:touch}
+/* Expanded console — large centred workspace. */
+.peh-ws-window.console{max-width:none}
+.peh-ws-window.console .peh-ws-body{padding:0;display:flex;flex:1 1 auto;min-height:0;overflow:hidden}
+/* Console scroll fix: the wraps that hold tall content MUST be the scrollers,
+   or 1000px+ of content gets clipped with no way to reach the rest. */
+.peh-ws-window.console .peh-ws-body>.peh-lane-wrap,
+.peh-ws-window.console .peh-ws-body>.peh-deck-wrap,
+.peh-ws-window.console .peh-ws-body>.peh-ph,
+.peh-ws-window.console .peh-ws-body>.peh-live,
+.peh-ws-window.console .peh-ws-body>.nus-ws,
+.peh-ws-window.console .peh-ws-body>.nus-console{flex:1 1 auto;min-width:0;min-height:0;overflow:auto}
+
+/* ── Compact glance card (small console-class window / Voltron tile) ──── */
+.peh-live-summary{gap:8px}
+.peh-live-glance{display:flex;flex-direction:column;gap:8px}
+.peh-glance-hint{font-size:11px;letter-spacing:.03em;color:var(--ink-dim);font-style:italic}
+
+/* ── Peh mascot pop-up (bounces in at the clicked hotspot) ───────────── */
+.peh-popup{position:absolute;z-index:30;pointer-events:none;transform:translate(-50%,-100%);animation:pehBounce .5s cubic-bezier(.34,1.56,.64,1) both}
+.peh-popup-img{width:82px;height:82px;object-fit:contain;filter:drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+@keyframes pehBounce{
+  0%{transform:translate(-50%,-100%) scale(0);opacity:0}
+  60%{transform:translate(-50%,-100%) scale(1.15);opacity:1}
+  100%{transform:translate(-50%,-100%) scale(1);opacity:1}
+}
+
+/* ── DashboardSurface — the Voltron pack-tight wall ──────────────────── */
+.peh-dash-surface{
+  flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:12px;gap:10px;overflow:hidden;
+  background:
+    radial-gradient(120% 80% at 50% -10%,color-mix(in srgb,var(--peh-accent) 12%,transparent),transparent 60%),
+    linear-gradient(180deg,rgba(10,15,13,.55),rgba(8,12,10,.85));
+}
+.peh-dash-bar{flex:0 0 auto;display:flex;align-items:center;gap:12px;padding:2px 4px}
+.peh-dash-bar-title{font-weight:800;font-size:14px;letter-spacing:.04em;color:var(--ink)}
+.peh-dash-bar-tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-dim)}
+.peh-dash-wall{
+  flex:1 1 auto;min-height:0;display:grid;gap:1px;background:var(--border-subtle);
+  border:1px solid var(--border-subtle);border-radius:16px;box-shadow:var(--shadow-panel,0 18px 60px rgba(0,0,0,.55));overflow:hidden;
+}
+.peh-dash-wall-flex{display:flex;flex-direction:column;gap:1px}
+.peh-dash-row{display:flex;flex:1 1 0;gap:1px;min-height:0}
+.peh-dash-wall-flex .peh-dash-tile{flex:1 1 0;min-width:0}
+.peh-dash-tile{display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg-card,rgba(14,22,19,.96));border:0;border-radius:0;box-shadow:none;overflow:hidden}
+.peh-dash-tile-head{flex:0 0 auto;display:flex;align-items:center;gap:8px;padding:8px 12px;border-bottom:1px solid var(--border-subtle);background:linear-gradient(180deg,rgba(255,255,255,.035),transparent)}
+.peh-dash-tile-glyph{color:var(--peh-accent);display:inline-flex;flex:0 0 auto}
+.peh-dash-tile-title{flex:1 1 auto;min-width:0;font-weight:700;font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.peh-dash-open{flex:0 0 auto;border:1px solid var(--border-subtle);background:transparent;color:var(--ink-soft);border-radius:7px;cursor:pointer;font-size:12px;line-height:1;padding:3px 6px;transition:.14s}
+.peh-dash-open:hover{border-color:var(--peh-accent);color:var(--ink)}
+/* nusika tiles carry full live content, so they DO scroll (luak's compact tiles
+   never do). Keeps the lesson lists / catalog reachable inside a tile. */
+.peh-dash-tile-body{flex:1 1 auto;min-height:0;overflow:auto;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.peh-dash-tile.role-status{border-top:2px solid color-mix(in srgb,var(--peh-accent) 70%,transparent)}
+.peh-dash-tile.role-results{border-top:2px solid color-mix(in srgb,var(--peh-accent) 45%,transparent)}
+.peh-dash-tile.role-config{border-top:2px solid color-mix(in srgb,var(--peh-accent2,#7c3aed) 50%,transparent)}
+.peh-dash-tile.role-metrics{border-top:2px solid color-mix(in srgb,var(--peh-accent) 35%,transparent)}
+.peh-dash-tile.role-diagnostics{border-top:2px solid color-mix(in srgb,var(--success) 50%,transparent)}
+
+/* Compact tile widgets (used by the glance summaries / fallbacks). */
+.pd-col{display:flex;flex-direction:column;gap:8px;min-height:0}
+.pd-stat{display:flex;align-items:baseline;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--border-subtle)}
+.pd-stat:last-child{border-bottom:0}
+.pd-stat-label{font-size:11px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-dim)}
+.pd-stat-value{font-weight:800;font-size:15px;color:var(--ink)}
+.pd-stat-value.teal{color:var(--success,#34d399)}
+.pd-stat-value.orange{color:var(--gold-hot,#f4dd92)}
+.pd-stat-value.red{color:var(--red,#ef4444)}
+.pd-note{font-size:11px;line-height:1.4;color:var(--ink-dim)}
+.pd-empty{margin:auto;color:var(--ink-dim);font-size:12px;letter-spacing:.04em;text-align:center}
+.pd-open{margin-top:auto;align-self:flex-start;border:1px solid var(--border-subtle);background:transparent;color:var(--ink-soft);border-radius:8px;cursor:pointer;font-size:11px;letter-spacing:.04em;padding:5px 9px;transition:.14s}
+.pd-open:hover{border-color:var(--peh-accent);color:var(--ink)}
+
+/* Make the window⇄tile merge a glide, not a snap. */
+::view-transition-group(*){animation-duration:.5s;animation-timing-function:cubic-bezier(.22,1,.36,1)}
+@media (prefers-reduced-motion:reduce){::view-transition-group(*){animation-duration:.01ms}}
+
+@media (max-width:880px){
+  .peh-dash-surface{overflow:auto}
+  .peh-dash-wall{display:flex;flex-direction:column;border-radius:14px}
+  .peh-dash-tile{min-height:200px}
+  .peh-ws-window:not(.console){width:min(92vw,460px)}
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   NUSIKA RESKIN — parchment + emerald scholar frame for the modern shell.
+   Scoped to .peh-product-nusika only; never touches signal colours.
+   ══════════════════════════════════════════════════════════════════════ */
+.peh-product-nusika .peh-ws-window{
+  background:linear-gradient(180deg,rgba(20,32,25,.97),rgba(10,15,13,.98));
+  border:1px solid var(--acad-emerald-dk);
+  box-shadow:0 14px 44px rgba(0,0,0,.6),0 0 0 1px rgba(52,211,153,.10) inset;
+}
+.peh-product-nusika .peh-ws-window.focused{border-color:var(--acad-emerald-hi)}
+.peh-product-nusika .peh-ws-header{
+  background:linear-gradient(180deg,rgba(26,43,34,.85),rgba(20,32,25,.7));
+  border-bottom:1px solid var(--acad-emerald-dk);
+}
+.peh-product-nusika .peh-ws-title{font-family:var(--acad-display);letter-spacing:.04em;color:var(--acad-paper)}
+.peh-product-nusika .peh-ws-glyph{color:var(--acad-emerald-hi)}
+.peh-product-nusika .peh-ws-console{border-color:var(--acad-emerald-dk);color:var(--acad-emerald-hi);font-family:var(--acad-display)}
+.peh-product-nusika .peh-ws-console:hover{border-color:var(--acad-emerald-hi);color:#fff}
+.peh-product-nusika .peh-popup-img{filter:drop-shadow(0 0 8px rgba(52,211,153,.5)) drop-shadow(0 4px 12px rgba(0,0,0,.5))}
+
+.peh-product-nusika .peh-dash-surface{
+  background:
+    radial-gradient(120% 80% at 50% -10%,color-mix(in srgb,var(--acad-emerald-hi) 14%,transparent),transparent 60%),
+    linear-gradient(180deg,rgba(10,15,13,.6),rgba(14,22,19,.82));
+}
+.peh-product-nusika .peh-dash-wall{
+  background:var(--acad-emerald-dk);border:2px solid var(--acad-emerald);
+  box-shadow:0 22px 70px rgba(0,0,0,.65),0 0 0 1px rgba(52,211,153,.15) inset;
+}
+.peh-product-nusika .peh-dash-tile{background:linear-gradient(180deg,rgba(20,32,25,.96),rgba(10,15,13,.97))}
+.peh-product-nusika .peh-dash-tile-head{background:linear-gradient(180deg,rgba(26,43,34,.55),transparent);border-bottom:1px solid var(--acad-emerald-dk)}
+.peh-product-nusika .peh-dash-tile-title{font-family:var(--acad-display);color:var(--acad-paper)}
+.peh-product-nusika .peh-dash-tile-glyph{color:var(--acad-emerald-hi)}
+.peh-product-nusika .peh-dash-open{border-color:var(--acad-emerald-dk);color:var(--acad-paper)}
+.peh-product-nusika .peh-dash-open:hover{border-color:var(--acad-emerald-hi);color:#fff}
+.peh-product-nusika .peh-dash-bar-title{font-family:var(--acad-display);color:var(--acad-emerald-hi)}
+.peh-product-nusika .peh-dash-bar-tag{color:var(--acad-emerald-dk)}
+.peh-product-nusika .peh-dash-surface .peh-backmap{border-color:var(--acad-emerald-dk);color:var(--acad-paper)}
+
+/* ── Themed always-visible scrollbars inside workspace windows + tiles ──
+   Chromium's 0-px overlay scrollbars read as "cut off"; force a classic
+   emerald bar so a scrollable console clearly scrolls. Webkit only — the
+   Firefox standard props are gated below so they don't suppress it. */
+.peh-product-nusika .peh-ws-window ::-webkit-scrollbar,
+.peh-product-nusika .peh-dash-tile-body::-webkit-scrollbar,
+.peh-product-nusika .peh-dash-tile-body *::-webkit-scrollbar{width:12px;height:12px}
+.peh-product-nusika .peh-ws-window ::-webkit-scrollbar-track,
+.peh-product-nusika .peh-dash-tile-body::-webkit-scrollbar-track,
+.peh-product-nusika .peh-dash-tile-body *::-webkit-scrollbar-track{background:rgba(10,15,13,.5)}
+.peh-product-nusika .peh-ws-window ::-webkit-scrollbar-thumb,
+.peh-product-nusika .peh-dash-tile-body::-webkit-scrollbar-thumb,
+.peh-product-nusika .peh-dash-tile-body *::-webkit-scrollbar-thumb{background:linear-gradient(180deg,var(--acad-emerald-hi),var(--acad-emerald-dk));border-radius:8px;border:2px solid rgba(10,15,13,.5);background-clip:padding-box}
+.peh-product-nusika .peh-ws-window ::-webkit-scrollbar-thumb:hover,
+.peh-product-nusika .peh-dash-tile-body::-webkit-scrollbar-thumb:hover,
+.peh-product-nusika .peh-dash-tile-body *::-webkit-scrollbar-thumb:hover{background:var(--acad-emerald);background-clip:padding-box;border:2px solid rgba(10,15,13,.5)}
+.peh-product-nusika .peh-ws-window ::-webkit-scrollbar-corner{background:transparent}
+@-moz-document url-prefix(){
+  .peh-product-nusika .peh-ws-window *,
+  .peh-product-nusika .peh-dash-tile-body *{scrollbar-width:thin;scrollbar-color:var(--acad-emerald-dk) rgba(10,15,13,.5)}
+}

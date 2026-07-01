@@ -293,23 +293,48 @@
     }).join('') + '</div>';
   }
 
-  function liveContainer(defId) {
-    return '<div class="peh-live" id="peh-live-' + esc(defId) + '">' +
-      optionRow(defId) +
+  // Console-class panels that have a meaningful at-a-glance card (a headline
+  // stat strip). When rendered as a compact card or Voltron tile we show only
+  // that strip. Panels NOT listed always render in full so their content keeps
+  // working. Only console-class panels are ever asked for a summary, so this is
+  // effectively the multi-section Catalog Room.
+  var GLANCE = { 'archive-catalog': 1 };
+  function isGlance(defId, summary) { return !!(summary && GLANCE[defId]); }
+
+  // Reduce a full rendered panel to its headline stat strip for the glance card.
+  function glanceHtml(html) {
+    try {
+      var t = document.createElement('div');
+      t.innerHTML = html;
+      var pick = t.querySelector('.peh-live-off, .peh-stats');
+      if (pick) {
+        return '<div class="peh-live-glance">' + pick.outerHTML +
+          '<div class="peh-glance-hint">Open the console for the full report →</div></div>';
+      }
+    } catch (e) { /* fall through to full html */ }
+    return html;
+  }
+
+  function liveContainer(defId, summary) {
+    var glance = isGlance(defId, summary);
+    return '<div class="peh-live' + (glance ? ' peh-live-summary' : '') + '" id="peh-live-' + esc(defId) + '">' +
+      (glance ? '' : optionRow(defId)) +
       '<div class="peh-live-body"><div class="peh-live-loading">Loading… <span class="peh-live-spin"></span></div></div>' +
       '</div>';
   }
 
-  async function fill(defId, fresh) {
+  async function fill(defId, fresh, summary) {
     var cfg = MAP[defId];
     if (!cfg) return;
     if (fresh && window.NusAPI) window.NusAPI.refresh();
     var host = document.getElementById('peh-live-' + defId);
     if (!host) return;
+    var glance = isGlance(defId, summary);
     var body = host.querySelector('.peh-live-body');
     if (fresh && body) body.innerHTML = '<div class="peh-live-loading">Refreshing… <span class="peh-live-spin"></span></div>';
     var html;
     try { html = await cfg.fn(); } catch (e) { html = offline({ error: (e && e.message) || String(e) }); }
+    if (glance) html = glanceHtml(html);
     host = document.getElementById('peh-live-' + defId);
     if (!host) return;
     body = host.querySelector('.peh-live-body');
