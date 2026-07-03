@@ -28,7 +28,7 @@
     "node": ">=20"
   },
   "dependencies": {
-    "velum-ai": "^0.2.2",
+    "velum-ai": "file:./vendor/velum-ai",
     "@fastify/multipart": "^8.3.0",
     "@fastify/static": "^7.0.4",
     "better-sqlite3": "^11.5.0",
