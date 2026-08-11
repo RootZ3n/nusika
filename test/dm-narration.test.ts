@@ -50,7 +50,7 @@ async function campaignWithFighter(harness: Awaited<ReturnType<typeof bootApp>>)
 
 test("buildDmNarrationPrompt includes the absolute-rules guardrails verbatim", () => {
   const campaign: DmCampaign = {
-    id: "c1", user_id: "jeff", title: "T", setting_blurb: null, status: "active",
+    id: "c1", user_id: "default", title: "T", setting_blurb: null, status: "active",
     current_scene: null, quest_state: {}, world_memory: [], encounter_state: null,
     created_at: "2026-01-01T00:00:00Z", updated_at: "2026-01-01T00:00:00Z", completed_at: null,
   };
@@ -70,7 +70,7 @@ test("buildDmNarrationPrompt includes the absolute-rules guardrails verbatim", (
 
 test("buildDmNarrationPrompt includes campaign + character + events sections", () => {
   const campaign: DmCampaign = {
-    id: "c1", user_id: "jeff", title: "The Brink", setting_blurb: "A grey shore.",
+    id: "c1", user_id: "default", title: "The Brink", setting_blurb: "A grey shore.",
     status: "active", current_scene: "Ruined watchtower",
     quest_state: {}, world_memory: ["the gate cracked", "rain returned"], encounter_state: null,
     created_at: "x", updated_at: "x", completed_at: null,

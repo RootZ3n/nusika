@@ -14,8 +14,16 @@
 **Adaptive learning engine — companion-driven teaching, spaced repetition, mastery tracking, and creative portfolio.**
 
 ```bash
-npm install nusika
+git clone https://github.com/RootZ3n/nusika.git
+cd nusika
+cp .env.example .env       # adjust if needed
+pnpm install
+pnpm run dev                # tsx watch
+# or
+pnpm run build && pnpm run start:dist
 ```
+
+> **Note:** Nusika is not published on npm. Clone and install locally.
 
 ## What is this?
 
@@ -35,10 +43,10 @@ You can also save creative work — writing, translations, anything you produce 
 
 | Repo | What it does |
 |------|-------------|
-| [RootZ3n/velum](https://github.com/RootZ3n/velum) | — |
-| [RootZ3n/ikbi](https://github.com/RootZ3n/ikbi) | — |
-| [RootZ3n/kokuli](https://github.com/RootZ3n/kokuli) | — |
-| [RootZ3n/luak](https://github.com/RootZ3n/luak) | — |
+| [RootZ3n/velum](https://github.com/RootZ3n/velum) | AI privacy and injection defense — PII masking, prompt-injection classification, credential buffer |
+| [RootZ3n/ikbi](https://github.com/RootZ3n/ikbi) | Governed AI coding engine — sandboxed builds, receipts, verification, deterministic judging |
+| [RootZ3n/kokuli](https://github.com/RootZ3n/kokuli) | Code auditing — finding what's broken, reviewing changes, pattern detection |
+| [RootZ3n/luak](https://github.com/RootZ3n/luak) | AI model benchmarking — 90 tests from personality to coding, performance comparison |
 
 ---
 
@@ -132,6 +140,21 @@ pnpm run build && pnpm run start:dist
 
 Listens on `NUSIKA_HOST:NUSIKA_PORT` (default `127.0.0.1:18793`).
 
+### Web UI
+
+```bash
+cd web
+pnpm install
+pnpm run dev        # http://127.0.0.1:3003
+```
+
+The web UI proxies the API and provides the visual interface:
+- `/` — Ittunaha (campaigns, sessions, modules)
+- `/teach` — Teach Me Anything (open-ended Peh lessons)
+- `/dm` — Dungeon Master mode (campaigns, character, dice, narration)
+
+> The web UI is optional — the API server works standalone via curl or any HTTP client.
+
 | Script | Purpose |
 |---|---|
 | `pnpm run dev` | tsx watch on `server/index.ts` — primary dev path |
@@ -221,20 +244,17 @@ The built server (`start:dist`) and the dev server both resolve the project root
 > friendly `{ ok:false, error, detail }` body — no Python tracebacks, no
 > raw stderr.
 >
-> The **Kokoro 82M** voice service (`nusika-voice`) lives in
-> [`voice/`](voice/README.md) — Nusika owns it. It runs as a separate
+> The **Kokoro 82M** voice service lives in a separate optional repo:
+> [RootZ3n/nusika-voice](https://github.com/RootZ3n/nusika-voice). It runs as a separate
 > Python process on `127.0.0.1:18794`. Nusika dispatches `POST
 > /nusika/tts` to Kokoro when a resolved voice profile has
-> `engine: "kokoro"`. Runtime posture (start via
-> `voice/start.sh`, honest degradation when down, the
-> `voice/systemd/nusika-voice.service` unit) is documented in
-> [`voice/README.md`](voice/README.md). **Slice 6E assigned Kokoro voices to Peh and
-> all 33 curriculum companions**, so any companion-targeted call now
-> reaches Kokoro by default (when the service is running). Piper is
-> retained as a fallback engine and as the default for legacy
+> `engine: "kokoro"`. Clone the `nusika-voice` repo and follow its
+> README to set up the voice service. Nusika degrades honestly when
+> it's unavailable — TTS endpoints return 503 with a friendly error.
+> Piper is retained as a fallback engine and as the default for legacy
 > `{ text }` callers without a voice profile match.
 >
-> The five language modules (Latin, Mandarin, Vietnamese, Spanish,
+> The six language modules (Latin, Mandarin, Vietnamese, Spanish,
 > French) currently use English Kokoro voices. Native-language Kokoro
 > support is a future engine-or-content slice; the registry honestly
 > labels each tutor voice's style with `(English speech)` so callers
@@ -344,13 +364,13 @@ Nusika was extracted from a larger project and now runs standalone. Shipped in t
 - Voice routes (Piper TTS, ElevenLabs TTS, whisper.cpp STT — when local binaries are configured)
 - Curriculum scan of 21 subjects (now includes `ai-literacy`, `ai-systems`, `chahta-anumpa`, and `rhcsa`)
 - Product narrator (Peh) exposed via `/nusika/config`
-- Smoke test (`pnpm run smoke`) and baseline node:test suite (`pnpm test` — 293 tests)
+- Smoke test (`pnpm run smoke`) and baseline node:test suite (`pnpm test` — 310 tests)
 
 Known limitations (not blockers, future polish):
 
 - Mastery spines for most subjects (only modules with a spine validate concept IDs; others accept any concept).
 - No transcript table for sessions — session recap operates on metadata (atom, hint counts, timing) only.
-- Public-release blockers: permissive CORS, no auth, no rate-limit on LLM-backed routes. Private-use and friend-demo are fine.
+- Public-release blockers: permissive CORS, no auth, no rate-limit on LLM-backed routes. Private-use and friend-demo are fine. MIT license is in place.
 - The web E2E smoke (`cd web && pnpm run test:e2e`) is HTTP-level only — JS-driven interactions (click → confirm → DELETE) aren't covered until a real-browser harness lands.
 
 ## Web — running and known issues
@@ -396,9 +416,9 @@ LAN/Tailscale-exposed surface; the API and Kokoro stay on loopback.
 pnpm run build
 cd web && pnpm run build && cd ..
 
-# provision the Kokoro venv once (don't keep using start.sh in the unit;
-# it pip-installs on every boot):
-voice/start.sh   # ^C after it prints "starting on 127.0.0.1:18794"
+# provision the Kokoro venv once (clone nusika-voice first):
+# git clone https://github.com/RootZ3n/nusika-voice.git
+# cd nusika-voice && ./start.sh   # ^C after it prints "starting on 127.0.0.1:18794"
 
 # install user units into ~/.config/systemd/user/ and daemon-reload:
 pnpm run service:install

@@ -76,7 +76,7 @@ test("progress upsert rejects mode-prefixed concept ids", () => {
   try {
     db.registerModule({ id: "linux", name: "Linux Fundamentals" });
     assert.throws(
-      () => db.updateProgress("jeff", "linux", "campaign:filesystem", { mastery_level: "introduced" }),
+      () => db.updateProgress("default", "linux", "campaign:filesystem", { mastery_level: "introduced" }),
       /colon/i,
     );
   } finally {

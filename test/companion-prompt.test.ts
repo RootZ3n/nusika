@@ -60,13 +60,13 @@ test("renderMemoryBlock surfaces achievements and struggles", () => {
   const now = new Date().toISOString();
   const memories: NusikaMemory[] = [
     {
-      id: "m1", user_id: "jeff", companion_id: "marcus",
+      id: "m1", user_id: "default", companion_id: "marcus",
       memory_type: "achievement",
       content: JSON.stringify({ mastered_concepts: ["nominative", "accusative"] }),
       session_id: null, archivum_id: null, created_at: now, expires_at: null,
     },
     {
-      id: "m2", user_id: "jeff", companion_id: "marcus",
+      id: "m2", user_id: "default", companion_id: "marcus",
       memory_type: "struggle",
       content: JSON.stringify({ struggled_concepts: ["ablative"] }),
       session_id: null, archivum_id: null, created_at: now, expires_at: null,

@@ -431,7 +431,7 @@ export class NusikaDB {
     this.db.exec(`
       CREATE TABLE IF NOT EXISTS magister_sessions (
         id                TEXT PRIMARY KEY,
-        user_id           TEXT DEFAULT 'jeff',
+        user_id           TEXT DEFAULT 'default',
         module_id         TEXT NOT NULL,
         companion_id      TEXT,
         status            TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'paused', 'complete')),
@@ -451,7 +451,7 @@ export class NusikaDB {
 
       CREATE TABLE IF NOT EXISTS magister_progress (
         id              TEXT PRIMARY KEY,
-        user_id         TEXT DEFAULT 'jeff',
+        user_id         TEXT DEFAULT 'default',
         module_id       TEXT NOT NULL,
         concept_id      TEXT NOT NULL,
         mastery_level   TEXT NOT NULL DEFAULT 'introduced' CHECK (mastery_level IN ('introduced', 'practiced', 'mastered', 'reaffirmed')),
@@ -467,7 +467,7 @@ export class NusikaDB {
 
       CREATE TABLE IF NOT EXISTS magister_memory (
         id              TEXT PRIMARY KEY,
-        user_id         TEXT DEFAULT 'jeff',
+        user_id         TEXT DEFAULT 'default',
         companion_id    TEXT NOT NULL,
         memory_type     TEXT NOT NULL CHECK (memory_type IN ('relationship', 'preference', 'achievement', 'struggle', 'creative')),
         content         TEXT NOT NULL,
@@ -479,7 +479,7 @@ export class NusikaDB {
 
       CREATE TABLE IF NOT EXISTS magister_creative (
         id                  TEXT PRIMARY KEY,
-        user_id             TEXT DEFAULT 'jeff',
+        user_id             TEXT DEFAULT 'default',
         module_id           TEXT NOT NULL,
         title               TEXT,
         content             TEXT,
@@ -513,7 +513,7 @@ export class NusikaDB {
       -- Additive only; no FK back into existing tables.
       CREATE TABLE IF NOT EXISTS magister_lessons (
         id            TEXT PRIMARY KEY,
-        user_id       TEXT NOT NULL DEFAULT 'jeff',
+        user_id       TEXT NOT NULL DEFAULT 'default',
         title         TEXT NOT NULL,
         topic         TEXT NOT NULL,
         depth         TEXT NOT NULL DEFAULT 'intro' CHECK (depth IN ('intro','deeper','example','practice','review')),
@@ -546,7 +546,7 @@ export class NusikaDB {
       -- Dungeon Master mode — deterministic state, append-only events.
       CREATE TABLE IF NOT EXISTS magister_dm_campaigns (
         id              TEXT PRIMARY KEY,
-        user_id         TEXT NOT NULL DEFAULT 'jeff',
+        user_id         TEXT NOT NULL DEFAULT 'default',
         title           TEXT NOT NULL,
         setting_blurb   TEXT,
         status          TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active','paused','complete')),
@@ -762,7 +762,7 @@ export class NusikaDB {
     const now = new Date().toISOString();
     const session: NusikaSession = {
       id: randomUUID(),
-      user_id: opts.userId ?? "jeff",
+      user_id: opts.userId ?? "default",
       module_id: moduleId,
       companion_id: opts.companionId ?? null,
       status: "active",
@@ -989,7 +989,7 @@ export class NusikaDB {
     ).all(userId, moduleId) as NusikaProgress[];
   }
 
-  getDueReaffirmations(userId: string = "jeff"): NusikaProgress[] {
+  getDueReaffirmations(userId: string = "default"): NusikaProgress[] {
     const now = new Date().toISOString();
     return this.db.prepare(
       "SELECT * FROM magister_progress WHERE user_id = ? AND next_reaffirm <= ? ORDER BY next_reaffirm ASC",
@@ -1029,7 +1029,7 @@ export class NusikaDB {
     const now = new Date().toISOString();
     const memory: NusikaMemory = {
       id: randomUUID(),
-      user_id: opts.userId ?? "jeff",
+      user_id: opts.userId ?? "default",
       companion_id: companionId,
       memory_type: memoryType,
       content,
@@ -1127,7 +1127,7 @@ export class NusikaDB {
     const clauses: string[] = ["companion_id = ?"];
     const params: unknown[] = [companionId];
 
-    const userId = opts?.userId ?? "jeff";
+    const userId = opts?.userId ?? "default";
     clauses.push("user_id = ?");
     params.push(userId);
 
@@ -1157,7 +1157,7 @@ export class NusikaDB {
     const now = new Date().toISOString();
     const work: NusikaCreative = {
       id: randomUUID(),
-      user_id: opts.userId ?? "jeff",
+      user_id: opts.userId ?? "default",
       module_id: moduleId,
       title: opts.title ?? null,
       content: opts.content ?? null,
@@ -1177,7 +1177,7 @@ export class NusikaDB {
     return work;
   }
 
-  getCreativeWorks(moduleId: string, userId: string = "jeff"): NusikaCreative[] {
+  getCreativeWorks(moduleId: string, userId: string = "default"): NusikaCreative[] {
     return this.db.prepare(
       "SELECT * FROM magister_creative WHERE module_id = ? AND user_id = ? ORDER BY updated_at DESC",
     ).all(moduleId, userId) as NusikaCreative[];
@@ -1343,7 +1343,7 @@ export class NusikaDB {
     const now = new Date().toISOString();
     const lesson: NusikaLesson = {
       id: randomUUID(),
-      user_id: opts.userId ?? "jeff",
+      user_id: opts.userId ?? "default",
       title,
       topic,
       depth: opts.depth ?? "intro",
@@ -1367,7 +1367,7 @@ export class NusikaDB {
   }
 
   listLessons(opts: { userId?: string; limit?: number } = {}): NusikaLesson[] {
-    const userId = opts.userId ?? "jeff";
+    const userId = opts.userId ?? "default";
     const limit = opts.limit ?? 50;
     return this.db.prepare(
       "SELECT * FROM magister_lessons WHERE user_id = ? ORDER BY updated_at DESC LIMIT ?",
@@ -1479,7 +1479,7 @@ export class NusikaDB {
     const now = new Date().toISOString();
     const row = {
       id: randomUUID(),
-      user_id: opts.userId ?? "jeff",
+      user_id: opts.userId ?? "default",
       title,
       setting_blurb: opts.settingBlurb ?? null,
       status: "active" as DmCampaignStatus,
@@ -1522,7 +1522,7 @@ export class NusikaDB {
   }
 
   listDmCampaigns(opts: { userId?: string; limit?: number } = {}): DmCampaign[] {
-    const userId = opts.userId ?? "jeff";
+    const userId = opts.userId ?? "default";
     const limit = opts.limit ?? 50;
     const rows = this.db.prepare(
       "SELECT * FROM magister_dm_campaigns WHERE user_id = ? ORDER BY updated_at DESC LIMIT ?",

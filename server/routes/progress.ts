@@ -1,7 +1,7 @@
 import type { FastifyInstance } from "fastify";
 import type { NusikaDB } from "../db.js";
 
-const DEFAULT_USER = "jeff";
+const DEFAULT_USER = "default";
 
 export async function registerProgressRoutes(app: FastifyInstance, db: NusikaDB): Promise<void> {
   // GET /nusika/progress/:moduleId — concept-level mastery + exam readiness

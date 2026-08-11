@@ -43,3 +43,4 @@ coverage/
 # generated *.wav scratch) are handled by voices/kokoro/.gitignore.
 # Any future voice engine added under voices/ should ship its own nested
 # .gitignore so we never accidentally stage gigabytes of model/venv state.
+*.tgz

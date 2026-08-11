@@ -13,13 +13,12 @@ import Fastify from "fastify";
 import multipart from "@fastify/multipart";
 import fastifyStatic from "@fastify/static";
 import { velumFastify } from "velum-ai/adapters/fastify";
-import { join, dirname } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join } from "node:path";
 import { existsSync } from "node:fs";
 import { NusikaDB } from "./db.js";
 import { scanCurriculum } from "./curriculum.js";
 import { registerAllRoutes } from "./routes/index.js";
-import { dbPath, curriculumDir } from "./lib/paths.js";
+import { dbPath, curriculumDir, projectRoot } from "./lib/paths.js";
 import { consoleLogger } from "./lib/log.js";
 import { nenv } from "./lib/env.js";
 
@@ -83,8 +82,7 @@ async function main(): Promise<void> {
   await registerAllRoutes(app, db);
 
   // Serve the world-engine UI from the repo's ui/ directory.
-  const __dirname = dirname(fileURLToPath(import.meta.url));
-  const uiDir = join(__dirname, "..", "..", "ui");
+  const uiDir = join(projectRoot(), "ui");
   if (existsSync(join(uiDir, "index.html"))) {
     await app.register(fastifyStatic, {
       root: uiDir,
